@@ -28,28 +28,14 @@ namespace EmploymentTracker
     {
         public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
 
-
-        EntityQuery tstQuery;
-        private BufferLookup<Renter> renterLookup;
-        int prevWorkerCount = 0;
         Entity selectedEntity;
 		private EndFrameBarrier endFrameBarrier;
 
 		protected override void OnCreate()
         {
             base.OnCreate();
-            this.endFrameBarrier = World.GetOrCreateSystemManaged<EndFrameBarrier>();
+           // this.endFrameBarrier = World.GetOrCreateSystemManaged<EndFrameBarrier>();
 
-			try
-            {
-                this.tstQuery = GetEntityQuery(ComponentType.ReadOnly<Worker>());
-                this.renterLookup = GetBufferLookup<Renter>(true);
-                Mod.log.Info("Succeeded entity query");
-            }
-            catch (Exception ex)
-            {
-                Mod.log.Info(ex, "Failed to get entity query");
-            }
         }
 
         byte count = 0;
@@ -57,6 +43,7 @@ namespace EmploymentTracker
         {
 			try
             {
+                Mod.log.Info("Started here");
                 ToolSystem toolSystem = World.GetExistingSystemManaged<ToolSystem>();
                 Entity selected = ((ToolSystem)toolSystem).selected;
                 if (selected != null && (this.selectedEntity == null || !selected.Equals(this.selectedEntity)))
@@ -99,7 +86,7 @@ namespace EmploymentTracker
 
                                                         if (!EntityManager.HasBuffer<ColorVariation>(householdPropertyRenter.m_Property))
                                                         {
-															DynamicBuffer<ColorVariation> color = EntityManager.AddBuffer<ColorVariation>(householdPropertyRenter.m_Property);
+															DynamicBuffer<ColorVariation> color = buffer.SetBuffer<ColorVariation>(householdPropertyRenter.m_Property);
 													
 															ColorSet colorSet = new ColorSet(new UnityEngine.Color(.5f, 0, 0, 1));
 															ColorVariation colorVariation = new ColorVariation();
@@ -108,28 +95,30 @@ namespace EmploymentTracker
                                                             colorVariation.m_ValueRange = 100;
 															color.Add(colorVariation);
 															color.Add(colorVariation);
-															EntityManager.AddComponent<BatchesUpdated>(householdPropertyRenter.m_Property);
-															EntityManager.AddComponent<EffectsUpdated>(householdPropertyRenter.m_Property);
 														}
 
+                                                        Mod.log.Info("Logged rent");
                                                         
                                                         if (EntityManager.HasBuffer<MeshColor>(householdPropertyRenter.m_Property))
                                                         {
-															NativeArray<MeshColor> meshColors = EntityManager.AddBuffer<MeshColor>(householdPropertyRenter.m_Property).AsNativeArray();
-                                                            MeshColor meshColor = meshColors[0];
+															DynamicBuffer<MeshColor> meshColors = buffer.SetBuffer<MeshColor>(householdPropertyRenter.m_Property);
+                                                            MeshColor meshColor = new MeshColor();
 															Mod.log.Info("Property Rente propertyr: " + meshColor.m_ColorSet.m_Channel0);
 															meshColor.m_ColorSet = new ColorSet();
 															meshColor.m_ColorSet.m_Channel0 = new UnityEngine.Color(1, 0, 0);
 															meshColor.m_ColorSet.m_Channel1 = new UnityEngine.Color(1, 0, 0);
 															meshColor.m_ColorSet.m_Channel2 = new UnityEngine.Color(1, 0, 0);
-                                                            meshColors[0] = meshColor;
-                                                            //meshColors
+                                                            meshColors.Add(meshColor);
+															//meshColors
 
-                                                            EntityManager.AddComponent<BatchesUpdated>(householdPropertyRenter.m_Property);
-															EntityManager.AddComponent<EffectsUpdated>(householdPropertyRenter.m_Property);
-                                                          
 														}
-                                                    }
+
+														buffer.AddComponent<BatchesUpdated>(householdPropertyRenter.m_Property);
+														buffer.AddComponent<EffectsUpdated>(householdPropertyRenter.m_Property);
+														buffer.AddComponent<Updated>(householdPropertyRenter.m_Property);
+													}
+
+                                                    Mod.log.Info("Got here");
                                                 }
 
                                             }
@@ -141,19 +130,7 @@ namespace EmploymentTracker
                             }
 
                         }
-                }
-                /*NativeArray<Entity> selectedEntities = this.selectionQuery.ToEntityArray(Allocator.Temp);
-
-                for (int i = 0; i < selectedEntities.Length; i++)
-                {
-                    if (this.selectedEntity == null || !this.selectedEntity.Equals(selectedEntities[i]))
-                    {
-                        this.selectedEntity = selectedEntities[i];
-                        Mod.log.Info("Selected entity:" + this.selectedEntity.ToString());
-                    }
-
-                    Mod.log.Info("Selected entities " + selectedEntities[i].ToString());
-                }*/
+                }              
             }
             catch (Exception ex)
             {
