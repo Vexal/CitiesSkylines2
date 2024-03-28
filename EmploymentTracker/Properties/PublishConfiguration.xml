@@ -4,7 +4,7 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="Employee Tracker" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Highlights residents' workplaces when clicking a build; employees' residences and in-transit commuters when clicking a workplace; vehicle passenger and pedestrian destinations when clicking a vehicle/citizen." />
+	<ShortDescription Value="Highlights residents' workplaces; employees' residences and in-transit commuters; vehicle passenger destinations." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
