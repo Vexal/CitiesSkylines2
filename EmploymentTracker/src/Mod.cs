@@ -16,7 +16,7 @@ namespace EmploymentTracker
         {
 
             log.Info(nameof(OnLoad) + " employment test");
-            updateSystem.UpdateBefore<TestSystem>(SystemUpdatePhase.Rendering);
+            updateSystem.UpdateBefore<TestSystem>(SystemUpdatePhase.MainLoop);
             throw new System.Exception("crash");
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");

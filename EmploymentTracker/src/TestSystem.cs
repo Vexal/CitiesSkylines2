@@ -30,29 +30,91 @@ namespace EmploymentTracker
 
         Entity selectedEntity;
 		private EndFrameBarrier endFrameBarrier;
+        EntityQuery allQuery;
 
 		protected override void OnCreate()
         {
             base.OnCreate();
-           // this.endFrameBarrier = World.GetOrCreateSystemManaged<EndFrameBarrier>();
+            // this.endFrameBarrier = World.GetOrCreateSystemManaged<EndFrameBarrier>();
 
+            
         }
 
         byte count = 0;
         protected override void OnUpdate()
         {
+			allQuery = this.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<Entity>());
+            RequireForUpdate(allQuery);
 			try
             {
-                Mod.log.Info("Started here");
                 ToolSystem toolSystem = World.GetExistingSystemManaged<ToolSystem>();
                 Entity selected = ((ToolSystem)toolSystem).selected;
                 if (selected != null && (this.selectedEntity == null || !selected.Equals(this.selectedEntity)))
-                {
-                    this.selectedEntity = selected;
+				{
+                    //Mod.log.Info("The entity count ? " +  this.allQuery.CalculateEntityCount());
+					//var newColor = new Color(9, 1);
+                    // (Entity entity in this.allQuery.ToEntityArray(Allocator.Temp))
+                    {
+                        //EntityManager.AddComponentData<Color>(entity, newColor);
+                        //EntityManager.RemoveComponent<MeshColor>(entity);
+                        /*var color = EntityManager.AddBuffer<ColorVariation>(entity);
+                        ColorSet colorSet = new ColorSet();
+                        colorSet.m_Channel0 = new UnityEngine.Color(1, 0, 0, 1);
+                        colorSet.m_Channel1 = new UnityEngine.Color(100, 0, 0, 1);
+                        colorSet.m_Channel2 = new UnityEngine.Color(0, 0, 1000, 1);
 
-                    var buffer = World.GetExistingSystemManaged<EntityCommandBufferSystem>().CreateCommandBuffer();
+
+						ColorVariation colorVariation = new ColorVariation();
+						colorVariation.m_ColorSet = colorSet;
+                        if (color.Length > 0)
+                        {
+                            for (int i = 0; i < color.Length; ++i)
+                            {
+                                color[i] = colorVariation;
+                            }
+                        }
+                        //else
+                        {
+                            color.Add(colorVariation);
+                        }*/
+
+                        //EntityManager.AddComponent<Highlighted>(entity);
+
+					/*	   DynamicBuffer<MeshColor> meshColors = EntityManager.AddBuffer<MeshColor>(entity);
+						MeshColor meshColor = new MeshColor();
+						meshColor.m_ColorSet = new ColorSet(UnityEngine.Color.red);
+						meshColor.m_ColorSet.m_Channel0 = new UnityEngine.Color(1f, 0, 0);
+						meshColor.m_ColorSet.m_Channel1 = new UnityEngine.Color(1f, 0, 0);
+						meshColor.m_ColorSet.m_Channel2 = new UnityEngine.Color(1f, 0, 0);
+                        
+                        if (meshColors.Length > 0)
+                        {
+							for (int i = 0; i < meshColors.Length; ++i)
+							{
+								meshColors[i] = meshColor;
+							}
+						}
+                        else
+                        {
+                            meshColors.Add(meshColor);
+                        }*/
+
+						/*EntityManager.AddComponent<BatchesUpdated>(entity);
+						EntityManager.AddComponent<EffectsUpdated>(entity);
+						EntityManager.AddComponent<Updated>(entity);*/
+					}
+					/*EntityManager.AddBuffer<ColorVariation>(selected);
+
+					EntityManager.AddComponent<BatchesUpdated>(selected);
+					EntityManager.AddComponent<EffectsUpdated>(selected);
+					EntityManager.AddComponent<Updated>(selected);*/
+					this.selectedEntity = selected;
+
+
+                    //var buffer = World.GetExistingSystemManaged<EntityCommandBufferSystem>().CreateCommandBuffer();
 
                     Mod.log.Info("Selected entity " + this.selectedEntity.ToString());
+
 					if (EntityManager.HasBuffer<Renter>(this.selectedEntity))
 					{
 						DynamicBuffer<Renter> renters = EntityManager.GetBuffer<Renter>(this.selectedEntity);
@@ -80,19 +142,22 @@ namespace EmploymentTracker
                                                     Mod.log.Info("Household: " + householdMember.m_Household.ToString());
                                                     if (EntityManager.HasComponent<PropertyRenter>(householdMember.m_Household))
                                                     {
-                                                        PropertyRenter householdPropertyRenter =
-                                                        EntityManager.GetComponentData<PropertyRenter>(householdMember.m_Household);
+                                                        PropertyRenter householdPropertyRenter = EntityManager.GetComponentData<PropertyRenter>(householdMember.m_Household);
+                                                        //Prefab bb = EntityManager.GetComponentData<Building>(householdPropertyRenter.m_Property);
+                                                        
                                                         Mod.log.Info("Property Rente propertyr: " + householdPropertyRenter.m_Property.ToString());
-
-                                                        if (!EntityManager.HasBuffer<ColorVariation>(householdPropertyRenter.m_Property))
+                                                        EntityManager.AddComponent<Highlighted>(householdPropertyRenter.m_Property);
+                                                       // EntityManager.AddComponent<Highlighted>(householdPropertyRenter.m);
+                                                       /* if (!EntityManager.HasBuffer<ColorVariation>(householdPropertyRenter.m_Property))
                                                         {
-															DynamicBuffer<ColorVariation> color = buffer.SetBuffer<ColorVariation>(householdPropertyRenter.m_Property);
-													
+															DynamicBuffer<ColorVariation> color = EntityManager.AddBuffer<ColorVariation>(householdPropertyRenter.m_Property); 
+                                                            //buffer.SetBuffer<ColorVariation>(householdPropertyRenter.m_Property);
+
 															ColorSet colorSet = new ColorSet(new UnityEngine.Color(.5f, 0, 0, 1));
 															ColorVariation colorVariation = new ColorVariation();
 															colorVariation.m_ColorSet = colorSet;
-                                                            colorVariation.m_Probability = 255;
-                                                            colorVariation.m_ValueRange = 100;
+                                                            //colorVariation.m_Probability = 255;
+                                                            //colorVariation.m_ValueRange = 100;
 															color.Add(colorVariation);
 															color.Add(colorVariation);
 														}
@@ -101,7 +166,8 @@ namespace EmploymentTracker
                                                         
                                                         if (EntityManager.HasBuffer<MeshColor>(householdPropertyRenter.m_Property))
                                                         {
-															DynamicBuffer<MeshColor> meshColors = buffer.SetBuffer<MeshColor>(householdPropertyRenter.m_Property);
+															//DynamicBuffer<MeshColor> meshColors = buffer.SetBuffer<MeshColor>(householdPropertyRenter.m_Property);
+															DynamicBuffer<MeshColor> meshColors = EntityManager.AddBuffer<MeshColor>(householdPropertyRenter.m_Property);
                                                             MeshColor meshColor = new MeshColor();
 															Mod.log.Info("Property Rente propertyr: " + meshColor.m_ColorSet.m_Channel0);
 															meshColor.m_ColorSet = new ColorSet();
@@ -109,13 +175,20 @@ namespace EmploymentTracker
 															meshColor.m_ColorSet.m_Channel1 = new UnityEngine.Color(1, 0, 0);
 															meshColor.m_ColorSet.m_Channel2 = new UnityEngine.Color(1, 0, 0);
                                                             meshColors.Add(meshColor);
-															//meshColors
+                                                            //meshColors
 
-														}
+                                                        }
 
-														buffer.AddComponent<BatchesUpdated>(householdPropertyRenter.m_Property);
-														buffer.AddComponent<EffectsUpdated>(householdPropertyRenter.m_Property);
-														buffer.AddComponent<Updated>(householdPropertyRenter.m_Property);
+                                                        EntityManager.SetComponentData<Color>(householdPropertyRenter.m_Property, newColor);
+                                                        /*if (EntityManager.HasComponent<Color>(householdPropertyRenter.m_Property))
+                                                        {
+                                                            Building propertyBuilding = EntityManager.GetComponentData<Color>(householdPropertyRenter.m_Property);
+                                                            propertyBuilding.
+                                                        }*/
+
+                                                        EntityManager.AddComponent<BatchesUpdated>(householdPropertyRenter.m_Property);
+														EntityManager.AddComponent<EffectsUpdated>(householdPropertyRenter.m_Property);
+														EntityManager.AddComponent<Updated>(householdPropertyRenter.m_Property);
 													}
 
                                                     Mod.log.Info("Got here");
