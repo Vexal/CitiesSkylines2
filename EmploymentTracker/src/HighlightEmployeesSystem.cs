@@ -1,13 +1,19 @@
-﻿using Colossal.Logging;
+﻿using Colossal.IO.AssetDatabase;
+using Colossal.Logging;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Companies;
 using Game.Creatures;
+using Game.Input;
+using Game.Settings;
 using Game.Tools;
+using Game.UI.Menu;
 using System.Collections.Generic;
 using Unity.Entities;
+using UnityEngine.InputSystem;
+using Student = Game.Citizens.Student;
 
 namespace EmploymentTracker
 {
@@ -17,53 +23,126 @@ namespace EmploymentTracker
 
         Entity selectedEntity;
 		List<Entity> highlightedEntities = new List<Entity>();
+        private InputAction action;
 
 		protected override void OnCreate()
         {
             base.OnCreate();
+            var menu = World.GetExistingSystemManaged<OptionsUISystem>();
+            menu.RegisterSetting(Mod.Settings, "isEnabled");
+            Mod.Settings.onSettingsApplied += new OnSettingsAppliedHandler(async setting =>
+            {
+                Mod.log.Info("setting is enabled: " + Mod.Settings.enabled);
+				await AssetDatabase.global.SaveSettings();
+			});
+            Mod.Settings.enabled = true;
+            //InputManager.instance.GetComposites();
+            this.action = new InputAction("shiftEmployment", InputActionType.Button);
+            //this.action.AddBinding(new InputBinding("<keyboard>/w"));
+            this.action.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+
+            //Mod.Settings.onSettingsApplied += new OnSettingsAppliedHandler();
         }
 
+		protected override void OnStartRunning()
+		{
+			base.OnStartRunning();
+            this.action.Enable();
+		}
+
+		protected override void OnStopRunning()
+		{
+			base.OnStopRunning();
+            this.action.Disable();
+		}
+
+		private bool toggled = true;
         protected override void OnUpdate()
-        {			
+        {
             Entity selected = this.getSelected();
-            if (selected != null && !selected.Equals(this.selectedEntity))
+            if (this.action.WasPressedThisFrame())
+            {
+                Mod.log.Info("Toggled: " + this.toggled);
+                if (this.toggled)
+                {
+                    this.clearHighlight();
+                    this.selectedEntity = default;
+                }
+
+                this.toggled = !this.toggled;
+            }
+
+            if (this.toggled && selected != null && !selected.Equals(this.selectedEntity))
 			{
                 this.clearHighlight();
                     
 				this.selectedEntity = selected;
 
-                //Mod.log.Info("Selected entity " + this.selectedEntity.ToString());
-
-				if (EntityManager.HasBuffer<Renter>(this.selectedEntity))
-				{
-                    //Employer list
-					DynamicBuffer<Renter> renters = EntityManager.GetBuffer<Renter>(this.selectedEntity);
-                    for (int i = 0; i < renters.Length; i++)
-                    {
-                        if (renters[i].m_Renter != null)
-                        {
-                            Entity employerRenter = renters[i].m_Renter;
-                            if (EntityManager.HasBuffer<Employee>(employerRenter))
-                            {
-                                DynamicBuffer<Employee> employees = EntityManager.GetBuffer<Employee>(employerRenter);
-                                //Mod.log.Info("Renter " + employerRenter.ToString());
-
-                                for (int j = 0; j < employees.Length; j++)
-                                {
-                                    Entity worker = employees[j].m_Worker;
-
-									this.highlightResidence(worker);
-                                    this.highlightTransport(worker, true);
-                                }
-                            }
-                        }
-                    }
-                }
+                this.handleForEmployers();
+                this.handleForStudents();
             }
             else if (selected == null && this.selectedEntity != null)
             {
                 this.clearHighlight();
             }                      
+        }
+
+        private void handleForEmployers()
+        {
+			if (EntityManager.HasBuffer<Renter>(this.selectedEntity))
+			{
+				//Employer list
+				DynamicBuffer<Renter> renters = EntityManager.GetBuffer<Renter>(this.selectedEntity);
+				for (int i = 0; i < renters.Length; i++)
+				{
+					if (renters[i].m_Renter != null)
+					{
+						Entity employerRenter = renters[i].m_Renter;
+						if (EntityManager.HasBuffer<Employee>(employerRenter))
+						{
+							DynamicBuffer<Employee> employees = EntityManager.GetBuffer<Employee>(employerRenter);
+
+							for (int j = 0; j < employees.Length; j++)
+							{
+								Entity worker = employees[j].m_Worker;
+
+								this.highlightResidence(worker);
+								this.highlightTransport(worker, true);
+							}
+						}
+					}
+				}
+			}
+		}
+
+        private void handleForStudents()
+        {
+            if (EntityManager.HasBuffer<Game.Buildings.Student>(this.selectedEntity))
+            {
+				DynamicBuffer<Game.Buildings.Student> students = EntityManager.GetBuffer<Game.Buildings.Student>(this.selectedEntity);
+				for (int i = 0; i < students.Length; i++)
+				{
+                    Mod.log.Info("STudent: " + i);
+                    this.highlightResidence(students[i].m_Student);
+                    this.highlightTransport(students[i], true);
+					/*if (students[i].m_Student != null)
+					{
+						Entity student = students[i].m_Student;
+						if (EntityManager.HasBuffer<Employee>(employerRenter))
+						{
+							DynamicBuffer<Employee> employees = EntityManager.GetBuffer<Employee>(employerRenter);
+
+							for (int j = 0; j < employees.Length; j++)
+							{
+								Entity worker = employees[j].m_Worker;
+
+								this.highlightResidence(worker);
+								this.highlightTransport(worker, true);
+							}
+						}
+					}*/
+				}
+			}
         }
 
         private void highlightResidence(Entity worker)
