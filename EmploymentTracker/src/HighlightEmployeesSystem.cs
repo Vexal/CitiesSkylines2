@@ -1,24 +1,16 @@
-﻿using Colossal.IO.AssetDatabase;
-using Colossal.Logging;
+﻿using Colossal.Logging;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Companies;
 using Game.Creatures;
-using Game.Input;
 using Game.Pathfind;
-using Game.Settings;
 using Game.Tools;
-using Game.UI.Menu;
 using Game.Vehicles;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using UnityEngine.InputSystem;
-using static Colossal.Animations.Animation;
-using static Unity.Burst.Intrinsics.X86.Avx;
-using Student = Game.Citizens.Student;
 
 namespace EmploymentTracker
 {
@@ -28,43 +20,55 @@ namespace EmploymentTracker
 
         Entity selectedEntity;
 		HashSet<Entity> highlightedEntities = new HashSet<Entity>();
-        private InputAction action;
+        private InputAction toggleSystemAction;
+        private InputAction togglePathDisplayAction;
         ToolSystem toolSystem;
 
 		protected override void OnCreate()
         {
             base.OnCreate();
-            this.action = new InputAction("shiftEmployment", InputActionType.Button);
-            this.action.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+            this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
+            this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
+			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
         }
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-            this.action.Enable();
+            this.toggleSystemAction.Enable();
+			this.togglePathDisplayAction.Enable();
 		}
 
 		protected override void OnStopRunning()
 		{
 			base.OnStopRunning();
-            this.action.Disable();
+            this.toggleSystemAction.Disable();
+            this.togglePathDisplayAction.Disable();
 		}
 
 		private void reset()
 		{
 			this.clearHighlight();
-			this.prevPathIndex = -1;
-			this.highlightedPathEntities.Clear();
+			this.resetPathing();
 			this.selectedEntity = default(Entity);
 		}
 
+		private void resetPathing()
+		{
+			this.clearHighlight(true);
+			this.prevPathIndex = -1;
+			this.highlightedPathEntities.Clear();
+		}
+
 		private bool toggled = true;
+		private bool pathingToggled = true;
         private HashSet<Entity> highlightedPathEntities = new HashSet<Entity>();
 		private int prevPathIndex = -1;
 
-        protected override void OnUpdate()
-        {
-            Entity selected = this.getSelected();
+		protected override void OnUpdate()
+		{
+			Entity selected = this.getSelected();
 
 			//only compute most highlighting when object selection changes (except for dynamic pathfinding)
 			bool updatedSelection = this.toggled && selected != this.selectedEntity;
@@ -75,15 +79,22 @@ namespace EmploymentTracker
 			}
 
 			//check if hot key disable/enable highlighting was pressed
-			if (this.action.WasPressedThisFrame())
-            {
+			if (this.toggleSystemAction.WasPressedThisFrame())
+			{
 				this.reset();
 				this.toggled = !this.toggled;
 				if (!this.toggled)
 				{
+					this.pathingToggled = true;
 					return;
 				}
-            }
+			}
+
+			if (this.togglePathDisplayAction.WasPressedThisFrame())
+			{
+				this.resetPathing();
+				this.pathingToggled = !this.pathingToggled;
+			}
 
 			if (this.selectedEntity == null)
 			{
@@ -98,12 +109,11 @@ namespace EmploymentTracker
 				this.highlightPassengerDestinations();
 			}
 
-			this.highlightPathingRoute(this.selectedEntity);
-
-				
-            
-                 
-        }
+			if (this.pathingToggled)
+			{
+				this.highlightPathingRoute(this.selectedEntity);
+			}
+		}
 
 		private HashSet<Entity> expectedPathElements = new HashSet<Entity>();
 
@@ -133,8 +143,6 @@ namespace EmploymentTracker
 
 					this.prevPathIndex = -1;
 					
-
-					Mod.log.Info("Path index " + this.prevPathIndex + "; " + pathOwner.m_ElementIndex);
 					for (int i = 0; i < pathElements.Length; ++i)
 					{
 						PathElement element = pathElements[i];
@@ -143,14 +151,13 @@ namespace EmploymentTracker
 							Owner owner = EntityManager.GetComponentData<Owner>(element.m_Target);
 							if (owner.m_Owner != null)
 							{
-								if (i < pathOwner.m_ElementIndex)
-								{
-									//toRemove.Add(owner.m_Owner);
-								}
-								else
+								if (i >= pathOwner.m_ElementIndex)
 								{
 									toAdd.Add(owner.m_Owner);
 									toRemove.Remove(owner.m_Owner);
+								} else
+								{
+									toRemove.Add(owner.m_Owner);
 								}
 							}
 						}
@@ -158,9 +165,7 @@ namespace EmploymentTracker
 
 					this.prevPathIndex = pathOwner.m_ElementIndex;
 				}
-			}
-
-			
+			}			
 
 			if (EntityManager.HasBuffer<CarNavigationLane>(selected))
 			{
@@ -192,8 +197,12 @@ namespace EmploymentTracker
 
 			foreach (Entity entity in toAdd)
 			{
-				this.applyHighlight(entity, false);
 				this.highlightedPathEntities.Add(entity);
+			}
+
+			foreach (Entity entity in this.highlightedPathEntities)
+			{
+				this.applyHighlight(entity, false);
 			}
 		}
 
@@ -282,8 +291,7 @@ namespace EmploymentTracker
         private void handleForVehicleElements(DynamicBuffer<LayoutElement> subObjects)
         {
             foreach(LayoutElement element in subObjects)
-            {
-				Mod.log.Info("Has element " + element.ToString());
+            {;
 				if (element.m_Vehicle != null)
                 {
                     this.handleForPassengers(element.m_Vehicle);
@@ -329,7 +337,6 @@ namespace EmploymentTracker
 				Target destination = EntityManager.GetComponentData<Target>(traveler);
                 this.applyHighlight(destination.m_Target);
 			}
-
 		}
 
         private void highlightTransport(Entity worker, bool onlyHighlightForwardTrips)
