@@ -2,13 +2,15 @@
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
 	<ModId Value="76662" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="Dynamic Pathing Display (Formerly Employee Tracker)" />
+	<DisplayName Value="Cim Route Highlighter (Formerly Employee Tracker)" />
 	<!--Short description of the mod-->
 	<ShortDescription Value="Highlights pathing routes; residents' workplaces; employees' residences and in-transit commuters; vehicle passenger destinations." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
-	<LongDescription> Formerlly named 'Employee Tracker'
-<b>Highlights these features of a selected object:</b>
+<LongDescription>
+Formerlly named 'Employee Tracker'
+
+<b>Selecting an object applies graphical highlighting to:</b>
 * Current chosen pathing route, if applicable (experimental); the highlighted route should update automatically if the chosen path changes
 * Destinations of all passengers in a selected vehicle
 * Employee residence buildings when selecting a building that contains a workplace
@@ -28,14 +30,15 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 * Route highlighting is still experimental -- it's yet to be determined if there are unnoticed edge cases. Feel free to report any in the linked forum thread or Discord.
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/cs2_pathing_thumbnailjpg.jpg" />
+	<Thumbnail Value="Properties/img1.jpg" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="Properties/cs2_pathing_2.jpg" />
-	<Screenshot Value="Properties/cs2_workplace_residence1.jpg" />
-	<Screenshot Value="Properties/20240328002833_1.jpg" />
-	<Screenshot Value="Properties/cs2_passenger_destination1.jpg" />
-	<Screenshot Value="Properties/20240329134314_1.jpg" />
-	<Screenshot Value="Properties/cs2_pathing_1jpg.jpg" />
+	<Screenshot Value="Properties/img1.jpg" />
+	<Screenshot Value="Properties/img2.jpg" />
+	<Screenshot Value="Properties/img3.jpg" />
+	<Screenshot Value="Properties/img4.jpg" />
+	<Screenshot Value="Properties/img5.jpg" />
+	<Screenshot Value="Properties/img6.jpg" />
+	<Screenshot Value="Properties/img7.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
