@@ -7,13 +7,17 @@ using Game.Common;
 using Game.Companies;
 using Game.Creatures;
 using Game.Input;
+using Game.Pathfind;
 using Game.Settings;
 using Game.Tools;
 using Game.UI.Menu;
 using Game.Vehicles;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 using UnityEngine.InputSystem;
+using static Colossal.Animations.Animation;
+using static Unity.Burst.Intrinsics.X86.Avx;
 using Student = Game.Citizens.Student;
 
 namespace EmploymentTracker
@@ -23,7 +27,7 @@ namespace EmploymentTracker
         public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
 
         Entity selectedEntity;
-		List<Entity> highlightedEntities = new List<Entity>();
+		HashSet<Entity> highlightedEntities = new HashSet<Entity>();
         private InputAction action;
         ToolSystem toolSystem;
 
@@ -46,38 +50,154 @@ namespace EmploymentTracker
             this.action.Disable();
 		}
 
+		private void reset()
+		{
+			this.clearHighlight();
+			this.prevPathIndex = -1;
+			this.highlightedPathEntities.Clear();
+			this.selectedEntity = default(Entity);
+		}
+
 		private bool toggled = true;
+        private HashSet<Entity> highlightedPathEntities = new HashSet<Entity>();
+		private int prevPathIndex = -1;
+
         protected override void OnUpdate()
         {
             Entity selected = this.getSelected();
-            if (this.action.WasPressedThisFrame())
-            {
-                if (this.toggled)
-                {
-                    this.clearHighlight();
-                    this.selectedEntity = default;
-                }
 
-                this.toggled = !this.toggled;
-            }
-
-            if (this.toggled && selected != null && !selected.Equals(this.selectedEntity))
+			//only compute most highlighting when object selection changes (except for dynamic pathfinding)
+			bool updatedSelection = this.toggled && selected != this.selectedEntity;
+			if (updatedSelection)
 			{
-                this.clearHighlight();
-                    
+				this.reset();
 				this.selectedEntity = selected;
+			}
 
-                this.handleForEmployers();
-                this.handleForStudents();
-                this.handleForPassengers();
-            }
-            else if (selected == null && this.selectedEntity != null)
+			//check if hot key disable/enable highlighting was pressed
+			if (this.action.WasPressedThisFrame())
             {
-                this.clearHighlight();
-            }                      
+				this.reset();
+				this.toggled = !this.toggled;
+				if (!this.toggled)
+				{
+					return;
+				}
+            }
+
+			if (this.selectedEntity == null)
+			{
+				return;
+			}
+
+			//only need to update building/target highlights when selection changes
+			if (updatedSelection)
+			{
+				this.highlightEmployerAndResidences();
+				this.highlightStudentResidences();
+				this.highlightPassengerDestinations();
+			}
+
+			this.highlightPathingRoute(this.selectedEntity);
+
+				
+            
+                 
         }
 
-        private void handleForEmployers()
+		private HashSet<Entity> expectedPathElements = new HashSet<Entity>();
+
+		/**
+		 * Hypothesis: an estimate of the fully planned route is contained in PathElement buffer.
+		 * PathOwner.m_elementIndex is an index into PathElement[] (a path element is not removed from the buffer even
+		 * after the entity has passed it)
+		 * 
+		 * Entities also have a CarNavigationLane buffer, which appears to contain up to 8 near-term pathing decisions,
+		 * to be performed prior to the nearest PathElement; Combining both of these buffers appears to highlight a route.
+		 * 
+		 * TODO: support train tracks
+		 */
+		private void highlightPathingRoute(Entity selected)
+		{
+			HashSet<Entity> toRemove = new HashSet<Entity>();
+			HashSet<Entity> toAdd = new HashSet<Entity>();
+			if (EntityManager.HasBuffer<PathElement>(selected) && EntityManager.HasComponent<PathOwner>(selected))
+			{
+				//A single entity is in charge of the path of an object -- the PathOwner
+				PathOwner pathOwner = EntityManager.GetComponentData<PathOwner>(selected);
+				DynamicBuffer<PathElement> pathElements = EntityManager.GetBuffer<PathElement>(selected);
+
+				if (pathOwner.m_State == PathFlags.Updated || this.prevPathIndex != pathOwner.m_ElementIndex)
+				{
+					toRemove = new HashSet<Entity>(this.highlightedPathEntities);
+
+					this.prevPathIndex = -1;
+					
+
+					Mod.log.Info("Path index " + this.prevPathIndex + "; " + pathOwner.m_ElementIndex);
+					for (int i = 0; i < pathElements.Length; ++i)
+					{
+						PathElement element = pathElements[i];
+						if (element.m_Target != null && EntityManager.HasComponent<Owner>(element.m_Target))
+						{
+							Owner owner = EntityManager.GetComponentData<Owner>(element.m_Target);
+							if (owner.m_Owner != null)
+							{
+								if (i < pathOwner.m_ElementIndex)
+								{
+									//toRemove.Add(owner.m_Owner);
+								}
+								else
+								{
+									toAdd.Add(owner.m_Owner);
+									toRemove.Remove(owner.m_Owner);
+								}
+							}
+						}
+					}
+
+					this.prevPathIndex = pathOwner.m_ElementIndex;
+				}
+			}
+
+			
+
+			if (EntityManager.HasBuffer<CarNavigationLane>(selected))
+			{
+				DynamicBuffer<CarNavigationLane> pathElements = EntityManager.GetBuffer<CarNavigationLane>(selected);		
+
+				foreach (var element in pathElements)
+				{
+					if (element.m_Lane != null && EntityManager.HasComponent<Owner>(element.m_Lane))
+					{
+						Owner owner = EntityManager.GetComponentData<Owner>(element.m_Lane);
+						if (owner.m_Owner != null)
+						{
+							toAdd.Add(owner.m_Owner);
+							toRemove.Remove(owner.m_Owner);
+						}						
+					}
+				}
+			}
+
+			foreach (Entity entity in toRemove)
+			{
+				if (!this.highlightedEntities.Contains(entity))
+				{
+					this.removeHighlight(entity);
+				}
+
+				this.highlightedPathEntities.Remove(entity);
+			}
+
+			foreach (Entity entity in toAdd)
+			{
+				this.applyHighlight(entity, false);
+				this.highlightedPathEntities.Add(entity);
+			}
+		}
+
+        private void highlightEmployerAndResidences()
         {
 			if (EntityManager.HasBuffer<Renter>(this.selectedEntity))
 			{
@@ -115,7 +235,7 @@ namespace EmploymentTracker
 			}
 		}
 
-        private void handleForStudents()
+        private void highlightStudentResidences()
         {
             if (EntityManager.HasBuffer<Game.Buildings.Student>(this.selectedEntity))
             {
@@ -128,7 +248,7 @@ namespace EmploymentTracker
 			}
         }
 
-        private void handleForPassengers()
+        private void highlightPassengerDestinations()
         {
             if (EntityManager.HasBuffer<Passenger>(this.selectedEntity))
             {
@@ -270,29 +390,52 @@ namespace EmploymentTracker
 			}
         }
 
-        private void clearHighlight()
+        private void clearHighlight(bool pathingOnly=false)
         {
-			for (int i = 0; i < this.highlightedEntities.Count; i++)
+			if (!pathingOnly)
 			{
-				EntityManager.RemoveComponent<Highlighted>(this.highlightedEntities[i]);
-				EntityManager.AddComponent<BatchesUpdated>(this.highlightedEntities[i]);
+				foreach (Entity entity in this.highlightedEntities)
+				{
+					this.removeHighlight(entity);
+				}
+
+				this.highlightedEntities.Clear();
 			}
 
-            this.highlightedEntities.Clear();
+			foreach (Entity entity in this.highlightedPathEntities)
+			{
+				this.removeHighlight(entity);
+			}
+
+			this.highlightedPathEntities.Clear();
 		}
 
-        private void applyHighlight(Entity entity)
+        private void removeHighlight(Entity entity)
         {
-            if (entity == null)
+            if (EntityManager.Exists(entity) && EntityManager.HasComponent<Highlighted>(entity))
             {
-                return;
+                EntityManager.RemoveComponent<Highlighted>(entity);
+                EntityManager.AddComponent<BatchesUpdated>(entity);
+            }
+        }
+
+        private bool applyHighlight(Entity entity, bool store = true)
+        {
+            if (entity == null || !EntityManager.Exists(entity) || EntityManager.HasComponent<Highlighted>(entity))
+            {
+                return false;
             }
 
-            EntityManager.AddComponent<Highlighted>(entity);         
-            this.highlightedEntities.Add(entity);
+			if (store)
+			{
+				this.highlightedEntities.Add(entity);
+			}
+				
+			EntityManager.AddComponent<Highlighted>(entity);
 			EntityManager.AddComponent<BatchesUpdated>(entity);
-		}
-       
+            return true;
+        }
+
         private Entity getSelected() 
         {
 			ToolSystem toolSystem = World.GetExistingSystemManaged<ToolSystem>();
