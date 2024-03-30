@@ -54,6 +54,9 @@
 		<Reference Include="Unity.InputSystem">
 			<Private>false</Private>
 		</Reference>
+		<Reference Include="Colossal.Mathematics">
+			<Private>false</Private>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>

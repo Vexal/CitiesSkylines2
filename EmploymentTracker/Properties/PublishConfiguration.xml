@@ -10,6 +10,8 @@
 <LongDescription>
 Formerlly named 'Employee Tracker'
 
+Update: Now supports lane-level route highlighting, and different path graphics for the pedestrian portions of travel (blue lines for walking segments)
+
 <b>Selecting an object applies graphical highlighting to:</b>
 * Current chosen pathing route, if applicable (experimental); the highlighted route should update automatically if the chosen path changes
 * Destinations of all passengers in a selected vehicle
@@ -24,7 +26,7 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 * <b>shift+v</b> to deactivate/reactivate path routing highlighting
 
 <b>Future Planned Updates:</b>
-* Lane-level pathing highlighting
+* Train/subway track highlighting; UI customization
 
 <b>Other notes:</b>
 * Route highlighting is still experimental -- it's yet to be determined if there are unnoticed edge cases. Feel free to report any in the linked forum thread or Discord.
@@ -32,25 +34,27 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/img1.jpg" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="Properties/img1.jpg" />
-	<Screenshot Value="Properties/img2.jpg" />
+	<Screenshot Value="Properties/img11.jpg" />
+	<Screenshot Value="Properties/img12.jpg" />
+	<Screenshot Value="Properties/img13.jpg" />
 	<Screenshot Value="Properties/img3.jpg" />
 	<Screenshot Value="Properties/img4.jpg" />
-	<Screenshot Value="Properties/img5.jpg" />
 	<Screenshot Value="Properties/img6.jpg" />
 	<Screenshot Value="Properties/img7.jpg" />
+	<Screenshot Value="Properties/img8.jpg" />
+	<Screenshot Value="Properties/img9.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/employee-tracker.1648804/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.7" />
+	<ModVersion Value="1.9" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Highlight pathing routes. Rename mod; fix retaining past paths." />
+	<ChangeLog Value="Added lane-level highlighting and highlight graphic update." />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
