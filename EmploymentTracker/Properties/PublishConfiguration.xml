@@ -43,18 +43,19 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 	<Screenshot Value="Properties/img7.jpg" />
 	<Screenshot Value="Properties/img8.jpg" />
 	<Screenshot Value="Properties/img9.jpg" />
+	<Screenshot Value="Properties/menuoptions.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/employee-tracker.1648804/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.9" />
+	<ModVersion Value="1.10" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Added lane-level highlighting and highlight graphic update." />
+	<ChangeLog Value="Highlight routes for selected vehicle drivers/passengers; added options menu." />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->

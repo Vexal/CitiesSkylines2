@@ -11,6 +11,7 @@ using Game.Rendering;
 using Game.Tools;
 using Game.Vehicles;
 using System.Collections.Generic;
+using System.Threading;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -29,6 +30,10 @@ namespace EmploymentTracker
         private InputAction togglePathDisplayAction;
 		private OverlayRenderSystem overlayRenderSystem;
         ToolSystem toolSystem;
+		EmploymentTrackerSettings settings;
+
+		private HighlightFeatures highlightFeatures = new HighlightFeatures();
+		private RouteOptions routeHighlightOptions = new RouteOptions();
 
 		protected override void OnCreate()
         {
@@ -45,6 +50,21 @@ namespace EmploymentTracker
             this.toggleSystemAction.Enable();
 			this.togglePathDisplayAction.Enable();
 			this.overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
+			this.settings = Mod.INSTANCE.getSettings();
+
+			this.highlightFeatures = new HighlightFeatures(settings);
+			this.routeHighlightOptions = new RouteOptions(settings);
+
+			this.settings.onSettingsApplied += gameSettings =>
+			{
+				if (gameSettings.GetType() == typeof(EmploymentTrackerSettings))
+				{
+					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)this.settings;
+					info("Settings thread: " + Thread.CurrentThread.ManagedThreadId);
+					this.highlightFeatures = new HighlightFeatures(settings);
+					this.routeHighlightOptions = new RouteOptions(settings);
+				}
+			};
 		}
 
 		protected override void OnStopRunning()
@@ -55,27 +75,22 @@ namespace EmploymentTracker
 			this.reset();
 		}
 
-		private void reset()
-		{
-			this.clearHighlight();
-			this.resetPathing();
-			this.selectedEntity = default(Entity);
-		}
-
-		private void resetPathing()
-		{
-			this.clearHighlight(true);
-			this.prevPathIndex = -1;
-			this.highlightedPathEntities.Clear();
-		}
-
 		private bool toggled = true;
 		private bool pathingToggled = true;
         private HashSet<Entity> highlightedPathEntities = new HashSet<Entity>();
-		private int prevPathIndex = -1;
 
 		protected override void OnUpdate()
 		{
+			if (this.highlightFeatures.dirty)
+			{
+				this.reset();
+				this.highlightFeatures.dirty = false;
+			}
+
+			if (!this.highlightFeatures.highlightAnything()) {
+				return;
+			}
+
 			Entity selected = this.getSelected();
 			
 			//only compute most highlighting when object selection changes (except for dynamic pathfinding)
@@ -84,6 +99,8 @@ namespace EmploymentTracker
 			{
 				this.reset();
 				this.selectedEntity = selected;
+				info("Updated selection to " + (selected != null ? selected.ToString() : "null"));
+				info("Update thread: " + Thread.CurrentThread.ManagedThreadId);
 			}
 
 			//check if hot key disable/enable highlighting was pressed
@@ -140,55 +157,58 @@ namespace EmploymentTracker
 		 */
 		private void highlightPathingRoute(Entity selected)
 		{
+			if (!this.highlightFeatures.routes || selected == null)
+			{
+				return;
+			}
+
+			//Highlight the path of a selected citizen inside a vehicle
+			if (EntityManager.HasComponent<CurrentVehicle>(selected))
+			{
+				this.highlightPathingRoute(EntityManager.GetComponentData<CurrentVehicle>(selected).m_Vehicle);
+				return;
+			} else if (EntityManager.HasComponent<CurrentTransport>(selected))
+			{
+				this.highlightPathingRoute(EntityManager.GetComponentData<CurrentTransport>(selected).m_CurrentTransport);
+				return;
+			}
+
 			HashSet<Entity> toRemove = new HashSet<Entity>();
 			HashSet<Entity> toAdd = new HashSet<Entity>();
 			List<CurveDef> curves = new List<CurveDef>();
-			bool onlyHighlightNear = false;
-			bool onlyHighlightFar = false;
 
 			if (EntityManager.HasBuffer<PathElement>(selected) && EntityManager.HasComponent<PathOwner>(selected))
 			{
 				//A single entity is in charge of the path of an object -- the PathOwner
 				PathOwner pathOwner = EntityManager.GetComponentData<PathOwner>(selected);
 				DynamicBuffer<PathElement> pathElements = EntityManager.GetBuffer<PathElement>(selected);
-
-				if (!onlyHighlightNear || pathOwner.m_State == PathFlags.Updated || this.prevPathIndex != pathOwner.m_ElementIndex)
-				{
-					toRemove = new HashSet<Entity>(this.highlightedPathEntities);
+			
+				toRemove = new HashSet<Entity>(this.highlightedPathEntities);
 					
-					for (int i = 0; i < pathElements.Length; ++i)
+				for (int i = 0; i < pathElements.Length; ++i)
+				{
+					PathElement element = pathElements[i];
+					if (EntityManager.HasComponent<Curve>(element.m_Target))
 					{
-						PathElement element = pathElements[i];
-						if (element.m_Target != null)
+						if (i >= pathOwner.m_ElementIndex)
 						{
-							if (!onlyHighlightNear && EntityManager.HasComponent<Curve>(element.m_Target))
-							{
-								if (i >= pathOwner.m_ElementIndex)
-								{
-									curves.Add(this.getCurveDef(element.m_Target));									
-								}
-							}
-							else if (EntityManager.HasComponent<Owner>(element.m_Target))
-							{
-								Owner owner = EntityManager.GetComponentData<Owner>(element.m_Target);
-								if (owner.m_Owner != null)
-								{
-									if (i >= pathOwner.m_ElementIndex)
-									{
-										toAdd.Add(owner.m_Owner);
-										toRemove.Remove(owner.m_Owner);
-									}
-									else
-									{
-										toRemove.Add(owner.m_Owner);
-									}
-								}
-							}
+							curves.Add(this.getCurveDef(element.m_Target));									
 						}
 					}
-
-					this.prevPathIndex = pathOwner.m_ElementIndex;
-				}
+					else if (EntityManager.HasComponent<Owner>(element.m_Target))
+					{
+						Owner owner = EntityManager.GetComponentData<Owner>(element.m_Target);
+						if (i >= pathOwner.m_ElementIndex)
+						{
+							toAdd.Add(owner.m_Owner);
+							toRemove.Remove(owner.m_Owner);
+						}
+						else
+						{
+							toRemove.Add(owner.m_Owner);
+						}
+					}
+				}			
 			}			
 
 			if (EntityManager.HasBuffer<CarNavigationLane>(selected))
@@ -196,20 +216,17 @@ namespace EmploymentTracker
 				DynamicBuffer<CarNavigationLane> pathElements = EntityManager.GetBuffer<CarNavigationLane>(selected);
 				if (!pathElements.IsEmpty)
 				{					
-					foreach (var element in pathElements)
+					foreach (CarNavigationLane element in pathElements)
 					{						
-						if (!onlyHighlightFar && element.m_Lane != null && EntityManager.HasComponent<Curve>(element.m_Lane))
+						if (EntityManager.HasComponent<Curve>(element.m_Lane))
 						{
 							curves.Add(this.getCurveDef(element.m_Lane));
 						}
-						else if (element.m_Lane != null && EntityManager.HasComponent<Owner>(element.m_Lane))
+						else if (EntityManager.HasComponent<Owner>(element.m_Lane))
 						{
 							Owner owner = EntityManager.GetComponentData<Owner>(element.m_Lane);
-							if (owner.m_Owner != null)
-							{
-								toAdd.Add(owner.m_Owner);
-								toRemove.Remove(owner.m_Owner);
-							}
+							toAdd.Add(owner.m_Owner);
+							toRemove.Remove(owner.m_Owner);
 						}
 					}
 				}
@@ -251,6 +268,11 @@ namespace EmploymentTracker
 
         private void highlightEmployerAndResidences()
         {
+	        if (!(this.highlightFeatures.employeeResidences || this.highlightFeatures.workplaces))
+	        {
+		        return;
+	        }
+
 			if (EntityManager.HasBuffer<Renter>(this.selectedEntity))
 			{
 				//Employer/Resident list
@@ -258,29 +280,29 @@ namespace EmploymentTracker
 				for (int i = 0; i < renters.Length; i++)
 				{
 					Entity renter = renters[i].m_Renter;
-					if (renter != null)
+					if (this.highlightFeatures.employeeResidences && EntityManager.HasBuffer<Employee>(renter))
 					{
-						if (EntityManager.HasBuffer<Employee>(renter))
+						DynamicBuffer<Employee> employees = EntityManager.GetBuffer<Employee>(renter);
+
+						for (int j = 0; j < employees.Length; j++)
 						{
-							DynamicBuffer<Employee> employees = EntityManager.GetBuffer<Employee>(renter);
+							Entity worker = employees[j].m_Worker;
 
-							for (int j = 0; j < employees.Length; j++)
+							this.highlightResidence(worker);
+							if (this.highlightFeatures.employeeCommuters)
 							{
-								Entity worker = employees[j].m_Worker;
-
-								this.highlightResidence(worker);
-                                //highlight commuters on the way to work
+								//highlight commuters on the way to work
 								this.highlightTransport(worker, true);
 							}
 						}
-						if (EntityManager.HasBuffer<HouseholdCitizen>(renter))
-						{
-							DynamicBuffer<HouseholdCitizen> citizens = EntityManager.GetBuffer<HouseholdCitizen>(renter);
+					}
+					if (this.highlightFeatures.workplaces && EntityManager.HasBuffer<HouseholdCitizen>(renter))
+					{
+						DynamicBuffer<HouseholdCitizen> citizens = EntityManager.GetBuffer<HouseholdCitizen>(renter);
 
-							foreach (HouseholdCitizen householdMember in citizens)
-                            {
-                                this.highlightWorkplace(householdMember.m_Citizen);
-							}
+						foreach (HouseholdCitizen householdMember in citizens)
+						{
+							this.highlightWorkplace(householdMember.m_Citizen);
 						}
 					}
 				}
@@ -289,6 +311,11 @@ namespace EmploymentTracker
 
         private void highlightStudentResidences()
         {
+			if (!this.highlightFeatures.studentResidences)
+			{
+				return;
+			}
+
             if (EntityManager.HasBuffer<Game.Buildings.Student>(this.selectedEntity))
             {
 				DynamicBuffer<Game.Buildings.Student> students = EntityManager.GetBuffer<Game.Buildings.Student>(this.selectedEntity);
@@ -302,6 +329,11 @@ namespace EmploymentTracker
 
         private void highlightPassengerDestinations()
         {
+			if (!this.highlightFeatures.destinations)
+			{
+				return;
+			}
+
             if (EntityManager.HasBuffer<Passenger>(this.selectedEntity))
             {
                 //Vehicle has multiple cars (such as a train)
@@ -444,12 +476,12 @@ namespace EmploymentTracker
 		{
 			//TODO make this configurable
 			Curve curve = EntityManager.GetComponentData<Curve>(entity);
-			Color color = new Color(.2f, 10f, .2f);
-			float width = 4f;
+			Color color = this.routeHighlightOptions.vehicleLineColor;
+			float width = this.routeHighlightOptions.vehicleLineWidth;
 			if (EntityManager.HasComponent<PedestrianLane>(entity))
 			{
-				color = new Color(.2f, .5f, 4f);
-				width = 2f;
+				color = this.routeHighlightOptions.pedestrianLineColor;
+				width = this.routeHighlightOptions.pedestrianLineWidth;
 			}
 			else if (EntityManager.HasComponent<SecondaryLane>(entity))
 			{
@@ -517,7 +549,23 @@ namespace EmploymentTracker
 		}
 		private void info(string message)
 		{
-			Mod.log.Info(message);
+			if (Mod.log != null && message != null)
+			{
+				Mod.log.Info(message);
+			}
+		}
+
+		private void reset()
+		{
+			this.clearHighlight();
+			this.resetPathing();
+			this.selectedEntity = default(Entity);
+		}
+
+		private void resetPathing()
+		{
+			this.clearHighlight(true);
+			this.highlightedPathEntities.Clear();
 		}
 	}
 }
