@@ -3,6 +3,7 @@ using Colossal.Logging;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
+using Game.Settings;
 using Unity.Entities;
 
 namespace EmploymentTracker
@@ -37,6 +38,11 @@ namespace EmploymentTracker
         public void OnDispose()
         {
             log.Info(nameof(OnDispose));
-        }
+			if (this.settings != null)
+			{
+				this.settings.UnregisterInOptionsUI();
+				this.settings = null;
+			}
+		}
     }
 }

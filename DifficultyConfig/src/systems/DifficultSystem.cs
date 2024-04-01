@@ -1,6 +1,8 @@
 ﻿using Game;
+using Game.City;
 using Game.Common;
 using Game.Prefabs;
+using Game.Simulation;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -8,22 +10,24 @@ namespace DifficultyConfig
 {
 	internal partial class DifficultSystem : GameSystemBase
 	{
+		private DifficultySettings settings;
 		private EntityQuery milestoneQuery;
 
 		private int[] originalMilestoneRewards;
+		private CitySystem citySystem;
 
 		protected override void OnCreate()
 		{
-			base.OnCreate();		
+			base.OnCreate();
+			this.citySystem = World.GetExistingSystemManaged<CitySystem>();
 		}
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-			var settings = Mod.INSTANCE.settings();
+			this.settings = Mod.INSTANCE.settings();
 
 			this.milestoneQuery = GetEntityQuery(ComponentType.ReadOnly<MilestoneData>());
-			RequireForUpdate(this.milestoneQuery);
 
 			this.originalMilestoneRewards = this.cacheMilestoneRewards();
 
@@ -43,9 +47,42 @@ namespace DifficultyConfig
 			this.updateMilestoneRewards(!settings.disableMilestoneRewards);
 		}
 
+		bool gameIsLost = false;
+
 		protected override void OnUpdate()
 		{
-			
+			if (this.settings.allowGameLoss)
+			{
+				PlayerMoney currentMoney = EntityManager.GetComponentData<PlayerMoney>(this.citySystem.City);
+				if (currentMoney.money < this.settings.minimumMoneyLoss)
+				{
+					if (!EntityManager.HasComponent<BurningCity>(this.citySystem.City))
+					{
+						EntityManager.AddComponentData(this.citySystem.City, new BurningCity(20));
+					}
+					if (!EntityManager.HasComponent<CollapsingCity>(this.citySystem.City))
+					{
+						EntityManager.AddComponentData(this.citySystem.City, new CollapsingCity(this.settings.lossSpeed));
+					}
+				} 
+				else
+				{
+					if (EntityManager.HasComponent<BurningCity>(this.citySystem.City))
+					{
+						this.EntityManager.RemoveComponent<BurningCity>(this.citySystem.City);
+					}
+					if (EntityManager.HasComponent<CollapsingCity>(this.citySystem.City))
+					{
+						this.EntityManager.RemoveComponent<CollapsingCity>(this.citySystem.City);
+					}
+				}
+
+				if (gameIsLost)
+				{
+					return;
+				}
+
+			}
 		}
 
 		private int[] cacheMilestoneRewards()
@@ -57,7 +94,6 @@ namespace DifficultyConfig
 				for (int i = 0; i < nativeArray2.Length; i++)
 				{
 					rewards[i] = nativeArray2[i].m_Reward;
-					Mod.log.Info("Cached milestone reward " + i + ": " + rewards[i]);
 				}
 			}
 			finally
@@ -79,7 +115,6 @@ namespace DifficultyConfig
 				{
 					var milestone = nativeArray2[i];
 
-					Mod.log.Info("Native milestone " + i + ": " + milestone.m_Reward);
 					if (toggle)
 					{
 						milestone.m_Reward = this.originalMilestoneRewards[i];

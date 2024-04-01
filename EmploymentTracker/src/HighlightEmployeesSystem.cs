@@ -5,10 +5,12 @@ using Game.Citizens;
 using Game.Common;
 using Game.Companies;
 using Game.Creatures;
+using Game.Events;
 using Game.Net;
 using Game.Pathfind;
 using Game.Rendering;
 using Game.Tools;
+using Game.Tutorials;
 using Game.Vehicles;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,6 +19,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 namespace EmploymentTracker
 {
@@ -34,7 +37,6 @@ namespace EmploymentTracker
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
-
 		protected override void OnCreate()
         {
             base.OnCreate();
@@ -42,7 +44,8 @@ namespace EmploymentTracker
             this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
 			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
 			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
-        }
+			
+		}
 
 		protected override void OnStartRunning()
 		{
@@ -78,7 +81,6 @@ namespace EmploymentTracker
 		private bool toggled = true;
 		private bool pathingToggled = true;
         private HashSet<Entity> highlightedPathEntities = new HashSet<Entity>();
-
 		protected override void OnUpdate()
 		{
 			if (this.highlightFeatures.dirty)
@@ -99,8 +101,6 @@ namespace EmploymentTracker
 			{
 				this.reset();
 				this.selectedEntity = selected;
-				info("Updated selection to " + (selected != null ? selected.ToString() : "null"));
-				info("Update thread: " + Thread.CurrentThread.ManagedThreadId);
 			}
 
 			//check if hot key disable/enable highlighting was pressed
@@ -133,7 +133,7 @@ namespace EmploymentTracker
 
 			//only need to update building/target highlights when selection changes
 			if (updatedSelection)
-			{
+			{	
 				this.highlightEmployerAndResidences();
 				this.highlightStudentResidences();
 				this.highlightPassengerDestinations();

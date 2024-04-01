@@ -36,9 +36,6 @@
 		<Reference Include="Colossal.IO.AssetDatabase">
 			<Private>false</Private>
 		</Reference>
-		<Reference Include="Colossal.Mathematics">
-			<Private>false</Private>
-		</Reference>
 		<Reference Include="Colossal.UI">
 			<Private>false</Private>
 		</Reference>
@@ -81,24 +78,16 @@
 		<None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
 		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
 	</ItemGroup>
+	
+	<Target Name="InstallUI" AfterTargets="AfterBuild">
+		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/UI" />
+	</Target>
 
-	<ItemGroup>
-	  <PackageReference Include="Lib.Harmony" Version="2.2.2" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Update="Properties\Resources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Resources.resx</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <EmbeddedResource Update="Properties\Resources.resx">
-	    <Generator>ResXFileCodeGenerator</Generator>
-	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
-	</ItemGroup>
-
+	<Target Name="Cleanup" AfterTargets="AfterBuild">
+		<ItemGroup>
+			<CleanTargets Include="$(DeployDir)/$(ProjectName).xml" />
+			<CleanTargets Include="$(DeployDir)/*.pdb" />
+		</ItemGroup>
+		<Delete Files="@(CleanTargets)" />
+	</Target>
 </Project>
