@@ -4,24 +4,33 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="FireStarter" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="This is a short description" />
+	<ShortDescription Value="Start fires with the click of a button." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
-This is a long description
+This is a very simple mod containing only one function -- a button to toggle your mouse clicks to create fires on everything clicked. 
+
+Note: Unfortuantely, the game has a limit of about 40-50 maximum fire graphics it will render simultaneously (the fire will still affect the building, but all you'll see is the icon).
+Hopefully in the future I can figure out a way around this,
+
+Future plans:
+* Support new or larger fire brush types
+* Support configurable fire intensities
+* Support explosions
+* Potentially support other types of disasters (volcanoes, meteors, floods, etc).
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Thumbnail Value="Properties/Thumbnail.jpg" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="20240402003519_1.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/firestarter-mod.1656139/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->

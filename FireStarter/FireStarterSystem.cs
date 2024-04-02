@@ -1,13 +1,8 @@
 ﻿using Colossal.UI.Binding;
-using Game;
 using Game.Prefabs;
 using Game.Tools;
 using Game.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Entities;
 
 namespace FireStarter
@@ -17,7 +12,8 @@ namespace FireStarter
 		ToolSystem toolSystem;
 		Entity selectedEntity; 
 		private FireStarter fireStarter;
-		private ValueBinding<bool> toolActiveBinding;
+		private ValueBinding<bool> toolActiveBinding;     
+		private ValueBinding<bool> settingActiveBinding;     
 
 		protected override void OnCreate()   
 		{
@@ -25,11 +21,20 @@ namespace FireStarter
 			this.fireStarter = new FireStarter(World.DefaultGameObjectInjectionWorld?.GetOrCreateSystemManaged<PrefabSystem>(), EntityManager);
 			AddBinding(new TriggerBinding<string>("FireStarter", "test", test));
 			this.toolActiveBinding = new ValueBinding<bool>("FireStarter", "FireToolActive", false);
-			
+			this.settingActiveBinding = new ValueBinding<bool>("FireStarter", "FireToolSettingActive", Mod.INSTANCE.settings().enabled);
+
+			Mod.INSTANCE.settings().onSettingsApplied += settings =>
+			{
+				if (settings.GetType() == typeof(Setting))
+				{
+					this.settingActiveBinding.Update(((Setting)settings).enabled);
+				}
+			};
 			AddBinding(this.toolActiveBinding);
+			AddBinding(this.settingActiveBinding);
 		}
 
-		protected override void OnStartRunning()
+		protected override void OnStartRunning() 
 		{
 			base.OnStartRunning();
 			
@@ -37,7 +42,7 @@ namespace FireStarter
 
 		protected override void OnUpdate()
 		{
-			if (!Mod.INSTANCE.settings().enabled || !this.toolActiveBinding.value)
+			if (!this.toolActiveBinding.value || !Mod.INSTANCE.settings().enabled)
 			{
 				return; 
 			}
@@ -55,7 +60,7 @@ namespace FireStarter
 
 		public void test(String s)
 		{
-			Mod.log.Info("Testing trigger " + s + " the value binding is: " + this.toolActiveBinding.value);
+			//Mod.log.Info("Testing trigger " + s + " the value binding is: " + this.toolActiveBinding.value);
 			this.toolActiveBinding.Update(!this.toolActiveBinding.value);
 		}
 

@@ -26,7 +26,7 @@ namespace FireStarter
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
 
 			AssetDatabase.global.LoadSettings(nameof(FireStarter), m_Setting, new Setting(this));
-			updateSystem.UpdateBefore<FireStarterSystem>(SystemUpdatePhase.MainLoop);
+			updateSystem.UpdateBefore<FireStarterSystem>(SystemUpdatePhase.GameSimulation);
 		}
 
 		public Setting settings()

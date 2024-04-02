@@ -1,7 +1,49 @@
-.icon {
+.fireButton {
+	.fireIcon {
+		cursor: pointer;
+	}
+
 	width: 40rem;
 	height: 40rem;
+
+	&:hover {
+		width: 42rem;
+		height: 42rem;
+		border-style: solid;
+		border-width: 3px;
+		border-color: blue;
+	}
+
+	cursor: pointer;
+
+	.fireText {
+		color: red;
+		cursor: pointer;
+	}
 }
+
+.fireActive {
+	.fireText {
+		animation: blinking 1s infinite;
+
+		@keyframes blinking {
+			0% {
+				color: red;
+			}
+
+			100% {
+				color: orange;
+			}
+		}
+	}
+
+	.fireButton {
+		border-style: solid;
+		border-width: 4px;
+		border-color: orange;
+	}
+}
+			 
 
 .cssIcon {
 	width: 40rem;

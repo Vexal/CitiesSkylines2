@@ -7,7 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmploymentTracker", "Employ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DifficultyConfig", "DifficultyConfig\DifficultyConfig.csproj", "{5B5EF05C-3B49-4AB7-9D54-C2F0902B2BC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FireStarter", "FireStarter\FireStarter.csproj", "{99729E2F-0397-4758-9AFE-0A48F5804629}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FireStarter", "FireStarter\FireStarter.csproj", "{99729E2F-0397-4758-9AFE-0A48F5804629}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CF984F04-FC5E-4394-8382-151B59B9DFB5}"
+	ProjectSection(SolutionItems) = preProject
+		prefablist.txt = prefablist.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
