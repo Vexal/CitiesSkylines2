@@ -28,9 +28,9 @@ namespace EmploymentTracker
 		{
 			this.vehicleLineWidth = settings.vehicleRouteWidth;
 			this.pedestrianLineWidth = settings.pedestrianRouteWidth;
-			this.vehicleLineColor = new Color(.2f, 10f, .2f);
-			this.pedestrianLineColor = new Color(.2f, .5f, 4f);
-			this.subwayLineColor = new Color(4f, .5f, 4f);
+			this.vehicleLineColor = new Color(.2f, 1f, .2f);
+			this.pedestrianLineColor = new Color(.2f, .5f, 1f);
+			this.subwayLineColor = new Color(1f, .5f, 1f);
 		}
 	}
 }
