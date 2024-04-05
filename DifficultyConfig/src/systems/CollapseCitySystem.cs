@@ -60,7 +60,7 @@ namespace DifficultyConfig
 				{
 					NativeArray<Entity> maybeDeletes = this.destroyedQuery.ToEntityArray(Allocator.Temp);
 
-					for (int i = 0; i < 150 && i < maybeDeletes.Length; ++i)
+					for (int i = 0; i < 1000 && i < maybeDeletes.Length; ++i)
 					{
 						EntityManager.AddComponent<Deleted>(maybeDeletes[i]);
 					}

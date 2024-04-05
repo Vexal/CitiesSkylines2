@@ -79,4 +79,8 @@
 		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="src\systems\" />
+	</ItemGroup>
+
 </Project>

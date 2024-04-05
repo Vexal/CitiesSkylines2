@@ -17,7 +17,6 @@ namespace DifficultyConfig
 
 		public void OnLoad(UpdateSystem updateSystem)
 		{
-			//DifficultPatcher.DoPatching();
 			log.Info(nameof(OnLoad));
 			updateSystem.UpdateBefore<DifficultSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<FireStarterSystem>(SystemUpdatePhase.GameSimulation);
@@ -34,8 +33,13 @@ namespace DifficultyConfig
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
 
 			AssetDatabase.global.LoadSettings(nameof(DifficultyConfig), m_Setting, new DifficultySettings(this));
+			if (m_Setting.subsidyType != DifficultySettings.SubsidyType.DEFAULT)
+			{
+				//only invoke harmony patch if we know for sure the user really wants this functionality
+				//if there is compatibility issues with other mods, they can just disable this feature
+				DifficultPatcher.DoPatching();
 
-
+			}
 		}
 
 		public DifficultySettings settings()

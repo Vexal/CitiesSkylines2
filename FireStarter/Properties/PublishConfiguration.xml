@@ -22,7 +22,7 @@ Future plans:
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.jpg" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="20240402003519_1.jpg" />
+	<Screenshot Value="Properties/20240402003519_1.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
@@ -38,5 +38,6 @@ Future plans:
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/FireStarter" />
+	<ExternalLink Type="youtube" Url="https://www.youtube.com/user/vexal" />
 </Publish>

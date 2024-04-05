@@ -11,7 +11,7 @@
 			public bool workplaces;
 			public bool routes;
 
-			public volatile bool dirty;
+			public bool dirty;
 
 			public HighlightFeatures(bool employeeResidences, bool studentResidences, bool employeeCommuters, bool destinations, bool workplaces, bool routes)
 			{
