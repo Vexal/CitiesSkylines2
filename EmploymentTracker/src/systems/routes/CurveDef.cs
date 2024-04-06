@@ -28,11 +28,6 @@ namespace EmploymentTracker
 
 		public override int GetHashCode()
 		{
-			/*int hashCode = 1573490305;
-			hashCode = hashCode * -1521134295 + this.curve.GetHashCode();
-			hashCode = hashCode * -1521134295 + this.type.GetHashCode();
-			return hashCode;*/
-
 			return this.curve.GetHashCode();
 		}
 	}   

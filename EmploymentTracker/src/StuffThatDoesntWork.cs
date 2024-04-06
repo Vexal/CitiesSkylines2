@@ -11,6 +11,25 @@ namespace EmploymentTracker
 		private void broken()
 		{
 			/*
+
+			NativeArray<Entity> timerEntities = this.timerQuery.ToEntityArray(Allocator.Temp);
+			this.timerQuery = GetEntityQuery(ComponentType.ReadWrite<DeleteTimer>());
+			foreach (Entity e in timerEntities)
+			{
+				DeleteTimer timer = EntityManager.GetComponentData<DeleteTimer>(e);
+				if (this.frameCount >= timer.endFrame)
+				{
+					switch (timer.componentType)
+					{
+						case ComponentTypeSelector.HIGHLIGHT:
+							EntityManager.RemoveComponent<Highlighted>(e);
+							EntityManager.AddComponent<BatchesUpdated>(e);
+							break;
+					}
+
+					EntityManager.RemoveComponent<DeleteTimer>(e);
+				}
+			}
 			 * 
 			allQuery = this.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<Entity>());
             RequireForUpdate(allQuery);

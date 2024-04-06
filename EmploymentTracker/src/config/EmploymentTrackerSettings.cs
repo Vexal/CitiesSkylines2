@@ -3,7 +3,6 @@ using Colossal.IO.AssetDatabase;
 using Game.Modding;
 using Game.Settings;
 using Game.UI;
-using Game.UI.Widgets;
 using System.Collections.Generic;
 
 namespace EmploymentTracker
@@ -28,6 +27,7 @@ namespace EmploymentTracker
 			this.highlightRoutes = true;
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
+			this.routeOpacity = .7f;
 		}
 
 		[SettingsUISection(kSection, featureOptionsGroup)]
@@ -56,6 +56,10 @@ namespace EmploymentTracker
 		[SettingsUISection(kSection, routeHighlightOptions)]
 		public float pedestrianRouteWidth { get; set; }
 
+		[SettingsUISlider(min = .1f, max = 10f, step = .1f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
+		[SettingsUISection(kSection, routeHighlightOptions)]
+		public float routeOpacity { get; set; }
+
 		public override void SetDefaults()
 		{
 			this.highlightDestinations = true;
@@ -66,6 +70,7 @@ namespace EmploymentTracker
 			this.highlightEmployeeResidences = true;
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
+			this.routeOpacity = .7f;
 		}
 	}
 
@@ -76,6 +81,7 @@ namespace EmploymentTracker
 		{
 			this.settings = setting;
 		}
+
 		public IEnumerable<KeyValuePair<string, string>> ReadEntries(IList<IDictionaryEntryError> errors, Dictionary<string, int> indexCounts)
 		{
 			return new Dictionary<string, string>
@@ -106,6 +112,9 @@ namespace EmploymentTracker
 
 				//Route highlight options
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightOptions), "Route Highlight Options" },
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), "Route Opacity" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), $"Opacity of route overlay lines." },
+
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.vehicleRouteWidth)), "Vehicle Route Segment Line Width" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.vehicleRouteWidth)), $"The width of the route display line for vehicles." },
 				
