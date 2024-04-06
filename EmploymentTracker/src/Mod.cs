@@ -19,6 +19,7 @@ namespace EmploymentTracker
 			INSTANCE = this;
             log.Info(nameof(OnLoad) + " employment test");
 			updateSystem.UpdateBefore<HighlightEmployeesSystem>(SystemUpdatePhase.MainLoop);
+			updateSystem.UpdateBefore<RenderRoutesSystem>(SystemUpdatePhase.Rendering);
 
 			this.settings = new EmploymentTrackerSettings(this);
 			this.settings.RegisterInOptionsUI();

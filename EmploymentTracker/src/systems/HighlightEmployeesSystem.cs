@@ -95,7 +95,7 @@ namespace EmploymentTracker
 		private bool pathingToggled = true;
         private HashSet<Entity> highlightedPathEntities = new HashSet<Entity>();
 		private long frameCount = 0;
-		private NativeArray<Entity> commutingEntities;
+		//private NativeArray<Entity> commutingEntities;
 
 		protected override void OnUpdate()
 		{
@@ -186,15 +186,15 @@ namespace EmploymentTracker
 				this.highlightStudentResidences();
 				this.highlightPassengerDestinations();
 
-				if (this.commutingEntities.IsCreated)
+				/*if (this.commutingEntities.IsCreated)
 				{
 					this.commutingEntities.Dispose();
 				}
 
-				this.commutingEntities = this.hasTargetQuery.ToEntityArray(Allocator.Persistent);
+				this.commutingEntities = this.hasTargetQuery.ToEntityArray(Allocator.Persistent);*/
 			}
 
-			if (this.pathingToggled)
+			/*if (this.pathingToggled)
 			{
 				CurveSet curvesToHighlight = new CurveSet();
 
@@ -221,12 +221,12 @@ namespace EmploymentTracker
 
 					foreach (var curve in curvesToHighlight.curve2Count)
 					{
-						overlayBuffer.DrawCurve(this.getCurveColor(curve.Key.type, curve.Value), curve.Key.curve, this.getCurveWidth(curve.Key.type), new float2() { x = 1, y = 1 });
+						//overlayBuffer.DrawCurve(this.getCurveColor(curve.Key.type, curve.Value), curve.Key.curve, this.getCurveWidth(curve.Key.type), new float2() { x = 1, y = 1 });
 					}
 
 					jHandle.Complete();
 				}
-			}
+			}*/
 		}
 
 		public class CurveSet
@@ -263,36 +263,35 @@ namespace EmploymentTracker
 			}
 
 			//Highlight the path of a selected citizen inside a vehicle
-			if (EntityManager.HasComponent<CurrentVehicle>(selected))
+			if (EntityManager.TryGetComponent(selected, out CurrentVehicle vehicle))
 			{
-				this.highlightPathingRoute(EntityManager.GetComponentData<CurrentVehicle>(selected).m_Vehicle, results);
+				this.highlightPathingRoute(vehicle.m_Vehicle, results);
 				return;
 			}
-			else if (EntityManager.HasComponent<CurrentTransport>(selected))
+			else if (EntityManager.TryGetComponent(selected, out CurrentTransport currentTransport))
 			{
-				this.highlightPathingRoute(EntityManager.GetComponentData<CurrentTransport>(selected).m_CurrentTransport, results);
+				this.highlightPathingRoute(currentTransport.m_CurrentTransport, results);
 				return;
 			}
 
 			HashSet<Entity> toRemove = new HashSet<Entity>();
 			HashSet<Entity> toAdd = new HashSet<Entity>();
 
-			if (EntityManager.HasBuffer<PathElement>(selected) && EntityManager.HasComponent<PathOwner>(selected))
+			if (EntityManager.HasComponent<PathOwner>(selected) && EntityManager.TryGetBuffer(selected, true, out DynamicBuffer<PathElement> pathElements))
 			{
 				//A single entity is in charge of the path of an object -- the PathOwner
 				PathOwner pathOwner = EntityManager.GetComponentData<PathOwner>(selected);
-				DynamicBuffer<PathElement> pathElements = EntityManager.GetBuffer<PathElement>(selected);
 			
-				toRemove = new HashSet<Entity>(this.highlightedPathEntities);
+				//toRemove = new HashSet<Entity>(this.highlightedPathEntities);
 					
 				for (int i = 0; i < pathElements.Length; ++i)
 				{
 					PathElement element = pathElements[i];
-					if (EntityManager.HasComponent<Curve>(element.m_Target))
+					if (EntityManager.TryGetComponent(element.m_Target, out Curve curve))
 					{
 						if (i >= pathOwner.m_ElementIndex)
 						{
-							results.add(this.getCurveDef(element.m_Target, element.m_TargetDelta));									
+							results.add(this.getCurveDef(element.m_Target, curve, element.m_TargetDelta));									
 						}
 					}
 					else if (EntityManager.TryGetComponent(element.m_Target, out Owner owner))
@@ -312,7 +311,7 @@ namespace EmploymentTracker
 									{
 										this.getTrackRouteCurves(waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, results, 3);
 										this.getTrackRouteCurves(0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, results, 3);
-									} 
+									}
 									else
 									{
 										this.getTrackRouteCurves(waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, results, 3);
@@ -320,7 +319,7 @@ namespace EmploymentTracker
 								}
 							}
 						}
-						else
+						/*else
 						{
 							if (i >= pathOwner.m_ElementIndex)
 							{
@@ -331,33 +330,14 @@ namespace EmploymentTracker
 							{
 								toRemove.Add(owner.m_Owner);
 							}
-						}				
+						}	*/	
 					}
 				}			
-			}			
-
-			if (EntityManager.HasBuffer<CarNavigationLane>(selected))
-			{
-				DynamicBuffer<CarNavigationLane> pathElements = EntityManager.GetBuffer<CarNavigationLane>(selected);
-				if (!pathElements.IsEmpty)
-				{					
-					foreach (CarNavigationLane element in pathElements)
-					{						
-						if (EntityManager.HasComponent<Curve>(element.m_Lane))
-						{
-							results.add(this.getCurveDef(element.m_Lane, element.m_CurvePosition));
-						}
-						else if (EntityManager.HasComponent<Owner>(element.m_Lane))
-						{
-							Owner owner = EntityManager.GetComponentData<Owner>(element.m_Lane);
-							toAdd.Add(owner.m_Owner);
-							toRemove.Remove(owner.m_Owner);
-						}
-					}
-				}
 			}
 
-			foreach (Entity entity in toRemove)
+			this.getRouteNavigationCurves(selected, results);
+
+			/*foreach (Entity entity in toRemove)
 			{
 				if (!this.highlightedEntities.Contains(entity))
 				{
@@ -375,7 +355,7 @@ namespace EmploymentTracker
 			foreach (Entity entity in this.highlightedPathEntities)
 			{
 				this.applyHighlight(entity, false);
-			}
+			}*/
 		}
 
 		private void getTrackRouteCurves(int startSegment, int endSegment, DynamicBuffer<RouteSegment> routeSegmentBuffer, CurveSet results, byte type = 3)
@@ -392,6 +372,25 @@ namespace EmploymentTracker
 							results.add(new CurveDef(curve.m_Bezier, type));
 						}
 					}
+				}
+			}
+		}
+
+		private void getRouteNavigationCurves(Entity entity, CurveSet results)
+		{
+			if (EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<CarNavigationLane> pathElements) && !pathElements.IsEmpty)
+			{
+				foreach (CarNavigationLane element in pathElements)
+				{
+					if (EntityManager.TryGetComponent(element.m_Lane, out Curve curve))
+					{
+						results.add(this.getCurveDef(element.m_Lane, curve, element.m_CurvePosition));
+					}
+					/*else if (EntityManager.TryGetComponent(element.m_Lane, out Owner owner))
+					{
+						toAdd.Add(owner.m_Owner);
+						toRemove.Remove(owner.m_Owner);
+					}*/
 				}
 			}
 		}
@@ -622,6 +621,26 @@ namespace EmploymentTracker
 			return new CurveDef(MathUtils.Cut(curve.m_Bezier, delta), type);
 		}
 
+		private CurveDef getCurveDef(Entity entity, Curve curve, float2 delta)
+		{
+			byte type = 1;
+			if (EntityManager.HasComponent<PedestrianLane>(entity))
+			{
+				type = 2;
+			}
+			else if (EntityManager.HasComponent<TrackLane>(entity))
+			{
+				type = 3;
+			}
+			else if (EntityManager.HasComponent<SecondaryLane>(entity))
+			{
+				type = 0;
+			}
+
+			return new CurveDef(MathUtils.Cut(curve.m_Bezier, delta), type);
+			//return new CurveDef(curve.m_Bezier, type);
+		}
+
 		public float getCurveWidth(byte type)
 		{
 			switch (type)
@@ -729,9 +748,9 @@ namespace EmploymentTracker
 			this.clearHighlight();
 			this.resetPathing();
 			this.selectedEntity = default(Entity);
-			if (this.commutingEntities.IsCreated)
+			//if (this.commutingEntities.IsCreated)
 			{
-				this.commutingEntities.Dispose();
+			//	this.commutingEntities.Dispose();
 			}
 		}
 

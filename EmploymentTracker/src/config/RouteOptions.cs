@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace EmploymentTracker
@@ -14,6 +15,7 @@ namespace EmploymentTracker
 		public UnityEngine.Color vehicleLineColor;
 		public UnityEngine.Color pedestrianLineColor;
 		public UnityEngine.Color subwayLineColor;
+		public float2 routeRoundness;
 
 		public RouteOptions(float vehicleLineWidth, float pedestrianLineWidth, Color vehicleLineColor, Color pedestrianLineColor, Color subwayLineColor)
 		{
@@ -22,6 +24,7 @@ namespace EmploymentTracker
 			this.vehicleLineColor = vehicleLineColor;
 			this.pedestrianLineColor = pedestrianLineColor;
 			this.subwayLineColor = subwayLineColor;
+			this.routeRoundness = new float2() { x = 1, y = 1 };
 		}
 
 		public RouteOptions(EmploymentTrackerSettings settings)
@@ -31,6 +34,7 @@ namespace EmploymentTracker
 			this.vehicleLineColor = new Color(.2f, 1f, .2f);
 			this.pedestrianLineColor = new Color(.2f, .5f, 1f);
 			this.subwayLineColor = new Color(1f, .5f, 1f);
+			this.routeRoundness = new float2() { x = 1, y = 1 };
 		}
 	}
 }

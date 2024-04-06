@@ -80,7 +80,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="src\systems\" />
+	  <Folder Include="src\pathing\" />
 	</ItemGroup>
 
 </Project>
