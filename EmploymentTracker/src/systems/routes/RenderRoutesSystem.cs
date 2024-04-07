@@ -1,43 +1,29 @@
-﻿using Colossal;
-using Colossal.Entities;
+﻿using Colossal.Entities;
 using Colossal.Logging;
-using Colossal.Mathematics;
 using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
-using Game.Companies;
 using Game.Creatures;
-using Game.Events;
 using Game.Net;
 using Game.Objects;
 using Game.Pathfind;
 using Game.Rendering;
 using Game.Routes;
 using Game.Tools;
-using Game.Tutorials;
 using Game.UI;
 using Game.Vehicles;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
-using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
-using static Colossal.IO.AssetDatabase.AtlasFrame;
-using static Colossal.Json.DiffUtility;
-using static EmploymentTracker.RenderRoutesSystem;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace EmploymentTracker
 {
@@ -66,6 +52,11 @@ namespace EmploymentTracker
 		private ValueBinding<int> undupedEntityCount;
 		private ValueBinding<int> uniqueSegmentCount;
 		private ValueBinding<int> totalSegmentCount;
+		private ValueBinding<string> routeTimeMs;
+
+		private ValueBinding<bool> incomingRoutes;
+		private ValueBinding<bool> incomingRoutesTransit;
+		private ValueBinding<bool> highlightSelected;
 
 		protected override void OnCreate()
         {
@@ -77,13 +68,39 @@ namespace EmploymentTracker
 
 			this.printFrameAction = new InputAction("shiftFrame", InputActionType.Button);
 			this.printFrameAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/g").With("Modifier", "<keyboard>/shift");
-			this.hasTargetQuery = GetEntityQuery(ComponentType.ReadOnly<Target>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Unspawned>());
+			//this.hasTargetQuery = GetEntityQuery(ComponentType.ReadOnly<Target>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Unspawned>());
+			this.hasTargetQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Target>()
+			},
+				Any = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Vehicle>(),
+				ComponentType.ReadOnly<Creature>(),
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<Building>(),
+				ComponentType.ReadOnly<Unspawned>()
+				}
+			});
 
 			//toggles
-
 			this.debugActiveBinding = new ValueBinding<bool>("EmploymentTracker", "DebugActive", false);
 			this.refreshTransitingEntitiesBinding = new ValueBinding<bool>("EmploymentTracker", "AutoRefreshTransitingEntitiesActive", false);
+			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", false);
 
+			//toggles
+			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
+			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleDebug", this.toggleDebug));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.highlightSelected.Update(s); }));
+
+
+			//options
 			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
 			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleDebug", this.toggleDebug));
 
@@ -99,6 +116,8 @@ namespace EmploymentTracker
 			AddBinding(this.totalSegmentCount);
 			this.undupedEntityCount = new ValueBinding<int>("EmploymentTracker", "UndupedEntityCount", 0);
 			AddBinding(this.undupedEntityCount);
+			this.routeTimeMs = new ValueBinding<string>("EmploymentTracker", "RouteTimeMs", "");
+			AddBinding(this.routeTimeMs);
 		}
 
 		protected override void OnStartRunning()
@@ -142,6 +161,9 @@ namespace EmploymentTracker
 
 		protected override void OnUpdate()
 		{
+			var clock = new Stopwatch();
+			clock.Start();
+
 			if (this.highlightFeatures.dirty)
 			{
 				this.reset();
@@ -149,6 +171,7 @@ namespace EmploymentTracker
 			}
 
 			if (!this.highlightFeatures.highlightAnything()) {
+				this.endFrame(clock);
 				return;
 			}
 
@@ -170,12 +193,14 @@ namespace EmploymentTracker
 				if (!this.toggled)
 				{
 					this.pathingToggled = true;
+				this.endFrame(clock);
 					return;
 				}
 			}
 
 			if (!this.toggled)
 			{
+				this.endFrame(clock);
 				return;
 			}
 
@@ -185,6 +210,7 @@ namespace EmploymentTracker
 				if (!this.pathingToggled)
 				{
 					this.reset();
+				this.endFrame(clock);
 					return;
 				}
 			}
@@ -197,6 +223,7 @@ namespace EmploymentTracker
 
 			if (this.selectedEntity == null || this.selectedEntity == default(Entity))
 			{
+				this.endFrame(clock);
 				return;
 			}
 
@@ -235,7 +262,12 @@ namespace EmploymentTracker
 								this.commutingEntities.Add(e);
 							}
 
-							//info("entity " + (count++) + " with target: " + e.ToString());
+							++count;
+							if (printFrame)
+							{
+								info("entity " + (count) + " with target: " + e.ToString());
+
+							}
 						}
 					}
 				}
@@ -305,17 +337,20 @@ namespace EmploymentTracker
 				var resultStream = new NativeStream(JobsUtility.MaxJobThreadCount, Allocator.TempJob);
 
 				calculateRoutesJob.results = resultStream.AsWriter();
-
+				var stopwatch = new Stopwatch();
+				stopwatch.Start();
 				JobHandle routeJob = calculateRoutesJob.ScheduleBatch(tmp.Length, routeBatchSize);
 
 				tmp.Dispose(routeJob);
 
 				routeJob.Complete();
+				stopwatch.Stop();
+				var elapsed_time = stopwatch.ElapsedMilliseconds;
 				//info("Is job completed: " + routeJob.IsCompleted);
 				//info("rs: " + resultStream.ForEachCount);
 				NativeStream.Reader resultReader = resultStream.AsReader();
 					
-
+				stopwatch.Restart();
 				NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
 
 				int totalCount = 0;
@@ -342,14 +377,19 @@ namespace EmploymentTracker
 					resultReader.EndForEachIndex();
 				}
 
+				stopwatch.Stop();
+				var streamReadTime = stopwatch.ElapsedMilliseconds;
 				if (this.debugActiveBinding.value)
 				{
 					this.totalSegmentCount.Update(totalCount);
 					this.uniqueSegmentCount.Update(resultCurves.Count);
+					//this.routeTimeMs.Update((int)elapsed_time);
+					this.bindings["Route Time (ms)"] = elapsed_time.ToString();
 				}
 
 				resultStream.Dispose();
 
+				stopwatch.Restart();
 				if (resultCurves.Count > 0)
 				{
 					NativeArray<CurveDef> curveArray = new NativeArray<CurveDef>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -364,11 +404,6 @@ namespace EmploymentTracker
 						++ind;
 					}
 
-					if (printFrame)
-					{
-						info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count);
-					}
-
 					RouteRenderJob job = new RouteRenderJob();
 					job.curveDefs = curveArray;
 					job.curveCounts = curveCount;
@@ -380,7 +415,22 @@ namespace EmploymentTracker
 					curveCount.Dispose(routeJobHandle);
 					this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
 
-					routeJobHandle.Complete();
+					//routeJobHandle.Complete();
+
+				}
+
+				stopwatch.Stop();
+				var renderTime = stopwatch.ElapsedMilliseconds;
+				if (printFrame)
+				{
+					info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count + " route time ms: " + elapsed_time + "; stream read time ms: " + streamReadTime + "; render time ms: " + renderTime);
+
+				}
+
+				if (this.debugActiveBinding.value)
+				{
+					this.bindings["Render Time (ms)"] = renderTime.ToString();
+					this.bindings["Stream Time (ms)"] = streamReadTime.ToString();
 				}
 
 				resultCurves.Dispose();
@@ -390,9 +440,10 @@ namespace EmploymentTracker
 				tmp.Dispose();
 			}
 			
+			this.endFrame(clock);
 		}
 
-        private Entity getSelected() 
+		private Entity getSelected() 
         {
 			ToolSystem toolSystem = World.GetExistingSystemManaged<ToolSystem>();
 			return toolSystem.selected;
@@ -434,6 +485,79 @@ namespace EmploymentTracker
 		private void toggleDebug(string active)
 		{
 			this.debugActiveBinding.Update("true".Equals(active));
+		}
+
+		private Dictionary<string, string> bindings = new Dictionary<string, string>();
+
+		private void updateBindings()
+		{
+			List<string> bindingList = new List<string>(this.bindings.Count);
+			foreach (var b in this.bindings)
+			{
+				bindingList.Add(b.Key + "," +  b.Value);
+			}
+
+			this.routeTimeMs.Update(string.Join(":", bindingList));
+		}
+
+		private void endFrame(Stopwatch startTime)
+		{
+			if (this.debugActiveBinding.value)
+			{
+				startTime.Stop();
+				this.bindings["Total Time (ms)"] = startTime.ElapsedMilliseconds.ToString();
+				this.updateBindings();
+			}
+		}
+
+		[BurstCompile]
+		public static void readRouteStream(NativeStream.Reader resultReader, out NativeArray<CurveDef> curveArray, out NativeArray<int> curveCount, out int totalCount)
+		{
+			NativeHashMap<CurveDef, int> curveMap = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
+
+			totalCount = 0;
+			for (int i = 0; i < resultReader.ForEachCount; ++i)
+			{
+				resultReader.BeginForEachIndex(i);
+				//info("Reader " + i + " remaining count: " + resultReader.RemainingItemCount + " rs count: " + resultStream.Count());
+				while (resultReader.RemainingItemCount > 0)
+				{
+					++totalCount;
+					CurveDef resultCurve = resultReader.Read<CurveDef>();
+					if (curveMap.ContainsKey(resultCurve))
+					{
+						++curveMap[resultCurve];
+					}
+					else
+					{
+						curveMap[resultCurve] = 1;
+					}
+
+					//resultCurves.Add(resultCurve);
+				}
+
+				resultReader.EndForEachIndex();
+			}
+
+			if (curveMap.Count > 0)
+			{
+				curveArray = new NativeArray<CurveDef>(curveMap.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+				curveCount = new NativeArray<int>(curveMap.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+				int ind = 0;
+				foreach (var curve in curveMap)
+				{
+					curveArray[ind] = curve.Key;
+					curveCount[ind] = curve.Value;
+
+					++ind;
+				}
+			} 
+			else
+			{
+				curveArray = default;
+				curveCount = default;
+			}
 		}
 	}
 }

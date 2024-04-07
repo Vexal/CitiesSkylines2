@@ -10,6 +10,11 @@ export const trackedEntityCountBinding = bindValue<number>("EmploymentTracker", 
 export const undupedEntityCountBinding = bindValue<number>("EmploymentTracker", 'UndupedEntityCount');
 export const totalSegmentCountBinding = bindValue<number>("EmploymentTracker", 'TotalSegmentCount');
 export const uniqueSegmentCountBinding = bindValue<number>("EmploymentTracker", 'UniqueSegmentCount');
+export const routeTimeBinding = bindValue<string>("EmploymentTracker", 'RouteTimeMs');
+
+
+export const highlightEnroute = bindValue<boolean>("EmploymentTracker", 'highlightEnroute');
+export const highlightSelectedRoute = bindValue<boolean>("EmploymentTracker", 'highlightSelectedRoute');
 
 export default class HighlightOptionsMenuButton extends Component {
 	state = {
@@ -20,6 +25,12 @@ export default class HighlightOptionsMenuButton extends Component {
 		undupedEntityCount: undupedEntityCountBinding.value,
 		uniqueSegmentCount: uniqueSegmentCountBinding.value,
 		totalSegmentCount: totalSegmentCountBinding.value,
+
+		highlightEnroute: highlightEnroute.value,
+		highlightSelectedRoute: highlightSelectedRoute.value,
+
+		/** @type {[string[]] */
+		routeTimeMs: HighlightOptionsMenuButton.parseBindings(routeTimeBinding.value),
 	}
 
 	render() {
@@ -33,40 +44,24 @@ export default class HighlightOptionsMenuButton extends Component {
 			{this.state.menuOpen && <div>
 				<Panel>
 					<PanelSection>
-						<PanelSectionRow  />
-						<div style={{ display: "flex" }}>
-							<div style={{ padding: "5rem" }}>
-								Auto-refresh entity selection
-							</div>
-							<div style={{ flex: "1", padding:"5rem" }} />
-							<div style={{paddingRight:"20rem"} }>
-								<Button selected={this.state.autoRefreshTransitingEntities} variant="flat" onSelect={() => {
-									trigger("EmploymentTracker", "toggleAutoRefresh", this.state.autoRefreshTransitingEntities ? "false" : "true");
-								}}>
-									<div style={{padding:"5rem"} }>{this.state.autoRefreshTransitingEntities ? "On" : "Off"}</div>
-								</Button>
-							</div>
-						</div>
+						<PanelSectionRow />
+						<div>Route Highlight Options</div>
+						<OptionToggle value={this.state.highlightEnroute} name={"highlightEnroute"} />
+						<OptionToggle value={this.state.highlightSelectedRoute} name={"highlightSelectedRoute"} />
 
-						<div style={{ display: "flex" }}>
-							<div style={{ padding: "5rem" }}>
-								Show Stats
-							</div>
-							<div style={{ flex: "1", padding:"5rem" }} />
-							<div style={{paddingRight:"20rem"} }>
-								<Button selected={this.state.showStats} variant="flat" onSelect={() => {
-									trigger("EmploymentTracker", "toggleDebug", this.state.showStats ? "false" : "true");
-								}}>
-									<div style={{ padding: "5rem" }}>{this.state.showStats ? "On" : "Off"}</div>
-								</Button>
-							</div>
-						</div>
-					
+						<PanelSectionRow />
+						<OptionToggle value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"} />
+
+						<PanelSectionRow />
+						<OptionToggle value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"}/>
+						<OptionToggle value={this.state.showStats} name={"toggleDebug"}/>
+						
+
 						<PanelSectionRow />
 						{this.state.showStats && <div>
 							<div style={{ display: "flex" }}>
 								<div style={{ padding: "5rem" }}>
-									In-transit count
+									En-route count
 								</div>
 								<div style={{ flex: "1", padding: "5rem" }} />
 								<div style={{ paddingRight: "20rem" }}>
@@ -100,6 +95,15 @@ export default class HighlightOptionsMenuButton extends Component {
 									{this.state.totalSegmentCount}
 								</div>
 							</div>
+							{this.state.routeTimeMs.map(kv => <div style={{ display: "flex" }}>
+								<div style={{ padding: "5rem" }}>
+									{kv[0]}
+								</div>
+								<div style={{ flex: "1", padding: "5rem" }} />
+								<div style={{ paddingRight: "20rem" }}>
+									{kv[1]}
+								</div>
+							</div>)}
 						</div>}
 					</PanelSection>
 				</Panel>
@@ -131,5 +135,51 @@ export default class HighlightOptionsMenuButton extends Component {
 		undupedEntityCountBinding.subscribe(val => {
 			this.setState({ undupedEntityCount: val });
 		})
+
+		highlightSelectedRoute.subscribe(val => {
+			this.setState({ highlightSelectedRoute: val });
+		})
+
+		highlightEnroute.subscribe(val => {
+			this.setState({ highlightEnroute: val });
+		})
+
+		routeTimeBinding.subscribe(val => {
+			this.setState({ routeTimeMs: HighlightOptionsMenuButton.parseBindings(val) });
+		})
+	}
+
+	static parseBindings(stringList: string) {
+		const results = stringList.split(":");
+
+		return results.map(kv => kv.split(","));
+	}
+}
+
+interface IProps {
+	value: boolean,
+	name: string
+}
+
+class OptionToggle extends Component<IProps> {
+	/*static propTypes = {
+		value: PropTypes.bool.isRequired,
+		name: PropTypes.string.isRequired
+	}*/
+
+	render() {
+		return <div style={{ display: "flex" }}>
+			<div style={{ padding: "5rem" }}>
+				Auto-refresh entity selection
+			</div>
+			<div style={{ flex: "1", padding: "5rem" }} />
+			<div style={{ paddingRight: "20rem" }}>
+				<Button selected={this.props.value} variant="flat" onSelect={() => {
+					trigger("EmploymentTracker", this.props.name, this.props.value ? "false" : "true");
+				}}>
+					<div style={{ padding: "5rem" }}>{this.props.value ? "On" : "Off"}</div>
+				</Button>
+			</div>
+		</div>
 	}
 }

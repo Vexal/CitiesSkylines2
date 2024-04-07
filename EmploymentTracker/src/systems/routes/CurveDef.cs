@@ -7,11 +7,20 @@ namespace EmploymentTracker
 	{
 		public Bezier4x3 curve;
 		public byte type;
+		public int hashCode;
 
 		public CurveDef(Bezier4x3 curve, byte type)
 		{
 			this.curve = curve;
 			this.type = type;
+
+			int precomputedHashCode = 435695894;
+			precomputedHashCode = precomputedHashCode * -1521134295 + curve.a.GetHashCode();
+			precomputedHashCode = precomputedHashCode * -1521134295 + curve.b.GetHashCode();
+			precomputedHashCode = precomputedHashCode * -1521134295 + curve.c.GetHashCode();
+			precomputedHashCode = precomputedHashCode * -1521134295 + curve.d.GetHashCode();
+
+			this.hashCode = precomputedHashCode;
 		}
 
 		public override bool Equals(object obj)
@@ -28,7 +37,7 @@ namespace EmploymentTracker
 
 		public override int GetHashCode()
 		{
-			return this.curve.GetHashCode();
+			return this.hashCode;
 		}
 	}   
 }

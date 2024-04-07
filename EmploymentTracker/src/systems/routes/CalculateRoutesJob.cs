@@ -6,17 +6,16 @@ using Game.Net;
 using Game.Pathfind;
 using Game.Routes;
 using Game.Vehicles;
-using System.Security.Cryptography;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Mathematics;
-using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace EmploymentTracker
 {
+	[BurstCompile]
 	public struct CalculateRoutesJob : IJobParallelForBatch
 	{
 		[ReadOnly]
@@ -210,4 +209,5 @@ namespace EmploymentTracker
 			results.Write<CurveDef>(curveDef);
 		}
 	}
+
 }
