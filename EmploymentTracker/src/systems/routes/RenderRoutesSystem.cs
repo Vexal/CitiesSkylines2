@@ -2,6 +2,7 @@
 using Colossal.Entities;
 using Colossal.Logging;
 using Colossal.Mathematics;
+using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
@@ -10,11 +11,13 @@ using Game.Companies;
 using Game.Creatures;
 using Game.Events;
 using Game.Net;
+using Game.Objects;
 using Game.Pathfind;
 using Game.Rendering;
 using Game.Routes;
 using Game.Tools;
 using Game.Tutorials;
+using Game.UI;
 using Game.Vehicles;
 using System.Collections;
 using System.Collections.Generic;
@@ -31,12 +34,14 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using static Colossal.IO.AssetDatabase.AtlasFrame;
 using static Colossal.Json.DiffUtility;
 using static EmploymentTracker.RenderRoutesSystem;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EmploymentTracker
 {
-	internal partial class RenderRoutesSystem : GameSystemBase
+	internal partial class RenderRoutesSystem : UISystemBase
     {
         public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
 
@@ -44,7 +49,6 @@ namespace EmploymentTracker
         private InputAction toggleSystemAction;
         private InputAction togglePathDisplayAction;
         private InputAction printFrameAction;
-        private InputAction addMapAction;
 		private OverlayRenderSystem overlayRenderSystem;
         ToolSystem toolSystem;
 		EmploymentTrackerSettings settings;
@@ -53,6 +57,16 @@ namespace EmploymentTracker
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
+
+
+		private ValueBinding<bool> debugActiveBinding;
+		private ValueBinding<bool> refreshTransitingEntitiesBinding;
+
+		private ValueBinding<int> trackedEntityCount;
+		private ValueBinding<int> undupedEntityCount;
+		private ValueBinding<int> uniqueSegmentCount;
+		private ValueBinding<int> totalSegmentCount;
+
 		protected override void OnCreate()
         {
             base.OnCreate();
@@ -63,10 +77,28 @@ namespace EmploymentTracker
 
 			this.printFrameAction = new InputAction("shiftFrame", InputActionType.Button);
 			this.printFrameAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/g").With("Modifier", "<keyboard>/shift");
-			this.addMapAction = new InputAction("shifMap", InputActionType.Button);
-			this.addMapAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/m").With("Modifier", "<keyboard>/shift");
-			this.hasTargetQuery = GetEntityQuery(ComponentType.ReadOnly<Target>());
+			this.hasTargetQuery = GetEntityQuery(ComponentType.ReadOnly<Target>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Unspawned>());
 
+			//toggles
+
+			this.debugActiveBinding = new ValueBinding<bool>("EmploymentTracker", "DebugActive", false);
+			this.refreshTransitingEntitiesBinding = new ValueBinding<bool>("EmploymentTracker", "AutoRefreshTransitingEntitiesActive", false);
+
+			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
+			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleDebug", this.toggleDebug));
+
+			AddBinding(this.debugActiveBinding);
+			AddBinding(this.refreshTransitingEntitiesBinding);
+
+			//stats
+			this.trackedEntityCount = new ValueBinding<int>("EmploymentTracker", "TrackedEntityCount", 0);
+			AddBinding(this.trackedEntityCount);
+			this.uniqueSegmentCount = new ValueBinding<int>("EmploymentTracker", "UniqueSegmentCount", 0);
+			AddBinding(this.uniqueSegmentCount);
+			this.totalSegmentCount = new ValueBinding<int>("EmploymentTracker", "TotalSegmentCount", 0);
+			AddBinding(this.totalSegmentCount);
+			this.undupedEntityCount = new ValueBinding<int>("EmploymentTracker", "UndupedEntityCount", 0);
+			AddBinding(this.undupedEntityCount);
 		}
 
 		protected override void OnStartRunning()
@@ -75,7 +107,6 @@ namespace EmploymentTracker
             this.toggleSystemAction.Enable();
 			this.togglePathDisplayAction.Enable();
 			this.printFrameAction.Enable();
-			this.addMapAction.Enable();
 			this.overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
 			this.settings = Mod.INSTANCE.getSettings();
 
@@ -100,13 +131,12 @@ namespace EmploymentTracker
             this.toggleSystemAction.Disable();
             this.togglePathDisplayAction.Disable();
             this.printFrameAction.Disable();
-            this.addMapAction.Disable();
 			this.reset();
 		}
 
 		private bool toggled = true;
 		private bool pathingToggled = true;
-		private NativeList<Entity> commutingEntities;
+		private NativeHashSet<Entity> commutingEntities;
 
 		long frameCount = 0;
 
@@ -171,152 +201,195 @@ namespace EmploymentTracker
 			}
 
 			//only need to update building/target highlights when selection changes
-			if (updatedSelection) // || (++this.frameCount % 64 == 0))
+			if ((updatedSelection || (this.refreshTransitingEntitiesBinding.value && (++this.frameCount % 64 == 0))) &&
+				!EntityManager.HasComponent<Vehicle>(this.selectedEntity) &&!EntityManager.HasComponent<Creature>(this.selectedEntity))
 			{	
 				if (this.commutingEntities.IsCreated)
 				{
+					this.commutingEntities.Clear();
 					this.commutingEntities.Dispose();
 				}
 
-				var tmp = this.hasTargetQuery.ToEntityArray(Allocator.Temp);
-				if (tmp.Length > 0)
-				{
-					this.commutingEntities = new NativeList<Entity>(Allocator.Persistent);
+				var entitiesWithTargets = this.hasTargetQuery.ToEntityArray(Allocator.Temp);
 
-					foreach (var e in tmp)
+				this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
+
+				int count = 0;
+				//info("Starting selection");
+				foreach (var e in entitiesWithTargets)
+				{
+					if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
 					{
-						if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
+						if (target.m_Target == this.selectedEntity)
 						{
-							if (target.m_Target == this.selectedEntity)
+							if (EntityManager.TryGetComponent(e, out CurrentVehicle vehicle))
 							{
-								this.commutingEntities.Add(e);
+								this.commutingEntities.Add(vehicle.m_Vehicle);
 							}
-						}
-					}
-				}
-			}
-
-			if (this.pathingToggled)
-			{
-				NativeList<Entity> tmp = new NativeList<Entity>(Allocator.TempJob);
-				tmp.Add(this.selectedEntity);
-
-				if (this.commutingEntities.IsCreated)
-				{
-
-					foreach (Entity e in this.commutingEntities)
-					{
-						if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
-						{
-							if (target.m_Target == this.selectedEntity)
+							else if (EntityManager.TryGetComponent(e, out CurrentTransport currentTransport))
 							{
-								tmp.Add(e);
-							}
-						}
-					}
-				}
-
-				if (tmp.Length > 0)
-				{
-					if (printFrame)
-					{
-						info("Printing frame: commuter count: " + tmp.Length);
-					}
-
-					CalculateRoutesJob calculateRoutesJob = new CalculateRoutesJob();
-					calculateRoutesJob.input = tmp;
-					calculateRoutesJob.pathOnwerLookup = GetComponentLookup<PathOwner>(true);
-					calculateRoutesJob.curveLookup = GetComponentLookup<Curve>(true);
-					calculateRoutesJob.ownerLookup = GetComponentLookup<Owner>(true);
-					calculateRoutesJob.routeLaneLookup = GetComponentLookup<RouteLane>(true);
-					calculateRoutesJob.waypointLookup = GetComponentLookup<Waypoint>(true);
-					calculateRoutesJob.pedestrianLaneLookup = GetComponentLookup<PedestrianLane>(true);
-					calculateRoutesJob.trackLaneLookup = GetComponentLookup<TrackLane>(true);
-					calculateRoutesJob.secondaryLaneLookup = GetComponentLookup<SecondaryLane>(true);
-					calculateRoutesJob.currentTransportLookup = GetComponentLookup<CurrentTransport>(true);
-					calculateRoutesJob.currentVehicleLookup = GetComponentLookup<CurrentVehicle>(true);
-					calculateRoutesJob.pathElementLookup = GetBufferLookup<PathElement>(true);
-					calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
-					calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
-
-					var resultStream = new NativeStream(JobsUtility.MaxJobThreadCount, Allocator.TempJob);
-
-					calculateRoutesJob.results = resultStream.AsWriter();
-
-					JobHandle routeJob = calculateRoutesJob.Schedule(tmp.Length, 16);
-
-					tmp.Dispose(routeJob);
-
-					routeJob.Complete();
-					NativeStream.Reader resultReader = resultStream.AsReader();
-					//NativeList<CurveDef> resultCurves = new NativeList<CurveDef>(Allocator.TempJob);
-					
-
-					NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
-
-					int totalCount = 0;
-					for (int i = 0; i < resultReader.ForEachCount; ++i)
-					{
-						resultReader.BeginForEachIndex(i);
-						while (resultReader.RemainingItemCount > 0)
-						{
-							++totalCount;
-							CurveDef resultCurve = resultReader.Read<CurveDef>();
-							if (resultCurves.ContainsKey(resultCurve))
-							{
-								++resultCurves[resultCurve];
+								this.commutingEntities.Add(currentTransport.m_CurrentTransport);
 							}
 							else
 							{
-								resultCurves[resultCurve] = 1;
+								this.commutingEntities.Add(e);
 							}
 
-							//resultCurves.Add(resultCurve);
+							//info("entity " + (count++) + " with target: " + e.ToString());
 						}
-
-						resultReader.EndForEachIndex();
 					}
-
-					resultStream.Dispose();
-
-					if (resultCurves.Count > 0)
-					{
-						NativeArray<CurveDef> curveArray = new NativeArray<CurveDef>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-						NativeArray<int> curveCount = new NativeArray<int>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
-						int ind = 0;
-						foreach (var curve in resultCurves)
-						{
-							curveArray[ind] = curve.Key;
-							curveCount[ind] = curve.Value;
-
-							++ind;
-						}
-
-						if (printFrame)
-						{
-							info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count);
-						}
-
-						RouteRenderJob job = new RouteRenderJob();
-						job.curveDefs = curveArray;
-						job.curveCounts = curveCount;
-						job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-						job.routeHighlightOptions = this.routeHighlightOptions;
-						JobHandle routeJobHandle = job.Schedule(dependencies);
-
-						curveArray.Dispose(routeJobHandle);
-						curveCount.Dispose(routeJobHandle);
-						this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
-					}
-
-					resultCurves.Dispose();
 				}
-				else
+
+				entitiesWithTargets.Dispose();
+
+				if (this.debugActiveBinding.value)
 				{
-					tmp.Dispose();
+					this.undupedEntityCount.Update(count);
 				}
 			}
+
+			NativeList<Entity> tmp = new NativeList<Entity>(Allocator.TempJob);
+
+			if (this.commutingEntities.IsCreated)
+			{
+				foreach (Entity e in this.commutingEntities)
+				{
+					if (this.isValidEntity(e) && EntityManager.TryGetComponent(e, out Target target))
+					{
+						if (target.m_Target == this.selectedEntity)
+						{
+							tmp.Add(e);
+						}
+					}
+				}
+			}
+
+			if (!EntityManager.HasComponent<Building>(this.selectedEntity))
+			{
+				tmp.Add(this.selectedEntity);
+			}
+
+
+			if (this.debugActiveBinding.value)
+			{
+				this.trackedEntityCount.Update(tmp.Length);
+			}
+
+			if (tmp.Length > 0)
+			{
+				if (printFrame)
+				{
+					info("Printing frame: commuter count: " + tmp.Length);
+				}
+
+				CalculateRoutesJob calculateRoutesJob = new CalculateRoutesJob();
+				calculateRoutesJob.input = tmp;
+				calculateRoutesJob.pathOnwerLookup = GetComponentLookup<PathOwner>(true);
+				calculateRoutesJob.curveLookup = GetComponentLookup<Curve>(true);
+				calculateRoutesJob.ownerLookup = GetComponentLookup<Owner>(true);
+				calculateRoutesJob.routeLaneLookup = GetComponentLookup<RouteLane>(true);
+				calculateRoutesJob.waypointLookup = GetComponentLookup<Waypoint>(true);
+				calculateRoutesJob.pedestrianLaneLookup = GetComponentLookup<PedestrianLane>(true);
+				calculateRoutesJob.trackLaneLookup = GetComponentLookup<TrackLane>(true);
+				calculateRoutesJob.secondaryLaneLookup = GetComponentLookup<SecondaryLane>(true);
+				calculateRoutesJob.currentTransportLookup = GetComponentLookup<CurrentTransport>(true);
+				calculateRoutesJob.currentVehicleLookup = GetComponentLookup<CurrentVehicle>(true);
+				calculateRoutesJob.pathElementLookup = GetBufferLookup<PathElement>(true);
+				calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
+				calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
+
+				int routeBatchSize = 16;
+
+				calculateRoutesJob.batchSize = routeBatchSize;
+
+				var resultStream = new NativeStream(JobsUtility.MaxJobThreadCount, Allocator.TempJob);
+
+				calculateRoutesJob.results = resultStream.AsWriter();
+
+				JobHandle routeJob = calculateRoutesJob.ScheduleBatch(tmp.Length, routeBatchSize);
+
+				tmp.Dispose(routeJob);
+
+				routeJob.Complete();
+				//info("Is job completed: " + routeJob.IsCompleted);
+				//info("rs: " + resultStream.ForEachCount);
+				NativeStream.Reader resultReader = resultStream.AsReader();
+					
+
+				NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
+
+				int totalCount = 0;
+				for (int i = 0; i < resultReader.ForEachCount; ++i)
+				{
+					resultReader.BeginForEachIndex(i);
+					//info("Reader " + i + " remaining count: " + resultReader.RemainingItemCount + " rs count: " + resultStream.Count());
+					while (resultReader.RemainingItemCount > 0)
+					{
+						++totalCount;
+						CurveDef resultCurve = resultReader.Read<CurveDef>();
+						if (resultCurves.ContainsKey(resultCurve))
+						{
+							++resultCurves[resultCurve];
+						}
+						else
+						{
+							resultCurves[resultCurve] = 1;
+						}
+
+						//resultCurves.Add(resultCurve);
+					}
+
+					resultReader.EndForEachIndex();
+				}
+
+				if (this.debugActiveBinding.value)
+				{
+					this.totalSegmentCount.Update(totalCount);
+					this.uniqueSegmentCount.Update(resultCurves.Count);
+				}
+
+				resultStream.Dispose();
+
+				if (resultCurves.Count > 0)
+				{
+					NativeArray<CurveDef> curveArray = new NativeArray<CurveDef>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+					NativeArray<int> curveCount = new NativeArray<int>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+					int ind = 0;
+					foreach (var curve in resultCurves)
+					{
+						curveArray[ind] = curve.Key;
+						curveCount[ind] = curve.Value;
+
+						++ind;
+					}
+
+					if (printFrame)
+					{
+						info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count);
+					}
+
+					RouteRenderJob job = new RouteRenderJob();
+					job.curveDefs = curveArray;
+					job.curveCounts = curveCount;
+					job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+					job.routeHighlightOptions = this.routeHighlightOptions;
+					JobHandle routeJobHandle = job.Schedule(dependencies);
+
+					curveArray.Dispose(routeJobHandle);
+					curveCount.Dispose(routeJobHandle);
+					this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
+
+					routeJobHandle.Complete();
+				}
+
+				resultCurves.Dispose();
+			}
+			else
+			{
+				tmp.Dispose();
+			}
+			
 		}
 
         private Entity getSelected() 
@@ -338,13 +411,29 @@ namespace EmploymentTracker
 			}
 		}
 
+		private bool isValidEntity(Entity e)
+		{
+			return EntityManager.Exists(e) && !EntityManager.HasComponent<Deleted>(e) && !EntityManager.HasComponent<Temp>(e);
+		}
+
 		private void reset()
 		{
 			this.selectedEntity = default(Entity);
 			if (this.commutingEntities.IsCreated)
-			{
+			{ 
 				this.commutingEntities.Dispose();
 			}
+		}
+
+		private void toggleAutoRefresh(string active) 
+		{
+			info("Toggling autorefresh: " + active); 
+			this.refreshTransitingEntitiesBinding.Update("true".Equals(active));  
+		}
+
+		private void toggleDebug(string active)
+		{
+			this.debugActiveBinding.Update("true".Equals(active));
 		}
 	}
 }

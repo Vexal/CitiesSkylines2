@@ -6,15 +6,18 @@ using Game.Net;
 using Game.Pathfind;
 using Game.Routes;
 using Game.Vehicles;
+using System.Security.Cryptography;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Mathematics;
+using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace EmploymentTracker
 {
-	public struct CalculateRoutesJob : IJobParallelFor
+	public struct CalculateRoutesJob : IJobParallelForBatch
 	{
 		[ReadOnly]
 		public NativeList<Entity> input;
@@ -44,35 +47,44 @@ namespace EmploymentTracker
 		public BufferLookup<RouteSegment> routeSegmentLookup;
 		[ReadOnly]
 		public BufferLookup<CarNavigationLane> carNavigationLaneSegmentLookup;
+		[ReadOnly]
+		public int batchSize;
 
 		[NativeSetThreadIndex]
 		int threadId;
 
+		[NativeDisableParallelForRestriction]
 		public NativeStream.Writer results;
 
-		public void Execute(int index)
+		public void Execute(int start, int count)
 		{
-			results.BeginForEachIndex(this.threadId);
-			Entity entity = this.input[index];
+			int batchIndex = start / batchSize;
 
-			this.writeEntityRoute(entity);
+			results.BeginForEachIndex(batchIndex);
+
+			for (int i = start; i < start + count; ++i)
+			{
+				Entity entity = this.input[i];
+				int writeCount = this.writeEntityRoute(entity);
+				//Mod.log.Info("Entity " + i + ": " + entity.ToString() + " write count: " + writeCount + " thread id: " + this.threadId + " batch index: " + batchIndex);
+			}
 
 			results.EndForEachIndex();
 		}
 
-		private void writeEntityRoute(Entity entity)
+		private int writeEntityRoute(Entity entity)
 		{
 			//Highlight the path of a selected citizen inside a vehicle
-			if (this.currentVehicleLookup.TryGetComponent(entity, out CurrentVehicle vehicle))
+			/*if (this.currentVehicleLookup.TryGetComponent(entity, out CurrentVehicle vehicle))
 			{
-				this.writeEntityRoute(vehicle.m_Vehicle);
-				return;
+				return this.writeEntityRoute(vehicle.m_Vehicle);
 			}
 			else if (this.currentTransportLookup.TryGetComponent(entity, out CurrentTransport currentTransport))
 			{
-				this.writeEntityRoute(currentTransport.m_CurrentTransport);
-				return;
-			}
+				return this.writeEntityRoute(currentTransport.m_CurrentTransport);
+			}*/
+
+			int writeCount = 0;
 
 			if (this.pathOnwerLookup.TryGetComponent(entity, out PathOwner pathOwner))
 			{
@@ -85,7 +97,9 @@ namespace EmploymentTracker
 						PathElement element = pathElements[i];
 						if (this.curveLookup.TryGetComponent(element.m_Target, out Curve curve))
 						{
-							results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta));
+							this.writeResult(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta), element.m_Target);
+							++writeCount;
+							//results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta));
 
 						}
 						else if (this.ownerLookup.TryGetComponent(element.m_Target, out Owner owner))
@@ -103,12 +117,12 @@ namespace EmploymentTracker
 
 										if (wrapAround)
 										{
-											this.getTrackRouteCurves(waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, 3);
-											this.getTrackRouteCurves(0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
+											writeCount += this.getTrackRouteCurves(waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, 3);
+											writeCount += this.getTrackRouteCurves(0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
 										}
 										else
 										{
-											this.getTrackRouteCurves(waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
+											writeCount += this.getTrackRouteCurves(waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
 										}
 									}
 								}
@@ -118,11 +132,13 @@ namespace EmploymentTracker
 				}
 			}
 
-			this.getRouteNavigationCurves(entity);
+			writeCount += this.getRouteNavigationCurves(entity);
+			return writeCount;
 		}
 
-		private void getTrackRouteCurves(int startSegment, int endSegment, DynamicBuffer<RouteSegment> routeSegmentBuffer, byte type = 3)
+		private int getTrackRouteCurves(int startSegment, int endSegment, DynamicBuffer<RouteSegment> routeSegmentBuffer, byte type = 3)
 		{
+			int writeCount = 0;
 			for (int trackInd = startSegment; trackInd < endSegment; trackInd++)
 			{
 				RouteSegment routeSegment = routeSegmentBuffer[trackInd];
@@ -132,25 +148,34 @@ namespace EmploymentTracker
 					{						
 						if (this.curveLookup.TryGetComponent(trackCurves[i].m_Target, out Curve curve))
 						{
-							results.Write(new CurveDef(curve.m_Bezier, type));
-						}					
+							//results.Write(new CurveDef(curve.m_Bezier, type));
+							this.writeResult(new CurveDef(curve.m_Bezier, type));
+							++writeCount;
+						}
 					}
 				}
 			}
+
+			return writeCount;
 		}
 
-		private void getRouteNavigationCurves(Entity entity)
+		private int getRouteNavigationCurves(Entity entity)
 		{
+			int writeCount = 0;
 			if (this.carNavigationLaneSegmentLookup.TryGetBuffer(entity, out DynamicBuffer<CarNavigationLane> pathElements) && !pathElements.IsEmpty)
 			{
 				for (int i = 0; i < pathElements.Length; i++)
 				{
 					if (this.curveLookup.TryGetComponent(pathElements[i].m_Lane, out Curve curve))
 					{
-						results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
+						++writeCount;
+						this.writeResult(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
+						//results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
 					}
 				}
 			}
+
+			return writeCount;
 		}
 
 		private CurveDef getCurveDef(Entity entity, Bezier4x3 curve, float2 delta)
@@ -177,6 +202,12 @@ namespace EmploymentTracker
 			{
 				//return new CurveDef(curve, type);
 			}
+		}
+
+		private void writeResult(CurveDef curveDef, Entity e=default(Entity))
+		{
+			//Mod.log.Info("Writing " + curveDef.GetType() + " thread id: " + this.threadId + " (entity: " + e.ToString() + ")");
+			results.Write<CurveDef>(curveDef);
 		}
 	}
 }
