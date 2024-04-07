@@ -36,8 +36,8 @@ namespace EmploymentTracker
         private InputAction togglePathDisplayAction;
         private InputAction printFrameAction;
 		private OverlayRenderSystem overlayRenderSystem;
-        ToolSystem toolSystem;
-		EmploymentTrackerSettings settings;
+        private ToolSystem toolSystem;
+		private EmploymentTrackerSettings settings;
 		private EntityQuery pathUpdatedQuery;
 		private EntityQuery hasTargetQuery;
 
@@ -57,6 +57,7 @@ namespace EmploymentTracker
 		private ValueBinding<bool> incomingRoutes;
 		private ValueBinding<bool> incomingRoutesTransit;
 		private ValueBinding<bool> highlightSelected;
+		private ValueBinding<bool> highlightPassengerRoutes;
 
 		protected override void OnCreate()
         {
@@ -89,20 +90,32 @@ namespace EmploymentTracker
 				}
 			});
 
-			//toggles
-			this.debugActiveBinding = new ValueBinding<bool>("EmploymentTracker", "DebugActive", false);
-			this.refreshTransitingEntitiesBinding = new ValueBinding<bool>("EmploymentTracker", "AutoRefreshTransitingEntitiesActive", false);
-			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", false);
+			this.settings = Mod.INSTANCE.getSettings();
+
+			//route toggles
+			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
+			this.highlightSelected = new ValueBinding<bool>("EmploymentTracker", "highlightSelectedRoute", this.settings.highlightSelected);
+			this.incomingRoutesTransit = new ValueBinding<bool>("EmploymentTracker", "highlightEnrouteTransit", this.settings.incomingRoutesTransit);
+			this.highlightPassengerRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerRoutes", this.settings.highlightSelectedTransitVehiclePassengerRoutes);
+			AddBinding(this.incomingRoutes);
+			AddBinding(this.highlightSelected);
+			AddBinding(this.incomingRoutesTransit);
+			AddBinding(this.highlightPassengerRoutes);
 
 			//toggles
-			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
-			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleDebug", this.toggleDebug));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.highlightSelected.Update(s); }));
+
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); }));
 
 
 			//options
 			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
 			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleDebug", this.toggleDebug));
+
+			this.debugActiveBinding = new ValueBinding<bool>("EmploymentTracker", "DebugActive", false);
+			this.refreshTransitingEntitiesBinding = new ValueBinding<bool>("EmploymentTracker", "AutoRefreshTransitingEntitiesActive", true);
 
 			AddBinding(this.debugActiveBinding);
 			AddBinding(this.refreshTransitingEntitiesBinding);
@@ -127,7 +140,6 @@ namespace EmploymentTracker
 			this.togglePathDisplayAction.Enable();
 			this.printFrameAction.Enable();
 			this.overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
-			this.settings = Mod.INSTANCE.getSettings();
 
 			this.highlightFeatures = new HighlightFeatures(settings);
 			this.routeHighlightOptions = new RouteOptions(settings);
@@ -296,7 +308,7 @@ namespace EmploymentTracker
 				}
 			}
 
-			if (!EntityManager.HasComponent<Building>(this.selectedEntity))
+			if (this.routeHighlightOptions.highlightSelected && !EntityManager.HasComponent<Building>(this.selectedEntity))
 			{
 				tmp.Add(this.selectedEntity);
 			}

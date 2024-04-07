@@ -15,6 +15,8 @@ export const routeTimeBinding = bindValue<string>("EmploymentTracker", 'RouteTim
 
 export const highlightEnroute = bindValue<boolean>("EmploymentTracker", 'highlightEnroute');
 export const highlightSelectedRoute = bindValue<boolean>("EmploymentTracker", 'highlightSelectedRoute');
+export const highlightEnrouteTransit = bindValue<boolean>("EmploymentTracker", 'highlightEnrouteTransit');
+export const highlightPassengerRoutes = bindValue<boolean>("EmploymentTracker", 'highlightPassengerRoutes');
 
 export default class HighlightOptionsMenuButton extends Component {
 	state = {
@@ -28,6 +30,8 @@ export default class HighlightOptionsMenuButton extends Component {
 
 		highlightEnroute: highlightEnroute.value,
 		highlightSelectedRoute: highlightSelectedRoute.value,
+		highlightEnrouteTransit: highlightEnrouteTransit.value,
+		highlightPassengerRoutes: highlightPassengerRoutes.value,
 
 		/** @type {[string[]] */
 		routeTimeMs: HighlightOptionsMenuButton.parseBindings(routeTimeBinding.value),
@@ -46,15 +50,17 @@ export default class HighlightOptionsMenuButton extends Component {
 					<PanelSection>
 						<PanelSectionRow />
 						<div>Route Highlight Options</div>
-						<OptionToggle value={this.state.highlightEnroute} name={"highlightEnroute"} />
-						<OptionToggle value={this.state.highlightSelectedRoute} name={"highlightSelectedRoute"} />
+						<OptionToggle text="Selected Object Route" value={this.state.highlightSelectedRoute} name={"toggleHighlightSelectedRoute"} />
+						<OptionToggle text="Incoming Routes" value={this.state.highlightEnroute} name={"toggleHighlightEnroute"} />
+						<OptionToggle text="Incoming Routes (Transit)" value={this.state.highlightEnrouteTransit} name={"toggleHighlightEnrouteTransit"} />
+						<OptionToggle text="Transit Passenger Routes" value={this.state.highlightPassengerRoutes} name={"toggleHighlightPassengerRoutes"} />
 
 						<PanelSectionRow />
-						<OptionToggle value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"} />
+						<div>Other Options</div>
 
 						<PanelSectionRow />
-						<OptionToggle value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"}/>
-						<OptionToggle value={this.state.showStats} name={"toggleDebug"}/>
+						<OptionToggle text="Auto-refresh Selected" value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"}/>
+						<OptionToggle text="Show Stats" value={this.state.showStats} name={"toggleDebug"}/>
 						
 
 						<PanelSectionRow />
@@ -158,7 +164,8 @@ export default class HighlightOptionsMenuButton extends Component {
 
 interface IProps {
 	value: boolean,
-	name: string
+	name: string,
+	text: string
 }
 
 class OptionToggle extends Component<IProps> {
@@ -170,7 +177,7 @@ class OptionToggle extends Component<IProps> {
 	render() {
 		return <div style={{ display: "flex" }}>
 			<div style={{ padding: "5rem" }}>
-				Auto-refresh entity selection
+				{this.props.text}
 			</div>
 			<div style={{ flex: "1", padding: "5rem" }} />
 			<div style={{ paddingRight: "20rem" }}>

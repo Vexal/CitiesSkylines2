@@ -29,7 +29,7 @@
 			this.employeeCommuters = settings.highlightEmployeeCommuters;
 			this.destinations = settings.highlightDestinations;
 			this.workplaces = settings.highlightWorkplaces;
-			this.routes = settings.highlightRoutes;
+			this.routes = settings.highlightSelected;
 			this.dirty = false;
 		}
 

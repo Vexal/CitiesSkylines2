@@ -18,14 +18,15 @@ namespace EmploymentTracker
         {
 			INSTANCE = this;
             log.Info(nameof(OnLoad) + " employment test");
-			updateSystem.UpdateBefore<HighlightEmployeesSystem>(SystemUpdatePhase.MainLoop);
-			updateSystem.UpdateBefore<RenderRoutesSystem>(SystemUpdatePhase.MainLoop);
 
 			this.settings = new EmploymentTrackerSettings(this);
 			this.settings.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(this.settings));
 
 			AssetDatabase.global.LoadSettings(nameof(EmploymentTracker), this.settings, new EmploymentTrackerSettings(this));
+
+			updateSystem.UpdateBefore<HighlightEmployeesSystem>(SystemUpdatePhase.MainLoop);
+			updateSystem.UpdateBefore<RenderRoutesSystem>(SystemUpdatePhase.MainLoop);
 
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");

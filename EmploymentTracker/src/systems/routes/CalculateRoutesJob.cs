@@ -48,6 +48,8 @@ namespace EmploymentTracker
 		public BufferLookup<CarNavigationLane> carNavigationLaneSegmentLookup;
 		[ReadOnly]
 		public int batchSize;
+		[ReadOnly]
+		public bool incomingRoutesTransit;
 
 		[NativeSetThreadIndex]
 		int threadId;
@@ -103,7 +105,7 @@ namespace EmploymentTracker
 						}
 						else if (this.ownerLookup.TryGetComponent(element.m_Target, out Owner owner))
 						{
-							if (this.routeLaneLookup.HasComponent(element.m_Target) &&
+							if (this.incomingRoutesTransit && this.routeLaneLookup.HasComponent(element.m_Target) &&
 								i < pathElements.Length - 1 &&
 								this.waypointLookup.TryGetComponent(element.m_Target, out Waypoint waypoint1) &&
 								this.waypointLookup.TryGetComponent(pathElements[i + 1].m_Target, out Waypoint waypoint2))
