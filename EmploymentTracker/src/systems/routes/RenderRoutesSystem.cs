@@ -106,7 +106,7 @@ namespace EmploymentTracker
 			AddBinding(this.incomingRoutesTransit);
 			AddBinding(this.highlightPassengerRoutes);
 
-			//toggles
+			//toggles 
 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
@@ -536,13 +536,12 @@ namespace EmploymentTracker
 			NativeStream.Reader resultReader = resultStream.AsReader();
 
 			stopwatch.Restart();
+			int totalCount = 0;
 			NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
 
-			int totalCount = 0;
 			for (int i = 0; i < resultReader.ForEachCount; ++i)
 			{
 				resultReader.BeginForEachIndex(i);
-				//info("Reader " + i + " remaining count: " + resultReader.RemainingItemCount + " rs count: " + resultStream.Count());
 				while (resultReader.RemainingItemCount > 0)
 				{
 					++totalCount;
@@ -555,12 +554,23 @@ namespace EmploymentTracker
 					{
 						resultCurves[resultCurve] = 1;
 					}
-
-					//resultCurves.Add(resultCurve);
 				}
 
 				resultReader.EndForEachIndex();
 			}
+			/*NativeHashSet<CurveDef> resultCurves = new NativeHashSet<CurveDef>(1500, Allocator.Temp);
+
+			for (int i = 0; i < resultReader.ForEachCount; ++i)
+			{
+				resultReader.BeginForEachIndex(i);
+				while (resultReader.RemainingItemCount > 0)
+				{
+					++totalCount;
+					resultCurves.Add(resultReader.Read<CurveDef>());
+				}
+
+				resultReader.EndForEachIndex();
+			}*/
 
 			stopwatch.Stop();
 			var streamReadTime = stopwatch.ElapsedMilliseconds;
@@ -589,7 +599,7 @@ namespace EmploymentTracker
 					curveCount[ind] = curve.Value;
 					//curveArray.Add(curve.Key);
 					//curveCount.Add(curve.Value);
-
+					//curveArray[ind] = curve;
 					++ind;
 				}
 
@@ -710,6 +720,45 @@ namespace EmploymentTracker
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {          
             return 1;
+		}
+
+		private int updateTrackedEntitiesFromBuildingSelection()
+		{
+			NativeArray<Entity> entitiesWithTargets = this.hasTargetQuery.ToEntityArray(Allocator.Temp);
+
+			if (this.printFrame)
+			{
+				info("Starting selection");
+			}
+
+			int undupedCount = 0;
+
+			for (int i = 0; i < entitiesWithTargets.Length; i++)
+			{
+				Entity e = entitiesWithTargets[i];
+				if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
+				{
+					if (target.m_Target == this.selectedEntity)
+					{
+						SelectionType entityRouteType = this.getEntityRouteType(e);
+						if (entityRouteType != SelectionType.CAR_OCCUPANT)
+						{
+							this.commutingEntities.Add(e);
+						}
+
+						++undupedCount;
+						if (printFrame)
+						{
+							info("entity " + (undupedCount) + " with target: " + e.ToString());
+
+						}
+					}
+				}
+			}
+
+			entitiesWithTargets.Dispose();
+
+			return undupedCount;
 		}
 
 		private SelectionType getEntityRouteType(Entity e)

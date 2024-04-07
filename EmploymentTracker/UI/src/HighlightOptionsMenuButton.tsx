@@ -150,6 +150,10 @@ export default class HighlightOptionsMenuButton extends Component {
 			this.setState({ highlightEnroute: val });
 		})
 
+		highlightEnrouteTransit.subscribe(val => {
+			this.setState({ highlightEnrouteTransit: val });
+		})
+
 		routeTimeBinding.subscribe(val => {
 			this.setState({ routeTimeMs: HighlightOptionsMenuButton.parseBindings(val) });
 		})
