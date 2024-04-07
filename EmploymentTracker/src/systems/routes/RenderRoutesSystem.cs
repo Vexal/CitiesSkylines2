@@ -24,6 +24,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine.InputSystem;
+using static Unity.Burst.Intrinsics.X86.Avx;
 
 namespace EmploymentTracker
 {
@@ -31,7 +32,9 @@ namespace EmploymentTracker
     {
         public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
 
-        Entity selectedEntity;
+        private Entity selectedEntity = default;
+		private Entity selectionLeader = default;
+		private SelectionType selectionType;
         private InputAction toggleSystemAction;
         private InputAction togglePathDisplayAction;
         private InputAction printFrameAction;
@@ -40,6 +43,7 @@ namespace EmploymentTracker
 		private EmploymentTrackerSettings settings;
 		private EntityQuery pathUpdatedQuery;
 		private EntityQuery hasTargetQuery;
+		private bool printFrame = false;
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
@@ -104,15 +108,15 @@ namespace EmploymentTracker
 
 			//toggles
 
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); this.settings.incomingRoutesTransit = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); this.settings.highlightSelectedTransitVehiclePassengerRoutes = s; this.saveSettings(); }));
 
 
 			//options
-			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
-			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleDebug", this.toggleDebug));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleDebug", this.toggleDebug));
 
 			this.debugActiveBinding = new ValueBinding<bool>("EmploymentTracker", "DebugActive", false);
 			this.refreshTransitingEntitiesBinding = new ValueBinding<bool>("EmploymentTracker", "AutoRefreshTransitingEntitiesActive", true);
@@ -188,13 +192,15 @@ namespace EmploymentTracker
 			}
 
 			Entity selected = this.getSelected();
+			SelectionType newSelectionType = this.getEntityRouteType(selected);
 			
 			//only compute most highlighting when object selection changes (except for dynamic pathfinding)
-			bool updatedSelection = this.toggled && selected != this.selectedEntity;
+			bool updatedSelection = this.toggled && (selected != this.selectedEntity || newSelectionType != this.selectionType);
 			if (updatedSelection)
 			{
 				this.reset();
 				this.selectedEntity = selected;
+				this.selectionType = newSelectionType;
 			}
 
 			//check if hot key disable/enable highlighting was pressed
@@ -222,30 +228,28 @@ namespace EmploymentTracker
 				if (!this.pathingToggled)
 				{
 					this.reset();
-				this.endFrame(clock);
+					this.endFrame(clock);
 					return;
 				}
 			}
 
-			bool printFrame = false;
 			if (this.printFrameAction.WasPressedThisFrame())
 			{
-				printFrame = true;
+				this.printFrame = true;
 			}
 
-			if (this.selectedEntity == null || this.selectedEntity == default(Entity))
+			if (this.selectedEntity == null || this.selectedEntity == default(Entity) || this.selectionType == SelectionType.UNKNOWN)
 			{
 				this.endFrame(clock);
 				return;
 			}
 
 			//only need to update building/target highlights when selection changes
-			if ((updatedSelection || (this.refreshTransitingEntitiesBinding.value && (++this.frameCount % 64 == 0))) &&
-				!EntityManager.HasComponent<Vehicle>(this.selectedEntity) &&!EntityManager.HasComponent<Creature>(this.selectedEntity))
+			if (updatedSelection || (this.refreshTransitingEntitiesBinding.value && (++this.frameCount % 64 == 0)))
 			{	
-				if (this.commutingEntities.IsCreated)
+				this.populateRouteEntities();
+				/*if (this.commutingEntities.IsCreated)
 				{
-					this.commutingEntities.Clear();
 					this.commutingEntities.Dispose();
 				}
 
@@ -289,10 +293,15 @@ namespace EmploymentTracker
 				if (this.debugActiveBinding.value)
 				{
 					this.undupedEntityCount.Update(count);
-				}
+				}*/
 			}
 
-			NativeList<Entity> tmp = new NativeList<Entity>(Allocator.TempJob);
+			if (this.commutingEntities.IsCreated)
+			{
+				this.doRouteJobs();
+			}
+
+			/*NativeList<Entity> tmp = new NativeList<Entity>(Allocator.TempJob);
 
 			if (this.commutingEntities.IsCreated)
 			{
@@ -318,14 +327,14 @@ namespace EmploymentTracker
 			{
 				this.trackedEntityCount.Update(tmp.Length);
 			}
-
+			*/
+			/*
 			if (tmp.Length > 0)
 			{
 				if (printFrame)
 				{
 					info("Printing frame: commuter count: " + tmp.Length);
 				}
-
 				CalculateRoutesJob calculateRoutesJob = new CalculateRoutesJob();
 				calculateRoutesJob.input = tmp;
 				calculateRoutesJob.pathOnwerLookup = GetComponentLookup<PathOwner>(true);
@@ -341,6 +350,8 @@ namespace EmploymentTracker
 				calculateRoutesJob.pathElementLookup = GetBufferLookup<PathElement>(true);
 				calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
 				calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
+				calculateRoutesJob.leader = this.selectionLeader;
+				calculateRoutesJob.selectionType = this.selectionType;
 
 				int routeBatchSize = 16;
 
@@ -451,8 +462,167 @@ namespace EmploymentTracker
 			{
 				tmp.Dispose();
 			}
-			
+			*/
 			this.endFrame(clock);
+		}
+
+		private void doRouteJobs()
+		{
+			if (printFrame)
+			{
+				info("Printing frame: commuter count: " + this.commutingEntities.Count);
+			}
+
+			if (this.commutingEntities.IsEmpty)
+			{
+				return;
+			}
+
+			/*
+			NativeArray<Entity> input = new NativeArray<Entity>(this.commutingEntities.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+			int inexd = 0;
+			foreach (Entity entity in this.commutingEntities)
+			{
+				input[inexd++] = entity;
+			}
+			*/
+			CalculateRoutesJob calculateRoutesJob = new CalculateRoutesJob();
+			calculateRoutesJob.input = new NativeList<Entity>(this.commutingEntities.Count, Allocator.TempJob);
+			int inexd = 0;
+			foreach (Entity entity in this.commutingEntities)
+			{
+				//calculateRoutesJob.input[inexd++] = entity;
+				calculateRoutesJob.input.Add(entity);
+			}
+
+			calculateRoutesJob.storageInfoLookup = GetEntityStorageInfoLookup();
+			calculateRoutesJob.pathOnwerLookup = GetComponentLookup<PathOwner>(true);
+			calculateRoutesJob.curveLookup = GetComponentLookup<Curve>(true);
+			calculateRoutesJob.ownerLookup = GetComponentLookup<Owner>(true);
+			calculateRoutesJob.routeLaneLookup = GetComponentLookup<RouteLane>(true);
+			calculateRoutesJob.waypointLookup = GetComponentLookup<Waypoint>(true);
+			calculateRoutesJob.pedestrianLaneLookup = GetComponentLookup<PedestrianLane>(true);
+			calculateRoutesJob.trackLaneLookup = GetComponentLookup<TrackLane>(true);
+			calculateRoutesJob.secondaryLaneLookup = GetComponentLookup<SecondaryLane>(true);
+			calculateRoutesJob.currentTransportLookup = GetComponentLookup<CurrentTransport>(true);
+			calculateRoutesJob.currentVehicleLookup = GetComponentLookup<CurrentVehicle>(true);
+			calculateRoutesJob.deletedLookup = GetComponentLookup<Deleted>(true);
+			calculateRoutesJob.unspawnedLookup = GetComponentLookup<Unspawned>(true);
+			calculateRoutesJob.pathElementLookup = GetBufferLookup<PathElement>(true);
+			calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
+			calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
+			calculateRoutesJob.incomingRoutesTransit = this.incomingRoutesTransit.value;
+			calculateRoutesJob.leader = this.selectionLeader;
+			calculateRoutesJob.selectionType = this.selectionType;
+
+			int routeBatchSize = 16;
+
+			calculateRoutesJob.batchSize = routeBatchSize;
+
+			var resultStream = new NativeStream(JobsUtility.MaxJobThreadCount, Allocator.TempJob);
+
+			calculateRoutesJob.results = resultStream.AsWriter();
+			var stopwatch = new Stopwatch();
+			stopwatch.Start();
+			JobHandle routeJob = calculateRoutesJob.ScheduleBatch(calculateRoutesJob.input.Length, routeBatchSize);
+
+			calculateRoutesJob.input.Dispose(routeJob);
+
+			routeJob.Complete();
+			stopwatch.Stop();
+			var elapsed_time = stopwatch.ElapsedMilliseconds;
+			//info("Is job completed: " + routeJob.IsCompleted);
+			//info("rs: " + resultStream.ForEachCount);
+			NativeStream.Reader resultReader = resultStream.AsReader();
+
+			stopwatch.Restart();
+			NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
+
+			int totalCount = 0;
+			for (int i = 0; i < resultReader.ForEachCount; ++i)
+			{
+				resultReader.BeginForEachIndex(i);
+				//info("Reader " + i + " remaining count: " + resultReader.RemainingItemCount + " rs count: " + resultStream.Count());
+				while (resultReader.RemainingItemCount > 0)
+				{
+					++totalCount;
+					CurveDef resultCurve = resultReader.Read<CurveDef>();
+					if (resultCurves.ContainsKey(resultCurve))
+					{
+						++resultCurves[resultCurve];
+					}
+					else
+					{
+						resultCurves[resultCurve] = 1;
+					}
+
+					//resultCurves.Add(resultCurve);
+				}
+
+				resultReader.EndForEachIndex();
+			}
+
+			stopwatch.Stop();
+			var streamReadTime = stopwatch.ElapsedMilliseconds;
+			if (this.debugActiveBinding.value)
+			{
+				this.totalSegmentCount.Update(totalCount);
+				this.uniqueSegmentCount.Update(resultCurves.Count);
+				//this.routeTimeMs.Update((int)elapsed_time);
+				this.bindings["Route Time (ms)"] = elapsed_time.ToString();
+			}
+
+			resultStream.Dispose();
+
+			stopwatch.Restart();
+			if (resultCurves.Count > 0)
+			{
+				//NativeList<CurveDef> curveArray = new NativeList<CurveDef>(resultCurves.Count, Allocator.TempJob);
+				NativeArray<CurveDef> curveArray = new NativeArray<CurveDef>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+				NativeArray<int> curveCount = new NativeArray<int>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+				//NativeList<int> curveCount = new NativeList<int>(resultCurves.Count, Allocator.TempJob);
+
+				int ind = 0;
+				foreach (var curve in resultCurves)
+				{
+					curveArray[ind] = curve.Key;
+					curveCount[ind] = curve.Value;
+					//curveArray.Add(curve.Key);
+					//curveCount.Add(curve.Value);
+
+					++ind;
+				}
+
+				RouteRenderJob job = new RouteRenderJob();
+				job.curveDefs = curveArray;
+				job.curveCounts = curveCount;
+				job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+				job.routeHighlightOptions = this.routeHighlightOptions;
+				JobHandle routeJobHandle = job.Schedule(dependencies);
+
+				curveArray.Dispose(routeJobHandle);
+				curveCount.Dispose(routeJobHandle);
+				this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
+
+				routeJobHandle.Complete();
+
+			}
+
+			stopwatch.Stop();
+			var renderTime = stopwatch.ElapsedMilliseconds;
+			if (printFrame)
+			{
+				info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count + " route time ms: " + elapsed_time + "; stream read time ms: " + streamReadTime + "; render time ms: " + renderTime);
+
+			}
+
+			if (this.debugActiveBinding.value)
+			{
+				this.bindings["Render Time (ms)"] = renderTime.ToString();
+				this.bindings["Stream Time (ms)"] = streamReadTime.ToString();
+			}
+
+			resultCurves.Dispose();
 		}
 
 		private Entity getSelected() 
@@ -461,9 +631,143 @@ namespace EmploymentTracker
 			return toolSystem.selected;
 		}
 
+		private void populateRouteEntities()
+		{
+			if (this.commutingEntities.IsCreated)
+			{
+				this.commutingEntities.Dispose();
+			}
+
+			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
+
+			int undupedCount = 0;
+			if (this.selectionType == SelectionType.BUILDING)
+			{
+				NativeArray<Entity> entitiesWithTargets = this.hasTargetQuery.ToEntityArray(Allocator.Temp);
+
+				if (this.printFrame)
+				{
+					info("Starting selection");
+				}
+
+				for (int i = 0; i < entitiesWithTargets.Length; i++)
+				{
+					Entity e = entitiesWithTargets[i];
+					if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
+					{
+						if (target.m_Target == this.selectedEntity)
+						{
+							SelectionType entityRouteType = this.getEntityRouteType(e);
+							if (entityRouteType != SelectionType.CAR_OCCUPANT)
+							{
+								this.commutingEntities.Add(e);
+							}
+
+							++undupedCount;
+							if (printFrame)
+							{
+								info("entity " + (undupedCount) + " with target: " + e.ToString());
+
+							}
+						}
+					}
+				}
+
+				entitiesWithTargets.Dispose();				
+			}
+			else
+			{
+				if (this.selectionType == SelectionType.HUMAN ||
+					this.selectionType == SelectionType.CAR)
+				{
+					this.commutingEntities.Add(this.selectedEntity);
+					this.selectionLeader = this.selectedEntity;
+					++undupedCount;
+				}
+				else if (this.selectionType == SelectionType.BUS)
+				{
+					this.commutingEntities.Add(this.selectedEntity);
+					this.selectionLeader = this.selectedEntity;
+					++undupedCount;
+				}
+				else
+				{
+					this.selectionLeader = this.selectedEntity;
+				}
+				/*else if (this.selectionType == SelectionType.TRAIN)
+				{
+
+				}*/
+			}
+
+			if (this.debugActiveBinding.value)
+			{
+				this.undupedEntityCount.Update(undupedCount);
+				this.trackedEntityCount.Update(this.commutingEntities.Count);
+			}
+		}
+
         public override int GetUpdateInterval(SystemUpdatePhase phase)
         {          
             return 1;
+		}
+
+		private SelectionType getEntityRouteType(Entity e)
+		{
+			if (EntityManager.HasComponent<PublicTransport>(e))
+			{
+				if (EntityManager.HasComponent<Train>(e))
+				{
+					return SelectionType.TRAIN;
+				}
+				else if (EntityManager.HasComponent<Watercraft>(e))
+				{
+					return SelectionType.BOAT;
+				}
+				else if (EntityManager.HasComponent<Car>(e))
+				{
+					return SelectionType.TRANSIT;
+				}
+			}
+			if (EntityManager.HasComponent<Building>(e))
+			{
+				return SelectionType.BUILDING;
+			}
+			else if (EntityManager.HasComponent<Car>(e))
+			{
+				return SelectionType.CAR;
+			}
+			else if (EntityManager.HasComponent<Human>(e))
+			{
+				if (EntityManager.TryGetComponent(e, out CurrentVehicle currentVehicle))
+				{
+					if (EntityManager.HasComponent<PublicTransport>(currentVehicle.m_Vehicle))
+					{
+						if (EntityManager.HasComponent<Train>(currentVehicle.m_Vehicle))
+						{
+							return SelectionType.TRAIN_OCCUPANT;
+						}
+						else if (EntityManager.HasComponent<Watercraft>(currentVehicle.m_Vehicle))
+						{
+							return SelectionType.BOAT_OCCUPANT;
+						}
+						else if (EntityManager.HasComponent<Car>(currentVehicle.m_Vehicle))
+						{
+							return SelectionType.TRANSIT_OCCUPANT;
+						}
+					}
+					else if (EntityManager.HasComponent<Car>(currentVehicle.m_Vehicle))
+					{
+						return SelectionType.CAR_OCCUPANT;
+					}
+				} 
+				else
+				{
+					return SelectionType.HUMAN;
+				}
+			}
+
+			return SelectionType.UNKNOWN;
 		}
 
 		private void info(string message)
@@ -481,22 +785,28 @@ namespace EmploymentTracker
 
 		private void reset()
 		{
-			this.selectedEntity = default(Entity);
+			this.selectedEntity = default;
+			this.selectionLeader = default;
 			if (this.commutingEntities.IsCreated)
 			{ 
 				this.commutingEntities.Dispose();
 			}
+
+			if (this.debugActiveBinding.value)
+			{
+				this.trackedEntityCount.Update(0);
+			}
 		}
 
-		private void toggleAutoRefresh(string active) 
+		private void toggleAutoRefresh(bool active) 
 		{
 			info("Toggling autorefresh: " + active); 
-			this.refreshTransitingEntitiesBinding.Update("true".Equals(active));  
+			this.refreshTransitingEntitiesBinding.Update(active);  
 		}
 
-		private void toggleDebug(string active)
+		private void toggleDebug(bool active)
 		{
-			this.debugActiveBinding.Update("true".Equals(active));
+			this.debugActiveBinding.Update(active);
 		}
 
 		private Dictionary<string, string> bindings = new Dictionary<string, string>();
@@ -518,8 +828,11 @@ namespace EmploymentTracker
 			{
 				startTime.Stop();
 				this.bindings["Total Time (ms)"] = startTime.ElapsedMilliseconds.ToString();
+
 				this.updateBindings();
 			}
+
+			this.printFrame = false;
 		}
 
 		[BurstCompile]
@@ -570,6 +883,11 @@ namespace EmploymentTracker
 				curveArray = default;
 				curveCount = default;
 			}
+		}
+
+		private void saveSettings()
+		{
+			this.settings.ApplyAndSave();
 		}
 	}
 }

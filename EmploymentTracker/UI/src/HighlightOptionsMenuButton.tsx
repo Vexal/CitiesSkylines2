@@ -182,7 +182,7 @@ class OptionToggle extends Component<IProps> {
 			<div style={{ flex: "1", padding: "5rem" }} />
 			<div style={{ paddingRight: "20rem" }}>
 				<Button selected={this.props.value} variant="flat" onSelect={() => {
-					trigger("EmploymentTracker", this.props.name, this.props.value ? "false" : "true");
+					trigger("EmploymentTracker", this.props.name, this.props.value ? false : true);
 				}}>
 					<div style={{ padding: "5rem" }}>{this.props.value ? "On" : "Off"}</div>
 				</Button>

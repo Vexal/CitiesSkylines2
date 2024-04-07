@@ -3,8 +3,10 @@ using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
 using Game.Net;
+using Game.Objects;
 using Game.Pathfind;
 using Game.Routes;
+using Game.Tools;
 using Game.Vehicles;
 using Unity.Burst;
 using Unity.Collections;
@@ -20,6 +22,7 @@ namespace EmploymentTracker
 	{
 		[ReadOnly]
 		public NativeList<Entity> input;
+		//public NativeArray<Entity> input;
 		[ReadOnly]
 		public ComponentLookup<PathOwner> pathOnwerLookup;
 		[ReadOnly]
@@ -41,6 +44,12 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public ComponentLookup<CurrentTransport> currentTransportLookup;
 		[ReadOnly]
+		public ComponentLookup<Deleted> deletedLookup;
+		[ReadOnly]
+		public ComponentLookup<Unspawned> unspawnedLookup;
+		[ReadOnly]
+		public EntityStorageInfoLookup storageInfoLookup;
+		[ReadOnly]
 		public BufferLookup<PathElement> pathElementLookup;
 		[ReadOnly]
 		public BufferLookup<RouteSegment> routeSegmentLookup;
@@ -50,6 +59,10 @@ namespace EmploymentTracker
 		public int batchSize;
 		[ReadOnly]
 		public bool incomingRoutesTransit;
+		[ReadOnly]
+		public SelectionType selectionType;
+		[ReadOnly]
+		public Entity leader;
 
 		[NativeSetThreadIndex]
 		int threadId;
@@ -75,6 +88,11 @@ namespace EmploymentTracker
 
 		private int writeEntityRoute(Entity entity)
 		{
+			if (!this.isValidEntity(entity))
+			{
+				return 0;
+			}
+
 			//Highlight the path of a selected citizen inside a vehicle
 			/*if (this.currentVehicleLookup.TryGetComponent(entity, out CurrentVehicle vehicle))
 			{
@@ -83,7 +101,8 @@ namespace EmploymentTracker
 			else if (this.currentTransportLookup.TryGetComponent(entity, out CurrentTransport currentTransport))
 			{
 				return this.writeEntityRoute(currentTransport.m_CurrentTransport);
-			}*/
+			}
+			*/
 
 			int writeCount = 0;
 
@@ -210,6 +229,10 @@ namespace EmploymentTracker
 			//Mod.log.Info("Writing " + curveDef.GetType() + " thread id: " + this.threadId + " (entity: " + e.ToString() + ")");
 			results.Write<CurveDef>(curveDef);
 		}
-	}
 
+		private bool isValidEntity(Entity e)
+		{
+			return this.storageInfoLookup.Exists(e) && !this.deletedLookup.HasComponent(e) && !this.unspawnedLookup.HasComponent(e);
+		}
+	}
 }

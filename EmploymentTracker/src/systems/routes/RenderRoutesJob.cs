@@ -1,15 +1,19 @@
 ﻿using Game.Rendering;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
 namespace EmploymentTracker
 {
+	//[BurstCompile]
 	public struct RouteRenderJob : IJob
 	{
 		public OverlayRenderSystem.Buffer overlayBuffer;
 		[ReadOnly]
+		//public NativeList<CurveDef> curveDefs;
 		public NativeArray<CurveDef> curveDefs;
 		[ReadOnly]
+		//public NativeList<int> curveCounts;
 		public NativeArray<int> curveCounts;
 		[ReadOnly]
 		public RouteOptions routeHighlightOptions;
