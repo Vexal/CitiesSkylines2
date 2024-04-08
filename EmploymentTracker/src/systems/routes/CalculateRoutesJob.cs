@@ -46,8 +46,6 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public ComponentLookup<Deleted> deletedLookup;
 		[ReadOnly]
-		public ComponentLookup<Unspawned> unspawnedLookup;
-		[ReadOnly]
 		public EntityStorageInfoLookup storageInfoLookup;
 		[ReadOnly]
 		public BufferLookup<PathElement> pathElementLookup;
@@ -232,7 +230,7 @@ namespace EmploymentTracker
 
 		private bool isValidEntity(Entity e)
 		{
-			return this.storageInfoLookup.Exists(e) && !this.deletedLookup.HasComponent(e) && !this.unspawnedLookup.HasComponent(e);
+			return this.storageInfoLookup.Exists(e) && !this.deletedLookup.HasComponent(e);
 		}
 	}
 }

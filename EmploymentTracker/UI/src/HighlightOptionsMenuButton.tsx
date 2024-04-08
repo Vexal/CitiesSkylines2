@@ -11,6 +11,7 @@ export const undupedEntityCountBinding = bindValue<number>("EmploymentTracker", 
 export const totalSegmentCountBinding = bindValue<number>("EmploymentTracker", 'TotalSegmentCount');
 export const uniqueSegmentCountBinding = bindValue<number>("EmploymentTracker", 'UniqueSegmentCount');
 export const routeTimeBinding = bindValue<string>("EmploymentTracker", 'RouteTimeMs');
+export const selectionTypeBinding = bindValue<string>("EmploymentTracker", 'selectionType');
 
 
 export const highlightEnroute = bindValue<boolean>("EmploymentTracker", 'highlightEnroute');
@@ -27,6 +28,7 @@ export default class HighlightOptionsMenuButton extends Component {
 		undupedEntityCount: undupedEntityCountBinding.value,
 		uniqueSegmentCount: uniqueSegmentCountBinding.value,
 		totalSegmentCount: totalSegmentCountBinding.value,
+		selectionType: selectionTypeBinding.value,
 
 		highlightEnroute: highlightEnroute.value,
 		highlightSelectedRoute: highlightSelectedRoute.value,
@@ -72,6 +74,15 @@ export default class HighlightOptionsMenuButton extends Component {
 								<div style={{ flex: "1", padding: "5rem" }} />
 								<div style={{ paddingRight: "20rem" }}>
 									{this.state.trackedEntityCount}
+								</div>
+							</div>
+							<div style={{ display: "flex" }}>
+								<div style={{ padding: "5rem" }}>
+									Type
+								</div>
+								<div style={{ flex: "1", padding: "5rem" }} />
+								<div style={{ paddingRight: "20rem" }}>
+									{this.state.selectionType}
 								</div>
 							</div>
 							<div style={{ display: "flex" }}>
@@ -152,6 +163,10 @@ export default class HighlightOptionsMenuButton extends Component {
 
 		highlightEnrouteTransit.subscribe(val => {
 			this.setState({ highlightEnrouteTransit: val });
+		})
+
+		selectionTypeBinding.subscribe(val => {
+			this.setState({ selectionType: val });
 		})
 
 		routeTimeBinding.subscribe(val => {

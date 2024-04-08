@@ -21,6 +21,8 @@ namespace EmploymentTracker
 		BOAT_OCCUPANT,
 		BOAT,
 		BUS_OCCUPANT,
-		BUS
+		BUS,
+		AIRPLANE,
+		ANIMAL
 	}
 }
