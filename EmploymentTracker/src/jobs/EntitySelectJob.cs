@@ -21,9 +21,13 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public ComponentLookup<Controller> controllerLookup;
 		[ReadOnly]
+		public ComponentLookup<PublicTransport> publicTransportLookup;
+		[ReadOnly]
 		public BufferLookup<Passenger> passengerLookup;
 		[ReadOnly]
 		public BufferLookup<LayoutElement> layoutElementLookup;
+		[ReadOnly]
+		public bool highlightTransitPassengerRoutes;
 
 		public void Execute()
 		{
@@ -59,6 +63,11 @@ namespace EmploymentTracker
 
 		private void handleForPassengers(Entity entity)
 		{
+			if (!this.highlightTransitPassengerRoutes && this.publicTransportLookup.HasComponent(entity))
+			{
+				return;
+			}
+
 			if (this.passengerLookup.TryGetBuffer(entity, out var passengers))
 			{
 				for (int i = 0; i < passengers.Length; i++)

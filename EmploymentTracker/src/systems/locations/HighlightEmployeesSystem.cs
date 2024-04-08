@@ -1,4 +1,5 @@
 ﻿using Colossal.Logging;
+using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
@@ -7,6 +8,7 @@ using Game.Companies;
 using Game.Creatures;
 using Game.Net;
 using Game.Tools;
+using Game.UI;
 using Game.Vehicles;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,10 +17,8 @@ using UnityEngine.InputSystem;
 
 namespace EmploymentTracker
 {
-	internal partial class HighlightEmployeesSystem : GameSystemBase
+	internal partial class HighlightEmployeesSystem : UISystemBase
     {
-        public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
-
 		private Entity selectedEntity;
 		private HashSet<Entity> highlightedEntities = new HashSet<Entity>();
         private InputAction toggleSystemAction;
@@ -27,30 +27,51 @@ namespace EmploymentTracker
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 
+		private ValueBinding<bool> activateHighlightPassengerDestinations;
+		private ValueBinding<bool> highlightEmployeeResidences;
+		private ValueBinding<bool> highlightWorkplaces;
+		private ValueBinding<bool> studentResidences;
+
 		protected override void OnCreate()
         {
             base.OnCreate();
             this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
             this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+
+			this.settings = Mod.INSTANCE.getSettings();
+
+			this.highlightFeatures = new HighlightFeatures(settings);
+
+			this.activateHighlightPassengerDestinations = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerDestinations", this.settings.highlightDestinations);
+			this.highlightWorkplaces = new ValueBinding<bool>("EmploymentTracker", "highlightResidentWorkplaces", this.settings.highlightWorkplaces);
+			this.highlightEmployeeResidences = new ValueBinding<bool>("EmploymentTracker", "highlightEmployeeResidences", this.settings.highlightEmployeeResidences);
+			this.studentResidences = new ValueBinding<bool>("EmploymentTracker", "highlightStudentResidences", this.settings.highlightStudentResidences);
+
+			AddBinding(this.activateHighlightPassengerDestinations);
+			AddBinding(this.highlightWorkplaces);
+			AddBinding(this.highlightEmployeeResidences);
+			AddBinding(this.studentResidences);
+
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerDestinations", s => { this.activateHighlightPassengerDestinations.Update(s); this.settings.highlightDestinations = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightResidentWorkplaces", s => { this.highlightWorkplaces.Update(s); this.settings.highlightWorkplaces = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEmployeeResidences", s => { this.highlightEmployeeResidences.Update(s); this.settings.highlightEmployeeResidences = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightStudentResidences", s => { this.studentResidences.Update(s); this.settings.highlightStudentResidences = s; this.saveSettings(); }));
 		}
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-            this.toggleSystemAction.Enable();
-			this.settings = Mod.INSTANCE.getSettings();
-
-			this.highlightFeatures = new HighlightFeatures(settings);
 
 			this.settings.onSettingsApplied += gameSettings =>
 			{
 				if (gameSettings.GetType() == typeof(EmploymentTrackerSettings))
 				{
 					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)this.settings;
-					info("Settings thread: " + Thread.CurrentThread.ManagedThreadId);
 					this.highlightFeatures = new HighlightFeatures(settings);
 				}
 			};
+
+			this.toggleSystemAction.Enable();
 		}
 
 		protected override void OnStopRunning()
@@ -401,6 +422,11 @@ namespace EmploymentTracker
 		{
 			this.clearHighlight();
 			this.selectedEntity = default(Entity);
+		}
+
+		private void saveSettings()
+		{
+			this.settings.ApplyAndSave();
 		}
 	}
 
