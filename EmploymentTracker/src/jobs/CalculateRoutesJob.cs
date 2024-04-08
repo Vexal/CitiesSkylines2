@@ -3,14 +3,11 @@ using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
 using Game.Net;
-using Game.Objects;
 using Game.Pathfind;
 using Game.Routes;
-using Game.Tools;
 using Game.Vehicles;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -22,7 +19,6 @@ namespace EmploymentTracker
 	{
 		[ReadOnly]
 		public NativeList<Entity> input;
-		//public NativeArray<Entity> input;
 		[ReadOnly]
 		public ComponentLookup<PathOwner> pathOnwerLookup;
 		[ReadOnly]
@@ -57,13 +53,6 @@ namespace EmploymentTracker
 		public int batchSize;
 		[ReadOnly]
 		public bool incomingRoutesTransit;
-		[ReadOnly]
-		public SelectionType selectionType;
-		[ReadOnly]
-		public Entity leader;
-
-		[NativeSetThreadIndex]
-		int threadId;
 
 		[NativeDisableParallelForRestriction]
 		public NativeStream.Writer results;
@@ -76,48 +65,29 @@ namespace EmploymentTracker
 
 			for (int i = start; i < start + count; ++i)
 			{
-				Entity entity = this.input[i];
-				int writeCount = this.writeEntityRoute(entity);
-				//Mod.log.Info("Entity " + i + ": " + entity.ToString() + " write count: " + writeCount + " thread id: " + this.threadId + " batch index: " + batchIndex);
+				this.writeEntityRoute(this.input[i]);
 			}
 
 			results.EndForEachIndex();
 		}
 
-		private int writeEntityRoute(Entity entity)
+		private void writeEntityRoute(Entity entity)
 		{
 			if (!this.isValidEntity(entity))
 			{
-				return 0;
+				return;
 			}
-
-			//Highlight the path of a selected citizen inside a vehicle
-			/*if (this.currentVehicleLookup.TryGetComponent(entity, out CurrentVehicle vehicle))
-			{
-				return this.writeEntityRoute(vehicle.m_Vehicle);
-			}
-			else if (this.currentTransportLookup.TryGetComponent(entity, out CurrentTransport currentTransport))
-			{
-				return this.writeEntityRoute(currentTransport.m_CurrentTransport);
-			}
-			*/
-
-			int writeCount = 0;
 
 			if (this.pathOnwerLookup.TryGetComponent(entity, out PathOwner pathOwner))
 			{
 				if (this.pathElementLookup.TryGetBuffer(entity, out DynamicBuffer<PathElement> pathElements))
 				{
-					//Mod.log.Info("Path element count: " + pathElements.Length + " index: " + index + " thread id: " + this.threadId);
-					
 					for (int i = pathOwner.m_ElementIndex; i < pathElements.Length; ++i)
 					{
 						PathElement element = pathElements[i];
 						if (this.curveLookup.TryGetComponent(element.m_Target, out Curve curve))
 						{
-							this.writeResult(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta), element.m_Target);
-							++writeCount;
-							//results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta));
+							this.results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta));
 
 						}
 						else if (this.ownerLookup.TryGetComponent(element.m_Target, out Owner owner))
@@ -135,12 +105,12 @@ namespace EmploymentTracker
 
 										if (wrapAround)
 										{
-											writeCount += this.getTrackRouteCurves(waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, 3);
-											writeCount += this.getTrackRouteCurves(0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
+											this.getTrackRouteCurves(waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, 3);
+											this.getTrackRouteCurves(0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
 										}
 										else
 										{
-											writeCount += this.getTrackRouteCurves(waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
+											this.getTrackRouteCurves(waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
 										}
 									}
 								}
@@ -150,8 +120,7 @@ namespace EmploymentTracker
 				}
 			}
 
-			writeCount += this.getRouteNavigationCurves(entity);
-			return writeCount;
+			this.getRouteNavigationCurves(entity);
 		}
 
 		private int getTrackRouteCurves(int startSegment, int endSegment, DynamicBuffer<RouteSegment> routeSegmentBuffer, byte type = 3)
@@ -166,9 +135,7 @@ namespace EmploymentTracker
 					{						
 						if (this.curveLookup.TryGetComponent(trackCurves[i].m_Target, out Curve curve))
 						{
-							//results.Write(new CurveDef(curve.m_Bezier, type));
-							this.writeResult(new CurveDef(curve.m_Bezier, type));
-							++writeCount;
+							this.results.Write(new CurveDef(curve.m_Bezier, type));
 						}
 					}
 				}
@@ -186,9 +153,7 @@ namespace EmploymentTracker
 				{
 					if (this.curveLookup.TryGetComponent(pathElements[i].m_Lane, out Curve curve))
 					{
-						++writeCount;
-						this.writeResult(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
-						//results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
+						this.results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
 					}
 				}
 			}
@@ -212,20 +177,7 @@ namespace EmploymentTracker
 				type = 3;
 			}
 
-			//if ((delta.x != 1f && delta.y != 1f) || (delta.x == 1f && delta.y == 1f))
-			{
-				return new CurveDef(MathUtils.Cut(curve, delta), type);
-			}
-			//else
-			{
-				//return new CurveDef(curve, type);
-			}
-		}
-
-		private void writeResult(CurveDef curveDef, Entity e=default(Entity))
-		{
-			//Mod.log.Info("Writing " + curveDef.GetType() + " thread id: " + this.threadId + " (entity: " + e.ToString() + ")");
-			results.Write<CurveDef>(curveDef);
+			return new CurveDef(MathUtils.Cut(curve, delta), type);
 		}
 
 		private bool isValidEntity(Entity e)

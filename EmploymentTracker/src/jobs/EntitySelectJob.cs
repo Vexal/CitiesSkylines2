@@ -36,7 +36,11 @@ namespace EmploymentTracker
 
 		private void executeInternal(Entity entity)
 		{
-			if (this.passengerLookup.HasBuffer(entity))
+			if (!this.publicTransportLookup.HasComponent(entity))
+			{
+				this.results.Add(entity);
+			}
+			else if (this.passengerLookup.HasBuffer(entity))
 			{
 				//Vehicle has multiple cars (such as a train)
 				if (this.handleForVehicleController(entity))

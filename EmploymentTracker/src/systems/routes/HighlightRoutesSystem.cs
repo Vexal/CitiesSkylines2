@@ -1,5 +1,4 @@
 ﻿using Colossal.Entities;
-using Colossal.Logging;
 using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
@@ -15,30 +14,22 @@ using Game.UI;
 using Game.Vehicles;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine.InputSystem;
 
 namespace EmploymentTracker
 {
-	internal partial class RenderRoutesSystem : UISystemBase
+	internal partial class HighlightRoutesSystem : UISystemBase
     {
-        public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
-
         private Entity selectedEntity = default;
-		private Entity selectionLeader = default;
 		private SelectionType selectionType;
         private InputAction toggleSystemAction;
         private InputAction togglePathDisplayAction;
         private InputAction printFrameAction;
 		private OverlayRenderSystem overlayRenderSystem;
-        private ToolSystem toolSystem;
 		private EmploymentTrackerSettings settings;
-		private EntityQuery pathUpdatedQuery;
 		private EntityQuery hasTargetQuery;
 		private bool printFrame = false;
 
@@ -50,7 +41,6 @@ namespace EmploymentTracker
 		private ValueBinding<bool> refreshTransitingEntitiesBinding;
 
 		private ValueBinding<int> trackedEntityCount;
-		private ValueBinding<int> undupedEntityCount;
 		private ValueBinding<int> uniqueSegmentCount;
 		private ValueBinding<int> totalSegmentCount;
 		private ValueBinding<string> routeTimeMs;
@@ -64,14 +54,7 @@ namespace EmploymentTracker
 		protected override void OnCreate()
         {
             base.OnCreate();
-            this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
-            this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
-			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
-			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
 
-			this.printFrameAction = new InputAction("shiftFrame", InputActionType.Button);
-			this.printFrameAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/g").With("Modifier", "<keyboard>/shift");
-			//this.hasTargetQuery = GetEntityQuery(ComponentType.ReadOnly<Target>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Unspawned>());
 			this.hasTargetQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
@@ -87,13 +70,21 @@ namespace EmploymentTracker
 			{
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
-				ComponentType.ReadOnly<Building>(),
-				//ComponentType.ReadOnly<Unspawned>()
+				ComponentType.ReadOnly<Building>()
 				}
 			});
 
+			//Init UI and IO
 			this.settings = Mod.INSTANCE.getSettings();
+			this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
+            this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
+			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
 
+			this.printFrameAction = new InputAction("shiftFrame", InputActionType.Button);
+			this.printFrameAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/g").With("Modifier", "<keyboard>/shift");
+
+	
 			//route toggles
 			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
 			this.highlightSelected = new ValueBinding<bool>("EmploymentTracker", "highlightSelectedRoute", this.settings.highlightSelected);
@@ -104,7 +95,6 @@ namespace EmploymentTracker
 			AddBinding(this.incomingRoutesTransit);
 			AddBinding(this.highlightPassengerRoutes);
 
-			//toggles 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); this.settings.incomingRoutesTransit = s; this.saveSettings(); }));
@@ -128,8 +118,6 @@ namespace EmploymentTracker
 			AddBinding(this.uniqueSegmentCount);
 			this.totalSegmentCount = new ValueBinding<int>("EmploymentTracker", "TotalSegmentCount", 0);
 			AddBinding(this.totalSegmentCount);
-			this.undupedEntityCount = new ValueBinding<int>("EmploymentTracker", "UndupedEntityCount", 0);
-			AddBinding(this.undupedEntityCount);
 			this.routeTimeMs = new ValueBinding<string>("EmploymentTracker", "RouteTimeMs", "");
 			AddBinding(this.routeTimeMs);
 			this.selectionTypeBinding = new ValueBinding<string>("EmploymentTracker", "selectionType", "");
@@ -152,7 +140,6 @@ namespace EmploymentTracker
 				if (gameSettings.GetType() == typeof(EmploymentTrackerSettings))
 				{
 					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings) gameSettings;
-					info("Settings thread: " + Thread.CurrentThread.ManagedThreadId);
 					this.highlightFeatures = new HighlightFeatures(settings);
 					this.routeHighlightOptions = new RouteOptions(settings);
 				}
@@ -253,64 +240,15 @@ namespace EmploymentTracker
 				var searchTimer = new Stopwatch();
 				searchTimer.Start();
 
-				this.populateRouteEntities(out int undupedCount, out int searchCount);
+				this.populateRouteEntities();
 
 				searchTimer.Stop();
 
 				if (this.debugActiveBinding.value)
 				{
-					this.undupedEntityCount.Update(undupedCount);
 					this.trackedEntityCount.Update(this.commutingEntities.Count);
 					this.bindings["Search Time (ms)"] = searchTimer.ElapsedMilliseconds.ToString();
-					this.bindings["Searched Entities"] = searchCount.ToString();
-				}
-
-				/*if (this.commutingEntities.IsCreated)
-				{
-					this.commutingEntities.Dispose();
-				}
-
-				var entitiesWithTargets = this.hasTargetQuery.ToEntityArray(Allocator.Temp);
-
-				this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
-
-				int count = 0;
-				//info("Starting selection");
-				foreach (var e in entitiesWithTargets)
-				{
-					if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
-					{
-						if (target.m_Target == this.selectedEntity)
-						{
-							if (EntityManager.TryGetComponent(e, out CurrentVehicle vehicle))
-							{
-								this.commutingEntities.Add(vehicle.m_Vehicle);
-							}
-							else if (EntityManager.TryGetComponent(e, out CurrentTransport currentTransport))
-							{
-								this.commutingEntities.Add(currentTransport.m_CurrentTransport);
-							}
-							else
-							{
-								this.commutingEntities.Add(e);
-							}
-
-							++count;
-							if (printFrame)
-							{
-								info("entity " + (count) + " with target: " + e.ToString());
-
-							}
-						}
-					}
-				}
-
-				entitiesWithTargets.Dispose();
-
-				if (this.debugActiveBinding.value)
-				{
-					this.undupedEntityCount.Update(count);
-				}*/
+				}				
 			}
 
 			if (this.commutingEntities.IsCreated)
@@ -318,168 +256,6 @@ namespace EmploymentTracker
 				this.doRouteJobs(this.selectionType == SelectionType.BUILDING && !this.routeHighlightOptions.incomingRoutesTransit);
 			}
 
-			/*NativeList<Entity> tmp = new NativeList<Entity>(Allocator.TempJob);
-
-			if (this.commutingEntities.IsCreated)
-			{
-				foreach (Entity e in this.commutingEntities)
-				{
-					if (this.isValidEntity(e) && EntityManager.TryGetComponent(e, out Target target))
-					{
-						if (target.m_Target == this.selectedEntity)
-						{
-							tmp.Add(e);
-						}
-					}
-				}
-			}
-
-			if (this.routeHighlightOptions.highlightSelected && !EntityManager.HasComponent<Building>(this.selectedEntity))
-			{
-				tmp.Add(this.selectedEntity);
-			}
-
-
-			if (this.debugActiveBinding.value)
-			{
-				this.trackedEntityCount.Update(tmp.Length);
-			}
-			*/
-			/*
-			if (tmp.Length > 0)
-			{
-				if (printFrame)
-				{
-					info("Printing frame: commuter count: " + tmp.Length);
-				}
-				CalculateRoutesJob calculateRoutesJob = new CalculateRoutesJob();
-				calculateRoutesJob.input = tmp;
-				calculateRoutesJob.pathOnwerLookup = GetComponentLookup<PathOwner>(true);
-				calculateRoutesJob.curveLookup = GetComponentLookup<Curve>(true);
-				calculateRoutesJob.ownerLookup = GetComponentLookup<Owner>(true);
-				calculateRoutesJob.routeLaneLookup = GetComponentLookup<RouteLane>(true);
-				calculateRoutesJob.waypointLookup = GetComponentLookup<Waypoint>(true);
-				calculateRoutesJob.pedestrianLaneLookup = GetComponentLookup<PedestrianLane>(true);
-				calculateRoutesJob.trackLaneLookup = GetComponentLookup<TrackLane>(true);
-				calculateRoutesJob.secondaryLaneLookup = GetComponentLookup<SecondaryLane>(true);
-				calculateRoutesJob.currentTransportLookup = GetComponentLookup<CurrentTransport>(true);
-				calculateRoutesJob.currentVehicleLookup = GetComponentLookup<CurrentVehicle>(true);
-				calculateRoutesJob.pathElementLookup = GetBufferLookup<PathElement>(true);
-				calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
-				calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
-				calculateRoutesJob.leader = this.selectionLeader;
-				calculateRoutesJob.selectionType = this.selectionType;
-
-				int routeBatchSize = 16;
-
-				calculateRoutesJob.batchSize = routeBatchSize;
-
-				var resultStream = new NativeStream(JobsUtility.MaxJobThreadCount, Allocator.TempJob);
-
-				calculateRoutesJob.results = resultStream.AsWriter();
-				var stopwatch = new Stopwatch();
-				stopwatch.Start();
-				JobHandle routeJob = calculateRoutesJob.ScheduleBatch(tmp.Length, routeBatchSize);
-
-				tmp.Dispose(routeJob);
-
-				routeJob.Complete();
-				stopwatch.Stop();
-				var elapsed_time = stopwatch.ElapsedMilliseconds;
-				//info("Is job completed: " + routeJob.IsCompleted);
-				//info("rs: " + resultStream.ForEachCount);
-				NativeStream.Reader resultReader = resultStream.AsReader();
-					
-				stopwatch.Restart();
-				NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
-
-				int totalCount = 0;
-				for (int i = 0; i < resultReader.ForEachCount; ++i)
-				{
-					resultReader.BeginForEachIndex(i);
-					//info("Reader " + i + " remaining count: " + resultReader.RemainingItemCount + " rs count: " + resultStream.Count());
-					while (resultReader.RemainingItemCount > 0)
-					{
-						++totalCount;
-						CurveDef resultCurve = resultReader.Read<CurveDef>();
-						if (resultCurves.ContainsKey(resultCurve))
-						{
-							++resultCurves[resultCurve];
-						}
-						else
-						{
-							resultCurves[resultCurve] = 1;
-						}
-
-						//resultCurves.Add(resultCurve);
-					}
-
-					resultReader.EndForEachIndex();
-				}
-
-				stopwatch.Stop();
-				var streamReadTime = stopwatch.ElapsedMilliseconds;
-				if (this.debugActiveBinding.value)
-				{
-					this.totalSegmentCount.Update(totalCount);
-					this.uniqueSegmentCount.Update(resultCurves.Count);
-					//this.routeTimeMs.Update((int)elapsed_time);
-					this.bindings["Route Time (ms)"] = elapsed_time.ToString();
-				}
-
-				resultStream.Dispose();
-
-				stopwatch.Restart();
-				if (resultCurves.Count > 0)
-				{
-					NativeArray<CurveDef> curveArray = new NativeArray<CurveDef>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-					NativeArray<int> curveCount = new NativeArray<int>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
-					int ind = 0;
-					foreach (var curve in resultCurves)
-					{
-						curveArray[ind] = curve.Key;
-						curveCount[ind] = curve.Value;
-
-						++ind;
-					}
-
-					RouteRenderJob job = new RouteRenderJob();
-					job.curveDefs = curveArray;
-					job.curveCounts = curveCount;
-					job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-					job.routeHighlightOptions = this.routeHighlightOptions;
-					JobHandle routeJobHandle = job.Schedule(dependencies);
-
-					curveArray.Dispose(routeJobHandle);
-					curveCount.Dispose(routeJobHandle);
-					this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
-
-					//routeJobHandle.Complete();
-
-				}
-
-				stopwatch.Stop();
-				var renderTime = stopwatch.ElapsedMilliseconds;
-				if (printFrame)
-				{
-					info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count + " route time ms: " + elapsed_time + "; stream read time ms: " + streamReadTime + "; render time ms: " + renderTime);
-
-				}
-
-				if (this.debugActiveBinding.value)
-				{
-					this.bindings["Render Time (ms)"] = renderTime.ToString();
-					this.bindings["Stream Time (ms)"] = streamReadTime.ToString();
-				}
-
-				resultCurves.Dispose();
-			}
-			else
-			{
-				tmp.Dispose();
-			}
-			*/
 			this.endFrame(clock);
 		}
 
@@ -495,20 +271,11 @@ namespace EmploymentTracker
 				return;
 			}
 
-			/*
-			NativeArray<Entity> input = new NativeArray<Entity>(this.commutingEntities.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-			int inexd = 0;
-			foreach (Entity entity in this.commutingEntities)
-			{
-				input[inexd++] = entity;
-			}
-			*/
 			CalculateRoutesJob calculateRoutesJob = new CalculateRoutesJob();
 			calculateRoutesJob.input = new NativeList<Entity>(this.commutingEntities.Count, Allocator.TempJob);
-			int inexd = 0;
+
 			foreach (Entity entity in this.commutingEntities)
 			{
-				//calculateRoutesJob.input[inexd++] = entity;
 				calculateRoutesJob.input.Add(entity);
 			}
 
@@ -528,14 +295,14 @@ namespace EmploymentTracker
 			calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
 			calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
 			calculateRoutesJob.incomingRoutesTransit = !ignoreTransit;
-			calculateRoutesJob.leader = this.selectionLeader;
-			calculateRoutesJob.selectionType = this.selectionType;
 
 			int routeBatchSize = 16;
 
 			calculateRoutesJob.batchSize = routeBatchSize;
 
-			var resultStream = new NativeStream(JobsUtility.MaxJobThreadCount, Allocator.TempJob);
+			int batchCount = (calculateRoutesJob.input.Length / routeBatchSize) + 1;
+
+			var resultStream = new NativeStream(batchCount, Allocator.TempJob);
 
 			calculateRoutesJob.results = resultStream.AsWriter();
 			var stopwatch = new Stopwatch();
@@ -547,12 +314,12 @@ namespace EmploymentTracker
 			routeJob.Complete();
 			stopwatch.Stop();
 			var elapsed_time = stopwatch.ElapsedMilliseconds;
-			//info("Is job completed: " + routeJob.IsCompleted);
-			//info("rs: " + resultStream.ForEachCount);
 			NativeStream.Reader resultReader = resultStream.AsReader();
 
 			stopwatch.Restart();
 			int totalCount = 0;
+
+			//Weight segments with multiple entities passing over heavier
 			NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
 
 			for (int i = 0; i < resultReader.ForEachCount; ++i)
@@ -574,19 +341,6 @@ namespace EmploymentTracker
 
 				resultReader.EndForEachIndex();
 			}
-			/*NativeHashSet<CurveDef> resultCurves = new NativeHashSet<CurveDef>(1500, Allocator.Temp);
-
-			for (int i = 0; i < resultReader.ForEachCount; ++i)
-			{
-				resultReader.BeginForEachIndex(i);
-				while (resultReader.RemainingItemCount > 0)
-				{
-					++totalCount;
-					resultCurves.Add(resultReader.Read<CurveDef>());
-				}
-
-				resultReader.EndForEachIndex();
-			}*/
 
 			stopwatch.Stop();
 			var streamReadTime = stopwatch.ElapsedMilliseconds;
@@ -594,7 +348,6 @@ namespace EmploymentTracker
 			{
 				this.totalSegmentCount.Update(totalCount);
 				this.uniqueSegmentCount.Update(resultCurves.Count);
-				//this.routeTimeMs.Update((int)elapsed_time);
 				this.bindings["Route Time (ms)"] = elapsed_time.ToString();
 			}
 
@@ -603,19 +356,14 @@ namespace EmploymentTracker
 			stopwatch.Restart();
 			if (resultCurves.Count > 0)
 			{
-				//NativeList<CurveDef> curveArray = new NativeList<CurveDef>(resultCurves.Count, Allocator.TempJob);
 				NativeArray<CurveDef> curveArray = new NativeArray<CurveDef>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 				NativeArray<int> curveCount = new NativeArray<int>(resultCurves.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-				//NativeList<int> curveCount = new NativeList<int>(resultCurves.Count, Allocator.TempJob);
 
 				int ind = 0;
 				foreach (var curve in resultCurves)
 				{
 					curveArray[ind] = curve.Key;
 					curveCount[ind] = curve.Value;
-					//curveArray.Add(curve.Key);
-					//curveCount.Add(curve.Value);
-					//curveArray[ind] = curve;
 					++ind;
 				}
 
@@ -629,9 +377,6 @@ namespace EmploymentTracker
 				curveArray.Dispose(routeJobHandle);
 				curveCount.Dispose(routeJobHandle);
 				this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
-
-				routeJobHandle.Complete();
-
 			}
 
 			stopwatch.Stop();
@@ -639,7 +384,6 @@ namespace EmploymentTracker
 			if (printFrame)
 			{
 				info("Printing frame: raw curve count " + totalCount + "; weighted count: " + resultCurves.Count + " route time ms: " + elapsed_time + "; stream read time ms: " + streamReadTime + "; render time ms: " + renderTime);
-
 			}
 
 			if (this.debugActiveBinding.value)
@@ -657,7 +401,7 @@ namespace EmploymentTracker
 			return toolSystem.selected;
 		}
 
-		private void populateRouteEntities(out int undupedCount, out int searchCount)
+		private void populateRouteEntities()
 		{
 			if (this.commutingEntities.IsCreated)
 			{
@@ -666,11 +410,8 @@ namespace EmploymentTracker
 
 			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
 
-			undupedCount = 0;
 			if (this.selectionType == SelectionType.BUILDING && this.routeHighlightOptions.incomingRoutes)
 			{
-				searchCount = 0;
-
 				EntitySearchJob searchJob = new EntitySearchJob();
 				searchJob.searchTarget = this.selectedEntity;
 				searchJob.results = new NativeList<Entity>(128, Allocator.TempJob);
@@ -680,8 +421,6 @@ namespace EmploymentTracker
 
 
 				jobHandle.Complete();
-
-				undupedCount = searchJob.results.Length;
 
 				for (int i = 0; i < searchJob.results.Length; ++i)
 				{
@@ -694,54 +433,7 @@ namespace EmploymentTracker
 					}
 				}
 
-				searchJob.results.Dispose();
-				/*var clock = new Stopwatch();
-				clock.Start();
-				NativeArray<Entity> entitiesWithTargets = this.hasTargetQuery.ToEntityArray(Allocator.Temp);
-
-				clock.Stop();
-				if (this.debugActiveBinding.value)
-				{
-					this.bindings["EQ Time (ms)"] = clock.ElapsedMilliseconds.ToString();
-				}
-
-				clock.Restart();
-				searchCount = entitiesWithTargets.Length;
-				if (this.printFrame)
-				{
-					info("Starting selection");
-				}
-
-				for (int i = 0; i < entitiesWithTargets.Length; i++)
-				{
-					Entity e = entitiesWithTargets[i];
-					if (EntityManager.Exists(e) && EntityManager.TryGetComponent(e, out Target target))
-					{
-						if (target.m_Target == this.selectedEntity)
-						{
-							SelectionType entityRouteType = this.getEntityRouteType(e);
-							if (entityRouteType != SelectionType.CAR_OCCUPANT)
-							{
-								this.commutingEntities.Add(e);
-							}
-
-							++undupedCount;
-							if (printFrame)
-							{
-								info("entity " + (undupedCount) + " with target: " + e.ToString());
-
-							}
-						}
-					}
-				}
-
-				clock.Stop();
-				if (this.debugActiveBinding.value)
-				{
-					this.bindings["EQ Compare (ms)"] = clock.ElapsedMilliseconds.ToString();
-				}
-
-				entitiesWithTargets.Dispose();	*/			
+				searchJob.results.Dispose();	
 			}
 			else
 			{
@@ -767,8 +459,6 @@ namespace EmploymentTracker
 				}
 
 				entitySelectJob.results.Dispose();
-
-				searchCount = 0;
 			}
 		}
 
@@ -851,15 +541,9 @@ namespace EmploymentTracker
 			}
 		}
 
-		private bool isValidEntity(Entity e)
-		{
-			return EntityManager.Exists(e) && !EntityManager.HasComponent<Deleted>(e) && !EntityManager.HasComponent<Temp>(e);
-		}
-
 		private void reset()
 		{
 			this.selectedEntity = default;
-			this.selectionLeader = default;
 			if (this.commutingEntities.IsCreated)
 			{ 
 				this.commutingEntities.Dispose();
@@ -873,7 +557,6 @@ namespace EmploymentTracker
 
 		private void toggleAutoRefresh(bool active) 
 		{
-			info("Toggling autorefresh: " + active); 
 			this.refreshTransitingEntitiesBinding.Update(active);  
 		}
 
@@ -906,56 +589,6 @@ namespace EmploymentTracker
 			}
 
 			this.printFrame = false;
-		}
-
-		[BurstCompile]
-		public static void readRouteStream(NativeStream.Reader resultReader, out NativeArray<CurveDef> curveArray, out NativeArray<int> curveCount, out int totalCount)
-		{
-			NativeHashMap<CurveDef, int> curveMap = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
-
-			totalCount = 0;
-			for (int i = 0; i < resultReader.ForEachCount; ++i)
-			{
-				resultReader.BeginForEachIndex(i);
-				//info("Reader " + i + " remaining count: " + resultReader.RemainingItemCount + " rs count: " + resultStream.Count());
-				while (resultReader.RemainingItemCount > 0)
-				{
-					++totalCount;
-					CurveDef resultCurve = resultReader.Read<CurveDef>();
-					if (curveMap.ContainsKey(resultCurve))
-					{
-						++curveMap[resultCurve];
-					}
-					else
-					{
-						curveMap[resultCurve] = 1;
-					}
-
-					//resultCurves.Add(resultCurve);
-				}
-
-				resultReader.EndForEachIndex();
-			}
-
-			if (curveMap.Count > 0)
-			{
-				curveArray = new NativeArray<CurveDef>(curveMap.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-				curveCount = new NativeArray<int>(curveMap.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
-				int ind = 0;
-				foreach (var curve in curveMap)
-				{
-					curveArray[ind] = curve.Key;
-					curveCount[ind] = curve.Value;
-
-					++ind;
-				}
-			} 
-			else
-			{
-				curveArray = default;
-				curveCount = default;
-			}
 		}
 
 		private void saveSettings()

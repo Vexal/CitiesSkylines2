@@ -1,17 +1,14 @@
-﻿using Colossal.Logging;
-using Colossal.UI.Binding;
+﻿using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Companies;
 using Game.Creatures;
-using Game.Net;
 using Game.Tools;
 using Game.UI;
 using Game.Vehicles;
 using System.Collections.Generic;
-using System.Threading;
 using Unity.Entities;
 using UnityEngine.InputSystem;
 
@@ -66,7 +63,7 @@ namespace EmploymentTracker
 			{
 				if (gameSettings.GetType() == typeof(EmploymentTrackerSettings))
 				{
-					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)this.settings;
+					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)gameSettings;
 					this.highlightFeatures = new HighlightFeatures(settings);
 				}
 			};
@@ -82,12 +79,9 @@ namespace EmploymentTracker
 		}
 
 		private bool toggled = true;
-		private long frameCount = 0;
 
 		protected override void OnUpdate()
 		{
-			++this.frameCount;
-
 			if (this.highlightFeatures.dirty)
 			{
 				this.reset();
@@ -124,7 +118,7 @@ namespace EmploymentTracker
 				return;
 			}
 
-			if (this.selectedEntity == null || this.selectedEntity == default(Entity))
+			if (this.selectedEntity == null || this.selectedEntity == default)
 			{
 				return;
 			}
@@ -135,22 +129,6 @@ namespace EmploymentTracker
 				this.highlightEmployerAndResidences();
 				this.highlightStudentResidences();
 				this.highlightPassengerDestinations();
-			}
-		}
-
-		public class CurveSet
-		{
-			public Dictionary<CurveDef, int> curve2Count = new Dictionary<CurveDef, int>();
-
-			public void add(CurveDef curve)
-			{
-				if (this.curve2Count.TryGetValue(curve, out int currentCount))
-				{
-					++this.curve2Count[curve];
-				} else
-				{
-					this.curve2Count[curve] = 1;
-				}
 			}
 		}
 
@@ -427,19 +405,6 @@ namespace EmploymentTracker
 		private void saveSettings()
 		{
 			this.settings.ApplyAndSave();
-		}
-	}
-
-	class CurveComparator : IEqualityComparer<Curve>
-	{
-		public bool Equals(Curve x, Curve y)
-		{
-			return x.m_Bezier.Equals(y.m_Bezier);
-		}
-
-		public int GetHashCode(Curve obj)
-		{
-			return obj.m_Bezier.GetHashCode();
 		}
 	}
 }

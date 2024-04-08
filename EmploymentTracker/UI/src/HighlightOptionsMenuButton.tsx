@@ -1,13 +1,11 @@
-import { Button, FloatingButton, MenuButton, Panel, PanelSection, PanelSectionRow } from "cs2/ui";
+import { Button, FloatingButton, Panel, PanelSection, PanelSectionRow } from "cs2/ui";
 import tadaSrc from "./Traffic.svg";
-import iconStyles from "./icon.module.scss";
 import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
 
 export const autoRefreshEntitiesBinding = bindValue<boolean>("EmploymentTracker", 'AutoRefreshTransitingEntitiesActive');
 export const debugStatsBinding = bindValue<boolean>("EmploymentTracker", 'DebugActive');
 export const trackedEntityCountBinding = bindValue<number>("EmploymentTracker", 'TrackedEntityCount');
-export const undupedEntityCountBinding = bindValue<number>("EmploymentTracker", 'UndupedEntityCount');
 export const totalSegmentCountBinding = bindValue<number>("EmploymentTracker", 'TotalSegmentCount');
 export const uniqueSegmentCountBinding = bindValue<number>("EmploymentTracker", 'UniqueSegmentCount');
 export const routeTimeBinding = bindValue<string>("EmploymentTracker", 'RouteTimeMs');
@@ -30,7 +28,6 @@ export default class HighlightOptionsMenuButton extends Component {
 		autoRefreshTransitingEntities: autoRefreshEntitiesBinding.value,
 		showStats: debugStatsBinding.value,
 		trackedEntityCount: trackedEntityCountBinding.value,
-		undupedEntityCount: undupedEntityCountBinding.value,
 		uniqueSegmentCount: uniqueSegmentCountBinding.value,
 		totalSegmentCount: totalSegmentCountBinding.value,
 		selectionType: selectionTypeBinding.value,
@@ -106,15 +103,6 @@ export default class HighlightOptionsMenuButton extends Component {
 							</div>
 							<div style={{ display: "flex" }}>
 								<div style={{ padding: "5rem" }}>
-									Unduped entities
-								</div>
-								<div style={{ flex: "1", padding: "5rem" }} />
-								<div style={{ paddingRight: "20rem" }}>
-									{this.state.undupedEntityCount}
-								</div>
-							</div>
-							<div style={{ display: "flex" }}>
-								<div style={{ padding: "5rem" }}>
 									Unique Segments
 								</div>
 								<div style={{ flex: "1", padding: "5rem" }} />
@@ -166,10 +154,6 @@ export default class HighlightOptionsMenuButton extends Component {
 
 		uniqueSegmentCountBinding.subscribe(val => {
 			this.setState({ uniqueSegmentCount: val });
-		})
-
-		undupedEntityCountBinding.subscribe(val => {
-			this.setState({ undupedEntityCount: val });
 		})
 
 		highlightSelectedRoute.subscribe(val => {

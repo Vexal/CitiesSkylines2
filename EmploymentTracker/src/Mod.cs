@@ -26,7 +26,7 @@ namespace EmploymentTracker
 			AssetDatabase.global.LoadSettings(nameof(EmploymentTracker), this.settings, new EmploymentTrackerSettings(this));
 
 			updateSystem.UpdateBefore<HighlightEmployeesSystem>(SystemUpdatePhase.MainLoop);
-			updateSystem.UpdateBefore<RenderRoutesSystem>(SystemUpdatePhase.MainLoop);
+			updateSystem.UpdateBefore<HighlightRoutesSystem>(SystemUpdatePhase.Rendering);
 
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");

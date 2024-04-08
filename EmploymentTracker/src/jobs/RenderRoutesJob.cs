@@ -12,10 +12,8 @@ namespace EmploymentTracker
 	{
 		public OverlayRenderSystem.Buffer overlayBuffer;
 		[ReadOnly]
-		//public NativeList<CurveDef> curveDefs;
 		public NativeArray<CurveDef> curveDefs;
 		[ReadOnly]
-		//public NativeList<int> curveCounts;
 		public NativeArray<int> curveCounts;
 		[ReadOnly]
 		public RouteOptions routeHighlightOptions;
@@ -26,7 +24,6 @@ namespace EmploymentTracker
 			{
 				CurveDef curve = this.curveDefs[i];
 				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, this.getCurveWidth(curve.type), this.routeHighlightOptions.routeRoundness);
-				//overlayBuffer.DrawCurve(this.getCurveColor(curve.type, 1), curve.curve, this.getCurveWidth(curve.type), this.routeHighlightOptions.routeRoundness);
 			}
 		}
 
@@ -64,8 +61,6 @@ namespace EmploymentTracker
 					break;
 			}
 
-			//color.a = this.routeHighlightOptions.minRouteAlpha;
-			//color.a = this.routeHighlightOptions.minRouteAlpha + (weight * this.routeHighlightOptions.routeWeightMultiplier);
 			color.a = math.min(this.routeHighlightOptions.minRouteAlpha + (weight * this.routeHighlightOptions.routeWeightMultiplier), 1);
 			return color;
 		}
