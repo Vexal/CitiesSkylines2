@@ -1,86 +1,85 @@
-﻿using Colossal.Logging;
+﻿using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Companies;
 using Game.Creatures;
-using Game.Events;
-using Game.Net;
-using Game.Pathfind;
-using Game.Rendering;
 using Game.Tools;
-using Game.Tutorials;
+using Game.UI;
 using Game.Vehicles;
 using System.Collections.Generic;
-using System.Threading;
 using Unity.Entities;
-using Unity.Jobs;
-using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 namespace EmploymentTracker
 {
-	internal partial class HighlightEmployeesSystem : GameSystemBase
+	internal partial class HighlightEmployeesSystem : UISystemBase
     {
-        public static ILog log = LogManager.GetLogger($"{nameof(EmploymentTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(true);
-
-        Entity selectedEntity;
-		HashSet<Entity> highlightedEntities = new HashSet<Entity>();
+		private Entity selectedEntity;
+		private HashSet<Entity> highlightedEntities = new HashSet<Entity>();
         private InputAction toggleSystemAction;
-        private InputAction togglePathDisplayAction;
-		private OverlayRenderSystem overlayRenderSystem;
-        ToolSystem toolSystem;
-		EmploymentTrackerSettings settings;
+        private ToolSystem toolSystem;
+		private EmploymentTrackerSettings settings;
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
-		private RouteOptions routeHighlightOptions = new RouteOptions();
+
+		private ValueBinding<bool> activateHighlightPassengerDestinations;
+		private ValueBinding<bool> highlightEmployeeResidences;
+		private ValueBinding<bool> highlightWorkplaces;
+		private ValueBinding<bool> studentResidences;
+
 		protected override void OnCreate()
         {
             base.OnCreate();
             this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
             this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
-			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
-			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
-			
+
+			this.settings = Mod.INSTANCE.getSettings();
+
+			this.highlightFeatures = new HighlightFeatures(settings);
+
+			this.activateHighlightPassengerDestinations = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerDestinations", this.settings.highlightDestinations);
+			this.highlightWorkplaces = new ValueBinding<bool>("EmploymentTracker", "highlightResidentWorkplaces", this.settings.highlightWorkplaces);
+			this.highlightEmployeeResidences = new ValueBinding<bool>("EmploymentTracker", "highlightEmployeeResidences", this.settings.highlightEmployeeResidences);
+			this.studentResidences = new ValueBinding<bool>("EmploymentTracker", "highlightStudentResidences", this.settings.highlightStudentResidences);
+
+			AddBinding(this.activateHighlightPassengerDestinations);
+			AddBinding(this.highlightWorkplaces);
+			AddBinding(this.highlightEmployeeResidences);
+			AddBinding(this.studentResidences);
+
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerDestinations", s => { this.activateHighlightPassengerDestinations.Update(s); this.settings.highlightDestinations = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightResidentWorkplaces", s => { this.highlightWorkplaces.Update(s); this.settings.highlightWorkplaces = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEmployeeResidences", s => { this.highlightEmployeeResidences.Update(s); this.settings.highlightEmployeeResidences = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightStudentResidences", s => { this.studentResidences.Update(s); this.settings.highlightStudentResidences = s; this.saveSettings(); }));
 		}
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-            this.toggleSystemAction.Enable();
-			this.togglePathDisplayAction.Enable();
-			this.overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
-			this.settings = Mod.INSTANCE.getSettings();
-
-			this.highlightFeatures = new HighlightFeatures(settings);
-			this.routeHighlightOptions = new RouteOptions(settings);
 
 			this.settings.onSettingsApplied += gameSettings =>
 			{
 				if (gameSettings.GetType() == typeof(EmploymentTrackerSettings))
 				{
-					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)this.settings;
-					info("Settings thread: " + Thread.CurrentThread.ManagedThreadId);
+					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)gameSettings;
 					this.highlightFeatures = new HighlightFeatures(settings);
-					this.routeHighlightOptions = new RouteOptions(settings);
 				}
 			};
+
+			this.toggleSystemAction.Enable();
 		}
 
 		protected override void OnStopRunning()
 		{
 			base.OnStopRunning();
             this.toggleSystemAction.Disable();
-            this.togglePathDisplayAction.Disable();
 			this.reset();
 		}
 
 		private bool toggled = true;
-		private bool pathingToggled = true;
-        private HashSet<Entity> highlightedPathEntities = new HashSet<Entity>();
+
 		protected override void OnUpdate()
 		{
 			if (this.highlightFeatures.dirty)
@@ -110,7 +109,6 @@ namespace EmploymentTracker
 				this.toggled = !this.toggled;
 				if (!this.toggled)
 				{
-					this.pathingToggled = true;
 					return;
 				}
 			}
@@ -120,13 +118,7 @@ namespace EmploymentTracker
 				return;
 			}
 
-			if (this.togglePathDisplayAction.WasPressedThisFrame())
-			{
-				this.resetPathing();
-				this.pathingToggled = !this.pathingToggled;
-			}
-
-			if (this.selectedEntity == null || this.selectedEntity == default(Entity))
+			if (this.selectedEntity == null || this.selectedEntity == default)
 			{
 				return;
 			}
@@ -137,132 +129,6 @@ namespace EmploymentTracker
 				this.highlightEmployerAndResidences();
 				this.highlightStudentResidences();
 				this.highlightPassengerDestinations();
-			}
-
-			if (this.pathingToggled)
-			{
-				this.highlightPathingRoute(this.selectedEntity);
-			}
-		}
-
-		/**
-		 * Hypothesis: an estimate of the fully planned route is contained in PathElement buffer.
-		 * PathOwner.m_elementIndex is an index into PathElement[] (a path element is not removed from the buffer even
-		 * after the entity has passed it)
-		 * 
-		 * Entities also have a CarNavigationLane buffer, which appears to contain up to 8 near-term pathing decisions,
-		 * to be performed prior to the nearest PathElement; Combining both of these buffers appears to highlight a route.
-		 * 
-		 * TODO: support train tracks
-		 */
-		private void highlightPathingRoute(Entity selected)
-		{
-			if (!this.highlightFeatures.routes || selected == null)
-			{
-				return;
-			}
-
-			//Highlight the path of a selected citizen inside a vehicle
-			if (EntityManager.HasComponent<CurrentVehicle>(selected))
-			{
-				this.highlightPathingRoute(EntityManager.GetComponentData<CurrentVehicle>(selected).m_Vehicle);
-				return;
-			} else if (EntityManager.HasComponent<CurrentTransport>(selected))
-			{
-				this.highlightPathingRoute(EntityManager.GetComponentData<CurrentTransport>(selected).m_CurrentTransport);
-				return;
-			}
-
-			HashSet<Entity> toRemove = new HashSet<Entity>();
-			HashSet<Entity> toAdd = new HashSet<Entity>();
-			List<CurveDef> curves = new List<CurveDef>();
-
-			if (EntityManager.HasBuffer<PathElement>(selected) && EntityManager.HasComponent<PathOwner>(selected))
-			{
-				//A single entity is in charge of the path of an object -- the PathOwner
-				PathOwner pathOwner = EntityManager.GetComponentData<PathOwner>(selected);
-				DynamicBuffer<PathElement> pathElements = EntityManager.GetBuffer<PathElement>(selected);
-			
-				toRemove = new HashSet<Entity>(this.highlightedPathEntities);
-					
-				for (int i = 0; i < pathElements.Length; ++i)
-				{
-					PathElement element = pathElements[i];
-					if (EntityManager.HasComponent<Curve>(element.m_Target))
-					{
-						if (i >= pathOwner.m_ElementIndex)
-						{
-							curves.Add(this.getCurveDef(element.m_Target));									
-						}
-					}
-					else if (EntityManager.HasComponent<Owner>(element.m_Target))
-					{
-						Owner owner = EntityManager.GetComponentData<Owner>(element.m_Target);
-						if (i >= pathOwner.m_ElementIndex)
-						{
-							toAdd.Add(owner.m_Owner);
-							toRemove.Remove(owner.m_Owner);
-						}
-						else
-						{
-							toRemove.Add(owner.m_Owner);
-						}
-					}
-				}			
-			}			
-
-			if (EntityManager.HasBuffer<CarNavigationLane>(selected))
-			{
-				DynamicBuffer<CarNavigationLane> pathElements = EntityManager.GetBuffer<CarNavigationLane>(selected);
-				if (!pathElements.IsEmpty)
-				{					
-					foreach (CarNavigationLane element in pathElements)
-					{						
-						if (EntityManager.HasComponent<Curve>(element.m_Lane))
-						{
-							curves.Add(this.getCurveDef(element.m_Lane));
-						}
-						else if (EntityManager.HasComponent<Owner>(element.m_Lane))
-						{
-							Owner owner = EntityManager.GetComponentData<Owner>(element.m_Lane);
-							toAdd.Add(owner.m_Owner);
-							toRemove.Remove(owner.m_Owner);
-						}
-					}
-				}
-			}
-
-			if (curves.Count > 0)
-			{
-				JobHandle jHandle; //TODO: learn why this needs to reference a job; also, learn how to use jobs
-				var overlayBuffer = this.overlayRenderSystem.GetBuffer(out jHandle);
-
-				foreach (var curve in curves)
-				{
-					overlayBuffer.DrawCurve(curve.color, curve.curve.m_Bezier, curve.width, new float2() { x = 1, y = 1 });
-				}
-
-				jHandle.Complete();
-			}
-
-			foreach (Entity entity in toRemove)
-			{
-				if (!this.highlightedEntities.Contains(entity))
-				{
-					this.removeHighlight(entity);
-				}
-
-				this.highlightedPathEntities.Remove(entity);
-			}
-
-			foreach (Entity entity in toAdd)
-			{
-				this.highlightedPathEntities.Add(entity);
-			}
-
-			foreach (Entity entity in this.highlightedPathEntities)
-			{
-				this.applyHighlight(entity, false);
 			}
 		}
 
@@ -431,7 +297,7 @@ namespace EmploymentTracker
 
 						if (!(purpose == Purpose.GoingToWork || purpose == Purpose.GoingToSchool))
                         {
-                            return;
+                           // return;
                         }
                     }
 				}
@@ -472,25 +338,6 @@ namespace EmploymentTracker
 			}
         }
 
-		private CurveDef getCurveDef(Entity entity)
-		{
-			//TODO make this configurable
-			Curve curve = EntityManager.GetComponentData<Curve>(entity);
-			Color color = this.routeHighlightOptions.vehicleLineColor;
-			float width = this.routeHighlightOptions.vehicleLineWidth;
-			if (EntityManager.HasComponent<PedestrianLane>(entity))
-			{
-				color = this.routeHighlightOptions.pedestrianLineColor;
-				width = this.routeHighlightOptions.pedestrianLineWidth;
-			}
-			else if (EntityManager.HasComponent<SecondaryLane>(entity))
-			{
-				width = 1f;
-			}
-
-			return new CurveDef(curve, color, width);
-		}
-
 		private void clearHighlight(bool pathingOnly=false)
         {
 			if (!pathingOnly)
@@ -502,13 +349,6 @@ namespace EmploymentTracker
 
 				this.highlightedEntities.Clear();
 			}
-
-			foreach (Entity entity in this.highlightedPathEntities)
-			{
-				this.removeHighlight(entity);
-			}
-
-			this.highlightedPathEntities.Clear();
 		}
 
         private void removeHighlight(Entity entity)
@@ -547,6 +387,7 @@ namespace EmploymentTracker
         {          
             return 1;
 		}
+
 		private void info(string message)
 		{
 			if (Mod.log != null && message != null)
@@ -558,14 +399,12 @@ namespace EmploymentTracker
 		private void reset()
 		{
 			this.clearHighlight();
-			this.resetPathing();
 			this.selectedEntity = default(Entity);
 		}
 
-		private void resetPathing()
+		private void saveSettings()
 		{
-			this.clearHighlight(true);
-			this.highlightedPathEntities.Clear();
+			this.settings.ApplyAndSave();
 		}
 	}
 }

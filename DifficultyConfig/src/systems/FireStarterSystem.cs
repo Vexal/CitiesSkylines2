@@ -42,7 +42,7 @@ namespace DifficultyConfig
 
 		protected override void OnUpdate()
 		{
-			if (EntityManager.TryGetComponent(this.citySystem.City, out BurningCity burningCity))
+			if (this.citySystem != null && EntityManager.Exists(this.citySystem.City) && EntityManager.TryGetComponent(this.citySystem.City, out BurningCity burningCity))
 			{
 				if (this.frameCount++ % 60 != 0)
 				{

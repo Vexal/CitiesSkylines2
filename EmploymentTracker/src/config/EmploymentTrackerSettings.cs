@@ -3,20 +3,20 @@ using Colossal.IO.AssetDatabase;
 using Game.Modding;
 using Game.Settings;
 using Game.UI;
-using Game.UI.Widgets;
 using System.Collections.Generic;
 
 namespace EmploymentTracker
 {
 	[FileLocation(nameof(EmploymentTracker))]
-	[SettingsUIGroupOrder(featureOptionsGroup, routeHighlightOptions)]
-	[SettingsUIShowGroupName(featureOptionsGroup, routeHighlightOptions)]
+	[SettingsUIGroupOrder(routeHighlightTypes, objectHighlightTypes, routeHighlightTypes, routeHighlightOptions)]
+	[SettingsUIShowGroupName(routeHighlightTypes, objectHighlightTypes, routeHighlightOptions)]
 	public class EmploymentTrackerSettings : ModSetting
 	{
 		public const string kSection = "Main";
 
 		public const string routeHighlightOptions = "Route Highlight Options";
-		public const string featureOptionsGroup = "Active Highlighters";
+		public const string routeHighlightTypes = "Route Highlight Types";
+		public const string objectHighlightTypes = "Object Highlight Types";
 
 		public EmploymentTrackerSettings(IMod mod) : base(mod)
 		{
@@ -25,27 +25,33 @@ namespace EmploymentTracker
 			this.highlightStudentResidences = true;
 			this.highlightEmployeeCommuters = true;
 			this.highlightEmployeeResidences = true;
-			this.highlightRoutes = true;
+			//this.highlightRoutes = true;
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
+			this.routeOpacity = .7f;
+
+			this.incomingRoutes = true;
+			this.incomingRoutesTransit = true;
+			this.highlightSelectedTransitVehiclePassengerRoutes = true;
+			this.highlightSelected = true;
 		}
 
-		[SettingsUISection(kSection, featureOptionsGroup)]
-		public bool highlightRoutes { get; set; }
+		//[SettingsUISection(kSection, objectHighlightTypes)]
+		//public bool highlightRoutes { get; set; }
 
-		[SettingsUISection(kSection, featureOptionsGroup)]
+		[SettingsUISection(kSection, objectHighlightTypes)]
 		public bool highlightWorkplaces { get; set; }
 		
-		[SettingsUISection(kSection, featureOptionsGroup)]
+		[SettingsUISection(kSection, objectHighlightTypes)]
 		public bool highlightEmployeeResidences { get; set; }
 		
-		[SettingsUISection(kSection, featureOptionsGroup)]
+		[SettingsUISection(kSection, objectHighlightTypes)]
 		public bool highlightEmployeeCommuters { get; set; }
 		
-		[SettingsUISection(kSection, featureOptionsGroup)]
+		[SettingsUISection(kSection, objectHighlightTypes)]
 		public bool highlightStudentResidences { get; set; }
 		
-		[SettingsUISection(kSection, featureOptionsGroup)]
+		[SettingsUISection(kSection, objectHighlightTypes)]
 		public bool highlightDestinations { get; set; }
 
 		[SettingsUISlider(min = .5f, max = 20f, step = .5f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
@@ -56,16 +62,36 @@ namespace EmploymentTracker
 		[SettingsUISection(kSection, routeHighlightOptions)]
 		public float pedestrianRouteWidth { get; set; }
 
+		[SettingsUISlider(min = .1f, max = 10f, step = .1f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
+		[SettingsUISection(kSection, routeHighlightOptions)]
+		public float routeOpacity { get; set; }
+
+
+		[SettingsUISection(kSection, routeHighlightTypes)]
+		public bool incomingRoutes { get; set; }
+		[SettingsUISection(kSection, routeHighlightTypes)]
+		public bool incomingRoutesTransit { get; set; }
+		[SettingsUISection(kSection, routeHighlightTypes)]
+		public bool highlightSelectedTransitVehiclePassengerRoutes { get; set; }
+		[SettingsUISection(kSection, routeHighlightTypes)]
+		public bool highlightSelected { get; set; }
+
 		public override void SetDefaults()
 		{
 			this.highlightDestinations = true;
 			this.highlightWorkplaces = true;
-			this.highlightRoutes = true;
+			//this.highlightRoutes = true;
 			this.highlightStudentResidences = true;
 			this.highlightEmployeeCommuters = true;
 			this.highlightEmployeeResidences = true;
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
+			this.routeOpacity = .7f;
+
+			this.incomingRoutes = true;
+			this.incomingRoutesTransit = true;
+			this.highlightSelectedTransitVehiclePassengerRoutes = true;
+			this.highlightSelected = true;
 		}
 	}
 
@@ -76,6 +102,7 @@ namespace EmploymentTracker
 		{
 			this.settings = setting;
 		}
+
 		public IEnumerable<KeyValuePair<string, string>> ReadEntries(IList<IDictionaryEntryError> errors, Dictionary<string, int> indexCounts)
 		{
 			return new Dictionary<string, string>
@@ -85,10 +112,23 @@ namespace EmploymentTracker
 
 
 				//Feature toggles
-				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.featureOptionsGroup), "Highlight Toggles" },
-				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightRoutes)), "Routes" },
-				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightRoutes)), $"Display current route of selected vehicle or CIM. Routes can change if the object encounters obstacles." },
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightTypes), "Route Highlight Toggles (Experimental)" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightSelected)), "Selected Object Route" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightSelected)), $"Display current route of selected CIM or non-public transit vehicles." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightSelectedTransitVehiclePassengerRoutes)), "Selected Vehicle Passenger Routes" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightSelectedTransitVehiclePassengerRoutes)), $"Display current routes of all CIMs in the selected vehicle." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.incomingRoutes)), "Active Routes to Selected Building" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutes)), $"Display routes of all objects en-route to the selected building. Has a non-trivial performance impact." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), "Include En-route Public Transit" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), $"Include public transit when incoming highlighting routes. This feature is an experimental work-in-progress." },
 				
+				//Object highlight options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.objectHighlightTypes), "Object Highlight Toggles" },
+
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightDestinations)), "Passenger Destinations" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightDestinations)), $"Highlight the destinations of passengers in the selected vehicle (personal vehicles or transit)." },
 				
@@ -104,8 +144,13 @@ namespace EmploymentTracker
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), "Student Residences" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), $"Highlight residence buildings for all students of the selected building." },
 
+
 				//Route highlight options
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightOptions), "Route Highlight Options" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), "Route Opacity" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), $"Opacity of route overlay lines." },
+
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.vehicleRouteWidth)), "Vehicle Route Segment Line Width" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.vehicleRouteWidth)), $"The width of the route display line for vehicles." },
 				

@@ -1,4 +1,5 @@
-﻿using Game;
+﻿using Colossal.Entities;
+using Game;
 using Game.City;
 using Game.Common;
 using Game.Prefabs;
@@ -42,19 +43,22 @@ namespace DifficultyConfig
 			this.updateGlobal(settings);
 		}
 
+		protected override void OnStopRunning()
+		{
+			base.OnStopRunning();
+		}
+
 		private void updateGlobal(DifficultySettings settings)
 		{
 			this.updateMilestoneRewards(!settings.disableMilestoneRewards);
 		}
 
 		bool gameIsLost = false;
-
 		protected override void OnUpdate()
 		{
 			if (this.settings.allowGameLoss)
 			{
-				PlayerMoney currentMoney = EntityManager.GetComponentData<PlayerMoney>(this.citySystem.City);
-				if (currentMoney.money < this.settings.minimumMoneyLoss)
+				if (EntityManager.TryGetComponent<PlayerMoney>(this.citySystem.City, out PlayerMoney currentMoney) && currentMoney.money < this.settings.minimumMoneyLoss)
 				{
 					if (!EntityManager.HasComponent<BurningCity>(this.citySystem.City))
 					{
