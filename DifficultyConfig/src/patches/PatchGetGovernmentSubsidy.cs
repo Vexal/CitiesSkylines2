@@ -1,5 +1,6 @@
 ﻿using Game.Simulation;
 using HarmonyLib;
+using Unity.Mathematics;
 
 namespace DifficultyConfig
 {
@@ -15,7 +16,7 @@ namespace DifficultyConfig
 					__result = -1000000000;
 					break;
 				case DifficultySettings.SubsidyType.NONE:
-					__result = 0;
+					__result = math.min(0, __result);
 					break;
 				case DifficultySettings.SubsidyType.DEFAULT:
 					break;

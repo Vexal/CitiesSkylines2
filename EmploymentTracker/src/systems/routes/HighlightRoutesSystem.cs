@@ -414,13 +414,30 @@ namespace EmploymentTracker
 			{
 				EntitySearchJob searchJob = new EntitySearchJob();
 				searchJob.searchTarget = this.selectedEntity;
+				if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
+				{
+					searchJob.searchTarget2 = renterBuffer[0].m_Renter;
+				}
+				else
+				{
+					searchJob.searchTarget2 = default;
+				}
+
 				searchJob.results = new NativeList<Entity>(128, Allocator.TempJob);
 				searchJob.targetHandle = SystemAPI.GetComponentTypeHandle<Target>(true);
 				searchJob.entityHandle = SystemAPI.GetEntityTypeHandle();
+				searchJob.searchCounter = new Colossal.NativeCounter(Allocator.TempJob);
 				var jobHandle = JobChunkExtensions.Schedule(searchJob, this.hasTargetQuery, default);
 
-
+				
 				jobHandle.Complete();
+
+				if (this.debugActiveBinding.value)
+				{
+					this.bindings["Search Count"] = searchJob.searchCounter.Count.ToString();
+				}
+					
+				searchJob.searchCounter.Dispose();
 
 				for (int i = 0; i < searchJob.results.Length; ++i)
 				{

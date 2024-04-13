@@ -1,4 +1,5 @@
-﻿using Game.Common;
+﻿using Colossal;
+using Game.Common;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -12,9 +13,12 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public Entity searchTarget;
 		[ReadOnly]
+		public Entity searchTarget2;
+		[ReadOnly]
 		public ComponentTypeHandle<Target> targetHandle;
 		[ReadOnly]
 		public EntityTypeHandle entityHandle;
+		public NativeCounter searchCounter;
 
 		public NativeList<Entity> results;
 
@@ -24,14 +28,19 @@ namespace EmploymentTracker
 			NativeArray<Target> targets = chunk.GetNativeArray(ref this.targetHandle);
 			NativeArray<Entity> entities = chunk.GetNativeArray(this.entityHandle);
 			var chunkIterator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+			int count = 0;
 			while (chunkIterator.NextEntityIndex(out var i))
 			{
 				Target entityTarget = targets[i];
-				if (entityTarget.m_Target == this.searchTarget)
+				if (entityTarget.m_Target == this.searchTarget || entityTarget.m_Target == this.searchTarget2)
 				{
 					this.results.Add(entities[i]);
 				}
+
+				++count;
 			}
+
+			this.searchCounter.Count += count;
 		}
 	}
 }

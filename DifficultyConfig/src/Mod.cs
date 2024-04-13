@@ -21,6 +21,7 @@ namespace DifficultyConfig
 			updateSystem.UpdateBefore<DifficultSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<FireStarterSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<CollapseCitySystem>(SystemUpdatePhase.GameSimulation);
+			updateSystem.UpdateBefore<BulldozeCostSystem>(SystemUpdatePhase.MainLoop);
 			//updateSystem.UpdateBefore<EmployeePresenceSystem>(SystemUpdatePhase.GameSimulation);
 
 			INSTANCE = this;
