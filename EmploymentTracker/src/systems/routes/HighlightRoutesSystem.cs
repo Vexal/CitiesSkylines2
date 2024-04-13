@@ -417,10 +417,12 @@ namespace EmploymentTracker
 				if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
 				{
 					searchJob.searchTarget2 = renterBuffer[0].m_Renter;
+					searchJob.hasTarget2 = true;
 				}
 				else
 				{
 					searchJob.searchTarget2 = default;
+					searchJob.hasTarget2 = false;
 				}
 
 				searchJob.results = new NativeList<Entity>(128, Allocator.TempJob);

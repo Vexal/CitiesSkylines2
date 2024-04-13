@@ -15,6 +15,8 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public Entity searchTarget2;
 		[ReadOnly]
+		public bool hasTarget2;
+		[ReadOnly]
 		public ComponentTypeHandle<Target> targetHandle;
 		[ReadOnly]
 		public EntityTypeHandle entityHandle;
@@ -32,7 +34,7 @@ namespace EmploymentTracker
 			while (chunkIterator.NextEntityIndex(out var i))
 			{
 				Target entityTarget = targets[i];
-				if (entityTarget.m_Target == this.searchTarget || entityTarget.m_Target == this.searchTarget2)
+				if (entityTarget.m_Target == this.searchTarget || (this.hasTarget2 && entityTarget.m_Target == this.searchTarget2))
 				{
 					this.results.Add(entities[i]);
 				}
