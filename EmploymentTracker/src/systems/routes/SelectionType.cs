@@ -23,6 +23,7 @@ namespace EmploymentTracker
 		BUS_OCCUPANT,
 		BUS,
 		AIRPLANE,
-		ANIMAL
+		ANIMAL,
+		RESIDENT
 	}
 }

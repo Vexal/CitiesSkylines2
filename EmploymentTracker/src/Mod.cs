@@ -22,6 +22,7 @@ namespace EmploymentTracker
 			this.settings = new EmploymentTrackerSettings(this);
 			this.settings.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(this.settings));
+			GameManager.instance.localizationManager.AddSource("zh-HANS", new LocaleSC(this.settings));
 
 			AssetDatabase.global.LoadSettings(nameof(EmploymentTracker), this.settings, new EmploymentTrackerSettings(this));
 

@@ -9,8 +9,10 @@ using Game.Vehicles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Mathematics;
+using static Colossal.Animations.Animation;
 
 namespace EmploymentTracker
 {
@@ -87,15 +89,12 @@ namespace EmploymentTracker
 						PathElement element = pathElements[i];
 						if (this.curveLookup.TryGetComponent(element.m_Target, out Curve curve))
 						{
-							this.results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta));
-
+							this.results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta, true));
 						}
 						else if (this.ownerLookup.TryGetComponent(element.m_Target, out Owner owner))
 						{
 							if (this.incomingRoutesTransit && this.routeLaneLookup.HasComponent(element.m_Target) &&
-								i < pathElements.Length - 1 &&
-								this.waypointLookup.TryGetComponent(element.m_Target, out Waypoint waypoint1) &&
-								this.waypointLookup.TryGetComponent(pathElements[i + 1].m_Target, out Waypoint waypoint2))
+								this.getTransitWaypoints(element.m_Target, pathElements, i, out i, out Waypoint waypoint1, out Waypoint waypoint2))
 							{
 								if (i >= pathOwner.m_ElementIndex)
 								{
@@ -161,7 +160,7 @@ namespace EmploymentTracker
 			return writeCount;
 		}
 
-		private CurveDef getCurveDef(Entity entity, Bezier4x3 curve, float2 delta)
+		private CurveDef getCurveDef(Entity entity, Bezier4x3 curve, float2 delta, bool definitelyIsNotTransit = false)
 		{
 			byte type = 1;
 			if (this.pedestrianLaneLookup.HasComponent(entity))
@@ -172,12 +171,31 @@ namespace EmploymentTracker
 			{
 				type = 0;
 			}
-			else if (this.trackLaneLookup.HasComponent(entity))
+			else if (!definitelyIsNotTransit && this.trackLaneLookup.HasComponent(entity))
 			{
 				type = 3;
 			}
 
 			return new CurveDef(MathUtils.Cut(curve, delta), type);
+		}
+
+		private bool getTransitWaypoints(Entity target, DynamicBuffer<PathElement> pathElements, int startIndex, out int endIndex, out Waypoint waypoint1, out Waypoint waypoint2)
+		{
+			if (this.waypointLookup.TryGetComponent(target, out waypoint1))
+			{
+				for (endIndex = startIndex + 1; endIndex < pathElements.Length; endIndex++)
+				{
+					if (this.waypointLookup.TryGetComponent(pathElements[endIndex].m_Target, out waypoint2))
+					{
+						return true;
+					}
+				}
+			}
+
+			waypoint1 = default;
+			waypoint2 = default;
+			endIndex = startIndex;
+			return false;
 		}
 
 		private bool isValidEntity(Entity e)

@@ -2,6 +2,7 @@ import { Button, FloatingButton, Panel, PanelSection, PanelSectionRow } from "cs
 import tadaSrc from "./Traffic.svg";
 import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
+import { useLocalization } from "cs2/l10n";
 
 export const autoRefreshEntitiesBinding = bindValue<boolean>("EmploymentTracker", 'AutoRefreshTransitingEntitiesActive');
 export const debugStatsBinding = bindValue<boolean>("EmploymentTracker", 'DebugActive');
@@ -49,6 +50,8 @@ export default class HighlightOptionsMenuButton extends Component {
 	}
 
 	render() {
+		//const { translate } = useLocalization();
+
 		return <div>
 
 			<FloatingButton src={tadaSrc} selected={this.state.menuOpen} onSelect={() => {
@@ -207,7 +210,7 @@ export default class HighlightOptionsMenuButton extends Component {
 interface OptionsProps {
 	value: boolean,
 	name: string,
-	text: string
+	text: string|null
 }
 
 class OptionToggle extends Component<OptionsProps> {

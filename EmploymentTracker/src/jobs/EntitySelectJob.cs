@@ -1,5 +1,7 @@
-﻿using Game.Common;
+﻿using Game.Citizens;
+using Game.Common;
 using Game.Creatures;
+using Game.Pathfind;
 using Game.Vehicles;
 using Unity.Burst;
 using Unity.Collections;
@@ -23,20 +25,43 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public ComponentLookup<PublicTransport> publicTransportLookup;
 		[ReadOnly]
+		public ComponentLookup<CurrentVehicle> currentVehicleLookup;
+		[ReadOnly]
+		public ComponentLookup<CurrentTransport> currentTransportLookup;
+		[ReadOnly]
 		public BufferLookup<Passenger> passengerLookup;
 		[ReadOnly]
 		public BufferLookup<LayoutElement> layoutElementLookup;
 		[ReadOnly]
+		public BufferLookup<PathElement> pathElementLookup;
+		[ReadOnly]
 		public bool highlightTransitPassengerRoutes;
+		[ReadOnly]
+		public SelectionType inputSelectionType;
 
 		public void Execute()
 		{
-			this.executeInternal(input);
+			this.executeInternal(this.input, this.inputSelectionType);
 		}
 
-		private void executeInternal(Entity entity)
+		private void executeInternal(Entity entity, SelectionType selectionType)
 		{
-			if (!this.publicTransportLookup.HasComponent(entity))
+			if (selectionType == SelectionType.CAR_OCCUPANT && this.currentVehicleLookup.TryGetComponent(entity, out CurrentVehicle vehicle))
+			{
+				this.executeInternal(vehicle.m_Vehicle, selectionType);
+			}
+			else if (selectionType == SelectionType.RESIDENT && this.currentTransportLookup.TryGetComponent(entity, out CurrentTransport currentTransport))
+			{
+				if (this.pathElementLookup.TryGetBuffer(currentTransport.m_CurrentTransport, out var pathElements) && pathElements.Length > 0)
+				{
+					this.executeInternal(currentTransport.m_CurrentTransport, SelectionType.HUMAN);
+				}
+				else
+				{
+					this.executeInternal(currentTransport.m_CurrentTransport, SelectionType.CAR_OCCUPANT);
+				}
+			}
+			else if (!this.publicTransportLookup.HasComponent(entity))
 			{
 				this.results.Add(entity);
 			}

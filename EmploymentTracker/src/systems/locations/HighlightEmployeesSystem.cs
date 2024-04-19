@@ -1,4 +1,5 @@
-﻿using Colossal.UI.Binding;
+﻿using Colossal.Entities;
+using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
 using Game.Citizens;
@@ -242,9 +243,8 @@ namespace EmploymentTracker
 
         private void handleForPassengers(Entity entity)
         {
-            if (EntityManager.HasBuffer<Passenger>(entity))
+            if (EntityManager.TryGetBuffer<Passenger>(entity, false, out var passengers))
             {
-				DynamicBuffer<Passenger> passengers = EntityManager.GetBuffer<Passenger>(entity);
 				foreach (Passenger passenger in passengers)
 				{
                     this.highlightDsetination(passenger.m_Passenger);
@@ -324,18 +324,20 @@ namespace EmploymentTracker
 			}
 		}
 
-        private void highlightRentedProperty(Entity propertyRenter)
+        private bool highlightRentedProperty(Entity propertyRenter)
         {
             if (propertyRenter == null)
             {
-                return;
+                return false;
             }
 
             if (EntityManager.HasComponent<PropertyRenter>(propertyRenter))
             {
 				PropertyRenter renter = EntityManager.GetComponentData<PropertyRenter>(propertyRenter);
-				this.applyHighlight(renter.m_Property);
+				return this.applyHighlight(renter.m_Property);
 			}
+
+			return false;
         }
 
 		private void clearHighlight(bool pathingOnly=false)
@@ -366,6 +368,11 @@ namespace EmploymentTracker
             {
                 return false;
             }
+
+			if (EntityManager.TryGetComponent<PropertyRenter>(entity, out var propertyRenter))
+			{
+				return this.applyHighlight(propertyRenter.m_Property);
+			}
 
 			if (store)
 			{

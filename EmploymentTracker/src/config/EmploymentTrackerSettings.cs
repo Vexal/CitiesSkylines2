@@ -68,13 +68,13 @@ namespace EmploymentTracker
 
 
 		[SettingsUISection(kSection, routeHighlightTypes)]
+		public bool highlightSelected { get; set; }
+		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool incomingRoutes { get; set; }
 		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool incomingRoutesTransit { get; set; }
 		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool highlightSelectedTransitVehiclePassengerRoutes { get; set; }
-		[SettingsUISection(kSection, routeHighlightTypes)]
-		public bool highlightSelected { get; set; }
 
 		public override void SetDefaults()
 		{
@@ -124,7 +124,7 @@ namespace EmploymentTracker
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutes)), $"Display routes of all objects en-route to the selected building. Has a non-trivial performance impact." },
 
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), "Include En-route Public Transit" },
-				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), $"Include public transit when incoming highlighting routes. This feature is an experimental work-in-progress." },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), $"Include public transit when highlighting incoming routes. This feature is an experimental work-in-progress." },
 				
 				//Object highlight options
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.objectHighlightTypes), "Object Highlight Toggles" },
@@ -142,7 +142,7 @@ namespace EmploymentTracker
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightEmployeeCommuters)), $"Highlight citizens and vehicles in-transit to the selected workplace building." },
 				
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), "Student Residences" },
-				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), $"Highlight residence buildings for all students of the selected building." },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), $"Highlight residence buildings for all students of the selected school." },
 
 
 				//Route highlight options
@@ -156,6 +156,81 @@ namespace EmploymentTracker
 				
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), "Pedestrian Route Segment Line Width" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), $"The width of the route display line for pedestrians." },
+
+				{"Selected Object Route", "Selected Object Route" },
+			};
+		}
+
+		public void Unload()
+		{
+
+		}
+	}
+
+	public class LocaleSC : IDictionarySource
+	{
+		private readonly EmploymentTrackerSettings settings;
+		public LocaleSC(EmploymentTrackerSettings setting)
+		{
+			this.settings = setting;
+		}
+
+		public IEnumerable<KeyValuePair<string, string>> ReadEntries(IList<IDictionaryEntryError> errors, Dictionary<string, int> indexCounts)
+		{
+			return new Dictionary<string, string>
+			{
+				{ this.settings.GetSettingsLocaleID(), "路径标记器 （Route Highlighter)" },
+				{ this.settings.GetOptionTabLocaleID(EmploymentTrackerSettings.kSection), "Main" },
+
+
+				//Feature toggles
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightTypes), "路径显示选项 (测试中)" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightSelected)), "所选对象路径" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightSelected)), $"显示所选人或非公共交通工具的当前路径。" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightSelectedTransitVehiclePassengerRoutes)), "所选交通所有乘客路径" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightSelectedTransitVehiclePassengerRoutes)), $"Display current routes of all CIMs in the selected vehicle." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.incomingRoutes)), "正在前往所选建筑路径" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutes)), $"Display routes of all objects en-route to the selected building. Has a non-trivial performance impact." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), "包括公共交通" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.incomingRoutesTransit)), $"Include public transit when incoming highlighting routes. This feature is an experimental work-in-progress." },
+				
+				//Object highlight options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.objectHighlightTypes), "Object Highlight Toggles" },
+				 
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightDestinations)), "乘客目的地" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightDestinations)), $"显示所选交通工具 （私人交通工具或者公共交通）所有乘客的目的地。" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightWorkplaces)), "Building Residents' Workplaces" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightWorkplaces)), $"Highlight the workplace buildings for every resident of the selected residential building." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightEmployeeResidences)), "员工住址" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightEmployeeResidences)), $"显示所选建筑所有员工的住址。" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightEmployeeCommuters)), "Employee Commuters" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightEmployeeCommuters)), $"Highlight citizens and vehicles in-transit to the selected workplace building." },
+			
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), "学生住址" },
+				
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightStudentResidences)), $"显示所选学校所有学生的住址。" },
+
+
+				//Route highlight options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightOptions), "Route Highlight Options" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), "Route Opacity" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), $"Opacity of route overlay lines." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.vehicleRouteWidth)), "Vehicle Route Segment Line Width" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.vehicleRouteWidth)), $"The width of the route display line for vehicles." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), "Pedestrian Route Segment Line Width" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), $"The width of the route display line for pedestrians." },
+
+				{"Selected Object Route", "Selected Object Route" },
 			};
 		}
 

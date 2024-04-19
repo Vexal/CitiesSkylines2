@@ -187,9 +187,11 @@ namespace EmploymentTracker
 				this.reset();
 				this.selectedEntity = selected;
 				this.selectionType = newSelectionType;
+
 				if (this.debugActiveBinding.value)
 				{
 					this.selectionTypeBinding.Update(this.selectionType.ToString());
+					this.bindings["Selected Entity"] = this.selectedEntity.Index.ToString() + "-" + this.selectedEntity.Version.ToString();
 				}
 			}
 
@@ -458,13 +460,17 @@ namespace EmploymentTracker
 			{
 				EntitySelectJob entitySelectJob = new EntitySelectJob();
 				entitySelectJob.input = this.selectedEntity;
+				entitySelectJob.inputSelectionType = this.selectionType;
 				entitySelectJob.results = new NativeList<Entity>(Allocator.TempJob);
 				entitySelectJob.targetLookup = GetComponentLookup<Target>();
 				entitySelectJob.controllerLookup = GetComponentLookup<Controller>();
+				entitySelectJob.currentVehicleLookup = GetComponentLookup<CurrentVehicle>();
 				entitySelectJob.animalLookup = GetComponentLookup<Animal>();
 				entitySelectJob.publicTransportLookup = GetComponentLookup<PublicTransport>();
+				entitySelectJob.currentTransportLookup = GetComponentLookup<CurrentTransport>();
 				entitySelectJob.passengerLookup = GetBufferLookup<Passenger>();
 				entitySelectJob.layoutElementLookup = GetBufferLookup<LayoutElement>();
+				entitySelectJob.pathElementLookup = GetBufferLookup<PathElement>();
 
 				entitySelectJob.highlightTransitPassengerRoutes = this.routeHighlightOptions.transitPassengerRoutes;
 
@@ -547,6 +553,10 @@ namespace EmploymentTracker
 			else if (EntityManager.HasComponent<Animal>(e))
 			{
 				return SelectionType.ANIMAL;
+			}
+			else if (EntityManager.HasComponent<HouseholdMember>(e) && EntityManager.HasComponent<CurrentTransport>(e))
+			{
+				return SelectionType.RESIDENT;
 			}
 
 			return SelectionType.UNKNOWN;
