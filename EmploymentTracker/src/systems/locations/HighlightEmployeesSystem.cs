@@ -20,7 +20,9 @@ namespace EmploymentTracker
 		private Entity selectedEntity;
 		private HashSet<Entity> highlightedEntities = new HashSet<Entity>();
         private InputAction toggleSystemAction;
+        private InputAction toggleBuildingsAction;
         private ToolSystem toolSystem;
+		private HighlightRoutesSystem highlightRoutesSystem = null;
 		private EmploymentTrackerSettings settings;
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
@@ -29,12 +31,16 @@ namespace EmploymentTracker
 		private ValueBinding<bool> highlightEmployeeResidences;
 		private ValueBinding<bool> highlightWorkplaces;
 		private ValueBinding<bool> studentResidences;
+		private ValueBinding<bool> toggleAll;
+		private ValueBinding<bool> buildingsToggled;
 
 		protected override void OnCreate()
         {
             base.OnCreate();
             this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
             this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+			this.toggleBuildingsAction = new InputAction("shiftBuildings", InputActionType.Button);
+			this.toggleBuildingsAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/b").With("Modifier", "<keyboard>/shift");
 
 			this.settings = Mod.INSTANCE.getSettings();
 
@@ -44,21 +50,28 @@ namespace EmploymentTracker
 			this.highlightWorkplaces = new ValueBinding<bool>("EmploymentTracker", "highlightResidentWorkplaces", this.settings.highlightWorkplaces);
 			this.highlightEmployeeResidences = new ValueBinding<bool>("EmploymentTracker", "highlightEmployeeResidences", this.settings.highlightEmployeeResidences);
 			this.studentResidences = new ValueBinding<bool>("EmploymentTracker", "highlightStudentResidences", this.settings.highlightStudentResidences);
+			this.toggleAll = new ValueBinding<bool>("EmploymentTracker", "allToggled", true);
+			this.buildingsToggled = new ValueBinding<bool>("EmploymentTracker", "buildingsToggled", true);
 
 			AddBinding(this.activateHighlightPassengerDestinations);
 			AddBinding(this.highlightWorkplaces);
 			AddBinding(this.highlightEmployeeResidences);
 			AddBinding(this.studentResidences);
+			AddBinding(this.toggleAll);
+			AddBinding(this.buildingsToggled);
 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerDestinations", s => { this.activateHighlightPassengerDestinations.Update(s); this.settings.highlightDestinations = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightResidentWorkplaces", s => { this.highlightWorkplaces.Update(s); this.settings.highlightWorkplaces = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEmployeeResidences", s => { this.highlightEmployeeResidences.Update(s); this.settings.highlightEmployeeResidences = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightStudentResidences", s => { this.studentResidences.Update(s); this.settings.highlightStudentResidences = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleAll", s => { this.toggle(s); this.highlightRoutesSystem?.toggle(s); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleBuildings", s => { this.toggleBuildings(s); }));
 		}
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
+			this.highlightRoutesSystem = World.GetExistingSystemManaged<HighlightRoutesSystem>();
 
 			this.settings.onSettingsApplied += gameSettings =>
 			{
@@ -66,20 +79,24 @@ namespace EmploymentTracker
 				{
 					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings)gameSettings;
 					this.highlightFeatures = new HighlightFeatures(settings);
+					this.reset();
 				}
 			};
 
 			this.toggleSystemAction.Enable();
+			this.toggleBuildingsAction.Enable();
 		}
 
 		protected override void OnStopRunning()
 		{
 			base.OnStopRunning();
             this.toggleSystemAction.Disable();
+            this.toggleBuildingsAction.Disable();
 			this.reset();
 		}
 
 		private bool toggled = true;
+		private bool buildingHighlightActive = true;
 
 		protected override void OnUpdate()
 		{
@@ -106,15 +123,15 @@ namespace EmploymentTracker
 			//check if hot key disable/enable highlighting was pressed
 			if (this.toggleSystemAction.WasPressedThisFrame())
 			{
-				this.reset();
-				this.toggled = !this.toggled;
-				if (!this.toggled)
-				{
-					return;
-				}
+				this.toggle(!this.toggled);
 			}
 
-			if (!this.toggled)
+			if (this.toggleBuildingsAction.WasPressedThisFrame())
+			{
+				this.toggleBuildings(!this.buildingHighlightActive);
+			}
+
+			if (!this.toggled || !this.buildingHighlightActive)
 			{
 				return;
 			}
@@ -276,7 +293,10 @@ namespace EmploymentTracker
 			if (EntityManager.HasComponent<Target>(traveler))
             {
 				Target destination = EntityManager.GetComponentData<Target>(traveler);
-                this.applyHighlight(destination.m_Target);
+				if (!this.highlightRentedProperty(destination.m_Target))
+				{
+					this.applyHighlight(destination.m_Target);
+				}				
 			}
 		}
 
@@ -369,10 +389,6 @@ namespace EmploymentTracker
                 return false;
             }
 
-			if (EntityManager.TryGetComponent<PropertyRenter>(entity, out var propertyRenter))
-			{
-				return this.applyHighlight(propertyRenter.m_Property);
-			}
 
 			if (store)
 			{
@@ -412,6 +428,32 @@ namespace EmploymentTracker
 		private void saveSettings()
 		{
 			this.settings.ApplyAndSave();
+		}
+
+		private void toggle(bool active)
+		{
+			if (active != this.toggled)
+			{
+				this.reset();
+				this.toggled = active;
+				if (this.toggleAll.value != this.toggled)
+				{
+					this.toggleAll.Update(this.toggled);
+				}
+			}
+		}
+
+		private void toggleBuildings(bool active)
+		{
+			if (active != this.buildingHighlightActive)
+			{
+				this.reset();
+				this.buildingHighlightActive = active;
+				if (this.buildingsToggled.value != this.buildingHighlightActive)
+				{
+					this.buildingsToggled.Update(this.buildingHighlightActive);
+				}
+			}
 		}
 	}
 }

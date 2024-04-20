@@ -152,7 +152,7 @@ namespace EmploymentTracker
 				{
 					if (this.curveLookup.TryGetComponent(pathElements[i].m_Lane, out Curve curve))
 					{
-						this.results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition));
+						this.results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition, true));
 					}
 				}
 			}

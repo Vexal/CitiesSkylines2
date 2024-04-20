@@ -8,12 +8,11 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 <LongDescription>
-Formerlly named 'Employee Tracker'
 
 <b>New update:</b>
-* Added route-highlighting for all en-route objects to the selected objects (ex: click a building to see who and how is coming to it)
-* Support public transit passenger route highlighting (experimental)
-* Added in-game options menu to easily toggle highlighting types on/off
+* Added Simplified Chinese translations
+* Bug fixes
+* UI enhancements
 
 <b>Features</b>
 Selecting an object applies graphical highlighting to:
@@ -25,10 +24,13 @@ Selecting an object applies graphical highlighting to:
 * In-transit employee commuter vehicles / pedestrians when selecting a workplace
 	
 Regarding route pathing highlight: This is still experimental. For entities whose route crosses transit types (ex: car -> pedestrian -> subway -> pedestrian), it will highlight the entire route, except for train / subway tracks (it will highlight everything before / after the track, you can see this more easily when zooming out and finding the highlighted stop)
-		
-<b>Controls:</b>
+
+<b>Quick-toggle Controls:</b>
 * <b>shift+e</b> to deactivate/reactivate all highlighting
 * <b>shift+v</b> to deactivate/reactivate path routing highlighting
+* <b>shift+b</b> to deactivate/reactivate building highlighting
+* Additional settings can be accessed from the main menu settings for this mod, or the in-game overlay menu from the button at the top right of the screen
+* Quick-toggle controls do not change the settings permanently; all other settings persist between games
 
 <b>Future Planned Updates:</b>
 * Highlight routes of objects traversing through, but not stopping at, a path node
@@ -55,13 +57,13 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/employee-tracker.1648804/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.13" />
+	<ModVersion Value="1.14" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Fix issue with showing routes to businesses." />
+	<ChangeLog Value="Add Simplified Chinese translations; more menu/hotkey options; reworked route opacity formula; bug fixes for driving over tram lanes, selecting citizens from household list" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->

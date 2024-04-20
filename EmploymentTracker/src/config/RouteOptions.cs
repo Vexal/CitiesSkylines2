@@ -53,7 +53,7 @@ namespace EmploymentTracker
 			this.pedestrianLineColor = new Color(.2f, .5f, 1f);
 			this.subwayLineColor = new Color(1f, .5f, 1f);
 			this.minRouteAlpha = settings.routeOpacity;
-			this.routeWeightMultiplier = .1f;
+			this.routeWeightMultiplier = settings.routeOpacityMultilier;
 			this.routeRoundness = new float2() { x = 1, y = 1 };
 			this.transitPassengerRoutes = settings.highlightSelectedTransitVehiclePassengerRoutes;
 			this.highlightSelected = settings.highlightSelected;

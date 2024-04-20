@@ -22,6 +22,9 @@ export const highlightPassengerDestinations = bindValue<boolean>("EmploymentTrac
 export const highlightEmployeeResidences = bindValue<boolean>("EmploymentTracker", 'highlightEmployeeResidences');
 export const highlightResidentWorkplaces = bindValue<boolean>("EmploymentTracker", 'highlightResidentWorkplaces');
 export const highlightStudentResidences = bindValue<boolean>("EmploymentTracker", 'highlightStudentResidences');
+export const toggleAll = bindValue<boolean>("EmploymentTracker", 'allToggled');
+export const routeHighlightingToggled = bindValue<boolean>("EmploymentTracker", 'routeHighlightingToggled');
+export const buildingsToggled = bindValue<boolean>("EmploymentTracker", 'buildingsToggled');
 
 export default class HighlightOptionsMenuButton extends Component {
 	state = {
@@ -43,97 +46,101 @@ export default class HighlightOptionsMenuButton extends Component {
 		highlightResidentWorkplaces: highlightResidentWorkplaces.value,
 		highlightStudentResidences: highlightStudentResidences.value,
 
-		
+		toggleAll: toggleAll.value,
+		buildingsToggled: routeHighlightingToggled.value,
+		routeHighlightingToggled: buildingsToggled.value,
 
 		/** @type {[string[]] */
 		routeTimeMs: HighlightOptionsMenuButton.parseBindings(routeTimeBinding.value),
 	}
 
 	render() {
-		//const { translate } = useLocalization();
-
+		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
 		return <div>
-
 			<FloatingButton src={tadaSrc} selected={this.state.menuOpen} onSelect={() => {
 				this.setState({ menuOpen: !this.state.menuOpen }); console.log("route menu open");
 				
 			}} />
 
-			{this.state.menuOpen && <div>
-				<Panel>
-					<PanelSection>
-						<PanelSectionRow />
-						<div style={{fontWeight: "bold"}}>Highlight Routes</div>
-						<OptionToggle text="Selected Object Route" value={this.state.highlightSelectedRoute} name={"toggleHighlightSelectedRoute"} />
-						<OptionToggle text="Incoming Routes" value={this.state.highlightEnroute} name={"toggleHighlightEnroute"} />
-						<OptionToggle text="Incoming Routes (Transit)" value={this.state.highlightEnrouteTransit} name={"toggleHighlightEnrouteTransit"} />
-						<OptionToggle text="Transit Passenger Routes" value={this.state.highlightPassengerRoutes} name={"toggleHighlightPassengerRoutes"} />
+			{this.state.menuOpen && <div style={{backgroundColor:"#183e69AA", borderStyle:"solid", borderWidth:"1rem", borderColor:"lightblue", borderRadius:"5rem"} }>
+				<PanelSection>
+					<SectionHeader text="Route Highlighter" />
+					<PanelSectionRow />
+					<SectionHeader text="Quick-toggle"/>
+					<OptionToggle text="All (shift+e)" value={this.state.toggleAll} name={"toggleAll"} />
+					<OptionToggle text="Routes (shift+v)" value={this.state.routeHighlightingToggled} name={"quickToggleRouteHighlighting"} />
+					<OptionToggle text="Buildings (shift+b)" value={this.state.buildingsToggled} name={"toggleBuildings"} />
 
-						<PanelSectionRow />
-						<div style={{ fontWeight: "bold" }}>Highlight Buildings</div>
-						<OptionToggle text="Passenger Destinations" value={this.state.highlightPassengerDestinations} name={"toggleHighlightPassengerDestinations"} />
-						<OptionToggle text="Employee Residences" value={this.state.highlightEmployeeResidences} name={"toggleHighlightEmployeeResidences"} />
-						<OptionToggle text="Residents' Workplaces" value={this.state.highlightResidentWorkplaces} name={"toggleHighlightResidentWorkplaces"} />
-						<OptionToggle text="Students' Residences" value={this.state.highlightStudentResidences} name={"toggleHighlightStudentResidences"} />
+					<PanelSectionRow />
+					<SectionHeader text="Highlight Routes"/>
+					<OptionToggle text="Selected Object Route" value={this.state.highlightSelectedRoute} name={"toggleHighlightSelectedRoute"} />
+					<OptionToggle text="Incoming Routes" value={this.state.highlightEnroute} name={"toggleHighlightEnroute"} />
+					<OptionToggle text="Incoming Routes (Transit)" value={this.state.highlightEnrouteTransit} name={"toggleHighlightEnrouteTransit"} />
+					<OptionToggle text="Transit Passenger Routes" value={this.state.highlightPassengerRoutes} name={"toggleHighlightPassengerRoutes"} />
 
-						<PanelSectionRow />
-						<div style={{ fontWeight: "bold" }}>Other Options</div>
+					<PanelSectionRow />
+					<SectionHeader text="Highlight Buildings" />
+					<OptionToggle text="Passenger Destinations" value={this.state.highlightPassengerDestinations} name={"toggleHighlightPassengerDestinations"} />
+					<OptionToggle text="Employee Residences" value={this.state.highlightEmployeeResidences} name={"toggleHighlightEmployeeResidences"} />
+					<OptionToggle text="Residents' Workplaces" value={this.state.highlightResidentWorkplaces} name={"toggleHighlightResidentWorkplaces"} />
+					<OptionToggle text="Students' Residences" value={this.state.highlightStudentResidences} name={"toggleHighlightStudentResidences"} />
 
-						<PanelSectionRow />
-						<OptionToggle text="Auto-refresh Selected" value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"}/>
-						<OptionToggle text="Show Stats" value={this.state.showStats} name={"toggleDebug"}/>
+					<PanelSectionRow />
+					<div style={{ fontWeight: "bold" }}>Other Options</div>
+
+					<PanelSectionRow />
+					<OptionToggle text="Auto-refresh Selected" value={this.state.autoRefreshTransitingEntities} name={"toggleAutoRefresh"}/>
+					<OptionToggle text="Show Stats" value={this.state.showStats} name={"toggleDebug"}/>
 						
 
-						<PanelSectionRow />
-						{this.state.showStats && <div>
-							<div style={{ display: "flex" }}>
-								<div style={{ padding: "5rem" }}>
-									En-route count
-								</div>
-								<div style={{ flex: "1", padding: "5rem" }} />
-								<div style={{ paddingRight: "20rem" }}>
-									{this.state.trackedEntityCount}
-								</div>
+					{this.state.showStats && <div>
+						<div style={{ display: "flex" }}>
+							<div style={{ padding: "5rem" }}>
+								En-route count
 							</div>
-							<div style={{ display: "flex" }}>
-								<div style={{ padding: "5rem" }}>
-									Type
-								</div>
-								<div style={{ flex: "1", padding: "5rem" }} />
-								<div style={{ paddingRight: "20rem" }}>
-									{this.state.selectionType}
-								</div>
+							<div style={{ flex: "1", padding: "5rem" }} />
+							<div style={{ paddingRight: "20rem" }}>
+								{this.state.trackedEntityCount}
 							</div>
-							<div style={{ display: "flex" }}>
-								<div style={{ padding: "5rem" }}>
-									Unique Segments
-								</div>
-								<div style={{ flex: "1", padding: "5rem" }} />
-								<div style={{ paddingRight: "20rem" }}>
-									{this.state.uniqueSegmentCount}
-								</div>
+						</div>
+						<div style={{ display: "flex" }}>
+							<div style={{ padding: "5rem" }}>
+								Type
 							</div>
-							<div style={{ display: "flex" }}>
-								<div style={{ padding: "5rem" }}>
-									Total Segments
-								</div>
-								<div style={{ flex: "1", padding: "5rem" }} />
-								<div style={{ paddingRight: "20rem" }}>
-									{this.state.totalSegmentCount}
-								</div>
+							<div style={{ flex: "1", padding: "5rem" }} />
+							<div style={{ paddingRight: "20rem" }}>
+								{this.state.selectionType}
 							</div>
-							{this.state.routeTimeMs.map(kv => <div style={{ display: "flex" }}>
-								<div style={{ padding: "5rem" }}>
-									{kv[0]}
-								</div>
-								<div style={{ flex: "1", padding: "5rem" }} />
-								<div style={{ paddingRight: "20rem" }}>
-									{kv[1]}
-								</div>
-							</div>)}
-						</div>}
-					</PanelSection>
-				</Panel>
+						</div>
+						<div style={{ display: "flex" }}>
+							<div style={{ padding: "5rem" }}>
+								Unique Segments
+							</div>
+							<div style={{ flex: "1", padding: "5rem" }} />
+							<div style={{ paddingRight: "20rem" }}>
+								{this.state.uniqueSegmentCount}
+							</div>
+						</div>
+						<div style={{ display: "flex" }}>
+							<div style={{ padding: "5rem" }}>
+								Total Segments
+							</div>
+							<div style={{ flex: "1", padding: "5rem" }} />
+							<div style={{ paddingRight: "20rem" }}>
+								{this.state.totalSegmentCount}
+							</div>
+						</div>
+						{this.state.routeTimeMs.map(kv => <div style={{ display: "flex" }}>
+							<div style={{ padding: "5rem" }}>
+								{kv[0]}
+							</div>
+							<div style={{ flex: "1", padding: "5rem" }} />
+							<div style={{ paddingRight: "20rem" }}>
+								{kv[1]}
+							</div>
+						</div>)}
+					</div>}
+				</PanelSection>
 			</div>}
 		</div>
 	}
@@ -191,6 +198,18 @@ export default class HighlightOptionsMenuButton extends Component {
 			this.setState({ highlightStudentResidences: val });
 		})
 
+		toggleAll.subscribe(val => {
+			this.setState({ toggleAll: val });
+		})
+
+		routeHighlightingToggled.subscribe(val => {
+			this.setState({ routeHighlightingToggled: val });
+		})
+
+		buildingsToggled.subscribe(val => {
+			this.setState({ buildingsToggled: val });
+		})
+
 		selectionTypeBinding.subscribe(val => {
 			this.setState({ selectionType: val });
 		})
@@ -207,26 +226,25 @@ export default class HighlightOptionsMenuButton extends Component {
 	}
 }
 
-interface OptionsProps {
-	value: boolean,
-	name: string,
-	text: string|null
+function OptionToggle(props: { value: boolean, name: string, text: string | null }) {
+	const { translate } = useLocalization();
+
+	return <div style={{ display: "flex" }}>
+		<div style={{ padding: "5rem" }}>
+			{props.text && translate("EmploymentTracker_" + props.text, props.text)}
+		</div>
+		<div style={{ flex: "1", padding: "5rem" }} />
+		<div style={{ paddingRight: "20rem" }}>
+			<Button selected={props.value} variant="flat" onSelect={() => {
+				trigger("EmploymentTracker", props.name, props.value ? false : true);
+			}}>
+				<div style={{ padding: "5rem" }}>{props.value ? translate("EmploymentTracker_" + "On", "On") : translate("EmploymentTracker_" + "Off", "Off")}</div>
+			</Button>
+		</div>
+	</div>
 }
 
-class OptionToggle extends Component<OptionsProps> {
-	render() {
-		return <div style={{ display: "flex" }}>
-			<div style={{ padding: "5rem" }}>
-				{this.props.text}
-			</div>
-			<div style={{ flex: "1", padding: "5rem" }} />
-			<div style={{ paddingRight: "20rem" }}>
-				<Button selected={this.props.value} variant="flat" onSelect={() => {
-					trigger("EmploymentTracker", this.props.name, this.props.value ? false : true);
-				}}>
-					<div style={{ padding: "5rem" }}>{this.props.value ? "On" : "Off"}</div>
-				</Button>
-			</div>
-		</div>
-	}
+function SectionHeader(props: { text: string }) {
+	const { translate } = useLocalization();
+	return <div style={{ fontWeight: "bold" }}>{translate("EmploymentTracker_" + props.text, props.text)}</div>
 }

@@ -12,6 +12,7 @@ using Game.Routes;
 using Game.Tools;
 using Game.UI;
 using Game.Vehicles;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Collections;
@@ -50,6 +51,7 @@ namespace EmploymentTracker
 		private ValueBinding<bool> incomingRoutesTransit;
 		private ValueBinding<bool> highlightSelected;
 		private ValueBinding<bool> highlightPassengerRoutes;
+		private ValueBinding<bool> routeHighlightingToggled;
 
 		protected override void OnCreate()
         {
@@ -90,15 +92,19 @@ namespace EmploymentTracker
 			this.highlightSelected = new ValueBinding<bool>("EmploymentTracker", "highlightSelectedRoute", this.settings.highlightSelected);
 			this.incomingRoutesTransit = new ValueBinding<bool>("EmploymentTracker", "highlightEnrouteTransit", this.settings.incomingRoutesTransit);
 			this.highlightPassengerRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerRoutes", this.settings.highlightSelectedTransitVehiclePassengerRoutes);
+			this.routeHighlightingToggled = new ValueBinding<bool>("EmploymentTracker", "routeHighlightingToggled", true);
+
 			AddBinding(this.incomingRoutes);
 			AddBinding(this.highlightSelected);
 			AddBinding(this.incomingRoutesTransit);
 			AddBinding(this.highlightPassengerRoutes);
+			AddBinding(this.routeHighlightingToggled);
 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); this.settings.incomingRoutesTransit = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); this.settings.highlightSelectedTransitVehiclePassengerRoutes = s; this.saveSettings(); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "quickToggleRouteHighlighting", s => { this.togglePathing(s); }));
 
 
 			//options
@@ -198,14 +204,7 @@ namespace EmploymentTracker
 			//check if hot key disable/enable highlighting was pressed
 			if (this.toggleSystemAction.WasPressedThisFrame())
 			{
-				this.reset();
-				this.toggled = !this.toggled;
-				if (!this.toggled)
-				{
-					this.pathingToggled = true;
-				this.endFrame(clock);
-					return;
-				}
+				this.toggle(!this.toggled);
 			}
 
 			if (!this.toggled)
@@ -216,13 +215,13 @@ namespace EmploymentTracker
 
 			if (this.togglePathDisplayAction.WasPressedThisFrame())
 			{
-				this.pathingToggled = !this.pathingToggled;
-				if (!this.pathingToggled)
-				{
-					this.reset();
-					this.endFrame(clock);
-					return;
-				}
+				this.togglePathing(!this.pathingToggled);
+			}
+
+			if (!this.pathingToggled)
+			{
+				this.endFrame(clock);
+				return;
 			}
 
 			if (this.printFrameAction.WasPressedThisFrame())
@@ -324,6 +323,9 @@ namespace EmploymentTracker
 			//Weight segments with multiple entities passing over heavier
 			NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(1500, Allocator.Temp);
 
+			int maxVehicleWeight = 1;
+			int maxPedestrianWeight = 1;
+			int maxTransitWeight = 1;
 			for (int i = 0; i < resultReader.ForEachCount; ++i)
 			{
 				resultReader.BeginForEachIndex(i);
@@ -333,7 +335,19 @@ namespace EmploymentTracker
 					CurveDef resultCurve = resultReader.Read<CurveDef>();
 					if (resultCurves.ContainsKey(resultCurve))
 					{
-						++resultCurves[resultCurve];
+						if (resultCurve.type == 2)
+						{
+							maxPedestrianWeight = Math.Max(++resultCurves[resultCurve], maxPedestrianWeight);
+						}
+						else if (resultCurve.type == 3)
+						{
+							maxTransitWeight = Math.Max(++resultCurves[resultCurve], maxTransitWeight);
+						}
+						else
+						{
+							maxVehicleWeight = Math.Max(++resultCurves[resultCurve], maxVehicleWeight);
+						}
+						
 					}
 					else
 					{
@@ -372,6 +386,9 @@ namespace EmploymentTracker
 				RouteRenderJob job = new RouteRenderJob();
 				job.curveDefs = curveArray;
 				job.curveCounts = curveCount;
+				job.maxVehicleCount = maxVehicleWeight;
+				job.maxTransitCount = maxTransitWeight;
+				job.maxPedestrianCount = maxPedestrianWeight;
 				job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
 				job.routeHighlightOptions = this.routeHighlightOptions;
 				JobHandle routeJobHandle = job.Schedule(dependencies);
@@ -456,7 +473,7 @@ namespace EmploymentTracker
 
 				searchJob.results.Dispose();	
 			}
-			else
+			else if (this.routeHighlightOptions.highlightSelected)
 			{
 				EntitySelectJob entitySelectJob = new EntitySelectJob();
 				entitySelectJob.input = this.selectedEntity;
@@ -623,6 +640,28 @@ namespace EmploymentTracker
 		private void saveSettings()
 		{
 			this.settings.ApplyAndSave();
+		}
+
+		public void toggle(bool active)
+		{
+			if (active != this.toggled)
+			{
+				this.reset();
+				this.toggled = active;
+			}
+		}
+
+		private void togglePathing(bool active)
+		{
+			if (active != this.pathingToggled)
+			{
+				this.reset();
+				this.pathingToggled = active;
+				if (this.routeHighlightingToggled.value != this.pathingToggled)
+				{
+					this.routeHighlightingToggled.Update(this.pathingToggled);
+				}
+			}
 		}
 	}
 }
