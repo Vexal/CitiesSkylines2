@@ -3,8 +3,6 @@ using Colossal.Logging;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
-using Game.Settings;
-using Unity.Entities;
 
 namespace EmploymentTracker
 {

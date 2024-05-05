@@ -9,10 +9,8 @@ using Game.Vehicles;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Mathematics;
-using static Colossal.Animations.Animation;
 
 namespace EmploymentTracker
 {
@@ -58,6 +56,8 @@ namespace EmploymentTracker
 
 		[NativeDisableParallelForRestriction]
 		public NativeStream.Writer results;
+
+
 
 		public void Execute(int start, int count)
 		{

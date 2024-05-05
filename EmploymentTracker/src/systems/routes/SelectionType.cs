@@ -24,6 +24,7 @@ namespace EmploymentTracker
 		BUS,
 		AIRPLANE,
 		ANIMAL,
-		RESIDENT
+		RESIDENT,
+		ROAD
 	}
 }

@@ -6,6 +6,7 @@ using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
 using Game.Net;
+using Game.Objects;
 using Game.Pathfind;
 using Game.Rendering;
 using Game.Routes;
@@ -29,14 +30,17 @@ namespace EmploymentTracker
         private InputAction toggleSystemAction;
         private InputAction togglePathDisplayAction;
         private InputAction printFrameAction;
+        private InputAction togglePathVolumeDisplayAction;
 		private OverlayRenderSystem overlayRenderSystem;
 		private EmploymentTrackerSettings settings;
 		private EntityQuery hasTargetQuery;
+		private EntityQuery hasPathQuery;
+		private ToolSystem toolSystem;
 		private bool printFrame = false;
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
-
+		private DefaultToolSystem defaultToolSystem;
 
 		private ValueBinding<bool> debugActiveBinding;
 		private ValueBinding<bool> refreshTransitingEntitiesBinding;
@@ -76,17 +80,38 @@ namespace EmploymentTracker
 				}
 			});
 
+			this.hasPathQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<PathOwner>(),
+				ComponentType.ReadOnly<PathElement>(),
+			},
+				Any = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Vehicle>(),
+				ComponentType.ReadOnly<Creature>(),
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<Building>()
+				}
+			});
+
 			//Init UI and IO
 			this.settings = Mod.INSTANCE.getSettings();
 			this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
             this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
 			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
 			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
+			this.togglePathVolumeDisplayAction = new InputAction("shiftPathingVolume", InputActionType.Button);
+			this.togglePathVolumeDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/r").With("Modifier", "<keyboard>/shift");
 
 			this.printFrameAction = new InputAction("shiftFrame", InputActionType.Button);
 			this.printFrameAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/g").With("Modifier", "<keyboard>/shift");
 
-	
 			//route toggles
 			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
 			this.highlightSelected = new ValueBinding<bool>("EmploymentTracker", "highlightSelectedRoute", this.settings.highlightSelected);
@@ -128,14 +153,18 @@ namespace EmploymentTracker
 			AddBinding(this.routeTimeMs);
 			this.selectionTypeBinding = new ValueBinding<string>("EmploymentTracker", "selectionType", "");
 			AddBinding(this.selectionTypeBinding);
+
+			this.toolSystem = World.GetExistingSystemManaged<ToolSystem>();
+			this.defaultToolSystem = World.GetExistingSystemManaged<DefaultToolSystem>();
 		}
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-            this.toggleSystemAction.Enable();
+			this.toggleSystemAction.Enable();
 			this.togglePathDisplayAction.Enable();
 			this.printFrameAction.Enable();
+			this.togglePathVolumeDisplayAction.Enable();
 			this.overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
 
 			this.highlightFeatures = new HighlightFeatures(settings);
@@ -158,11 +187,14 @@ namespace EmploymentTracker
             this.toggleSystemAction.Disable();
             this.togglePathDisplayAction.Disable();
             this.printFrameAction.Disable();
+            this.togglePathVolumeDisplayAction.Disable();
 			this.reset();
 		}
 
 		private bool toggled = true;
 		private bool pathingToggled = true;
+		private bool pathVolumeToggled = false;
+		private bool defaultHasDebugSelect = false;
 		private NativeHashSet<Entity> commutingEntities;
 
 		long frameCount = 0;
@@ -176,6 +208,21 @@ namespace EmploymentTracker
 			{
 				this.reset();
 				this.highlightFeatures.dirty = false;
+			}
+
+			if (this.togglePathVolumeDisplayAction.WasPressedThisFrame())
+			{
+				if (!this.pathVolumeToggled)
+				{
+					this.defaultHasDebugSelect = this.defaultToolSystem.debugSelect;
+					this.pathVolumeToggled = true;
+					this.defaultToolSystem.debugSelect = true;
+				}
+				else
+				{
+					this.pathVolumeToggled = false;
+					this.defaultToolSystem.debugSelect = this.defaultHasDebugSelect;
+				}
 			}
 
 			if (!this.highlightFeatures.highlightAnything()) {
@@ -218,6 +265,8 @@ namespace EmploymentTracker
 				this.togglePathing(!this.pathingToggled);
 			}
 
+			
+
 			if (!this.pathingToggled)
 			{
 				this.endFrame(clock);
@@ -229,7 +278,7 @@ namespace EmploymentTracker
 				this.printFrame = true;
 			}
 
-			if (this.selectedEntity == null || this.selectedEntity == default(Entity) || this.selectionType == SelectionType.UNKNOWN)
+			if (this.selectedEntity == null || this.selectedEntity == default(Entity) || (this.selectionType == SelectionType.UNKNOWN && !this.pathVolumeToggled))
 			{
 				this.endFrame(clock);
 				return;
@@ -248,6 +297,7 @@ namespace EmploymentTracker
 				if (this.debugActiveBinding.value)
 				{
 					this.trackedEntityCount.Update(this.commutingEntities.Count);
+					info("Enroute count: " + this.commutingEntities.Count.ToString());
 					this.bindings["Search Time (ms)"] = searchTimer.ElapsedMilliseconds.ToString();
 				}				
 			}
@@ -414,10 +464,9 @@ namespace EmploymentTracker
 			resultCurves.Dispose();
 		}
 
-		private Entity getSelected() 
-        {
-			ToolSystem toolSystem = World.GetExistingSystemManaged<ToolSystem>();
-			return toolSystem.selected;
+		private Entity getSelected()
+		{
+			return this.toolSystem.selected;
 		}
 
 		private void populateRouteEntities()
@@ -429,9 +478,98 @@ namespace EmploymentTracker
 
 			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
 
-			if (this.selectionType == SelectionType.BUILDING && this.routeHighlightOptions.incomingRoutes)
+			if (this.pathVolumeToggled)
 			{
-				EntitySearchJob searchJob = new EntitySearchJob();
+				info("Attempting path volume of " + this.selectedEntity.ToString());
+				NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
+
+				if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
+				{
+					targets.Add(renterBuffer[0].m_Renter);
+				}
+				if (EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
+				{
+					for (int i = 0; i < laneBuffer.Length; ++i)
+					{
+						targets.Add(laneBuffer[i].m_SubLane);
+					}
+				}
+
+				if (EntityManager.TryGetBuffer<SubObject>(this.selectedEntity, true, out var subnetBuffer))
+				{
+					for (int i = 0; i < subnetBuffer.Length; ++i)
+					{
+						if (EntityManager.TryGetBuffer<SubLane>(subnetBuffer[i].m_SubObject, true, out var subnetLaneBuffer))
+						{
+							for (int j = 0; j < subnetLaneBuffer.Length; ++j)
+							{
+								targets.Add(subnetLaneBuffer[j].m_SubLane);
+							}
+						}
+					}
+				}
+
+				if (this.debugActiveBinding.value)
+				{
+					this.bindings["Target Count"] = targets.Count.ToString();
+				}
+
+				if (targets.Count > 0)
+				{
+					var searchCounter = new Colossal.NativeCounter(Allocator.TempJob);
+					var resultCounter = new Colossal.NativeCounter(Allocator.TempJob);
+
+					EntityPathSearchJob searchJob = new EntityPathSearchJob();
+					searchJob.targets = targets;
+
+					searchJob.results = new NativeArray<Entity>(20000, Allocator.TempJob);
+					searchJob.pathHandle = SystemAPI.GetBufferTypeHandle<PathElement>(true);
+					searchJob.immediateCarLaneHandle = SystemAPI.GetBufferTypeHandle<CarNavigationLane>(true);
+					searchJob.pathOwnerHandle = SystemAPI.GetComponentTypeHandle<PathOwner>(true);
+					searchJob.entityHandle = SystemAPI.GetEntityTypeHandle();
+					searchJob.searchCounter = searchCounter.ToConcurrent();
+					searchJob.resultCounter = resultCounter.ToConcurrent();
+
+					var jobHandle = JobChunkExtensions.ScheduleParallel(searchJob, this.hasPathQuery, default);
+
+					targets.Dispose(jobHandle);
+
+					jobHandle.Complete();
+
+					if (this.debugActiveBinding.value)
+					{
+						this.bindings["Search Count"] = searchCounter.Count.ToString();
+					}
+
+					for (int i = 0; i < resultCounter.Count; ++i)
+					{
+						Entity e = searchJob.results[i];
+
+						SelectionType entityRouteType = this.getEntityRouteType(e);
+						if (entityRouteType != SelectionType.CAR_OCCUPANT)
+						{
+							this.commutingEntities.Add(e);
+						}
+					}
+
+					searchCounter.Dispose();
+					resultCounter.Dispose();
+
+					searchJob.results.Dispose();
+
+					if (this.debugActiveBinding.value)
+					{
+						this.bindings["Found Count"] = this.commutingEntities.Count.ToString();
+					}
+				}
+                else
+                {
+                     targets.Dispose();
+                }
+			}
+			else if (this.selectionType == SelectionType.BUILDING && this.routeHighlightOptions.incomingRoutes)
+			{
+				EntityTargetSearchJob searchJob = new EntityTargetSearchJob();
 				searchJob.searchTarget = this.selectedEntity;
 				if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
 				{
@@ -456,6 +594,7 @@ namespace EmploymentTracker
 				if (this.debugActiveBinding.value)
 				{
 					this.bindings["Search Count"] = searchJob.searchCounter.Count.ToString();
+					this.bindings.Remove("Target Count");
 				}
 					
 				searchJob.searchCounter.Dispose();
@@ -511,7 +650,11 @@ namespace EmploymentTracker
 
 		private SelectionType getEntityRouteType(Entity e)
 		{
-			if (EntityManager.HasComponent<PublicTransport>(e))
+			if (EntityManager.HasComponent<Road>(e))
+			{
+				return SelectionType.ROAD;
+			} 
+			else if (EntityManager.HasComponent<PublicTransport>(e))
 			{
 				if (EntityManager.HasComponent<Train>(e))
 				{

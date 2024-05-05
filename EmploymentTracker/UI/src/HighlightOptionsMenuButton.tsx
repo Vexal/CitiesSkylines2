@@ -70,6 +70,7 @@ export default class HighlightOptionsMenuButton extends Component {
 					<OptionToggle text="All (shift+e)" value={this.state.toggleAll} name={"toggleAll"} />
 					<OptionToggle text="Routes (shift+v)" value={this.state.routeHighlightingToggled} name={"quickToggleRouteHighlighting"} />
 					<OptionToggle text="Buildings (shift+b)" value={this.state.buildingsToggled} name={"toggleBuildings"} />
+					<OptionToggle text="Bulk Tool (shift+r)" value={this.state.buildingsToggled} name={"toggleBuildings"} />
 
 					<PanelSectionRow />
 					<SectionHeader text="Highlight Routes"/>
@@ -93,7 +94,7 @@ export default class HighlightOptionsMenuButton extends Component {
 					<OptionToggle text="Show Stats" value={this.state.showStats} name={"toggleDebug"}/>
 						
 
-					{this.state.showStats && <div>
+					{this.state.showStats && <div style={{fontSize:"12rem"} }>
 						<div style={{ display: "flex" }}>
 							<div style={{ padding: "5rem" }}>
 								En-route count

@@ -8,7 +8,7 @@ using Unity.Entities;
 namespace EmploymentTracker
 {
 	[BurstCompile]
-	public struct EntitySearchJob : IJobChunk
+	public struct EntityTargetSearchJob : IJobChunk
 	{
 		[ReadOnly]
 		public Entity searchTarget;

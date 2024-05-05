@@ -76,9 +76,12 @@ namespace EmploymentTracker
 		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool incomingRoutes { get; set; }
 		[SettingsUISection(kSection, routeHighlightTypes)]
+		[SettingsUIDisableByCondition(typeof(EmploymentTrackerSettings), nameof(hideSubIncomingOption))]
 		public bool incomingRoutesTransit { get; set; }
 		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool highlightSelectedTransitVehiclePassengerRoutes { get; set; }
+
+		private bool hideSubIncomingOption => !this.incomingRoutes;
 
 		public override void SetDefaults()
 		{
@@ -245,6 +248,7 @@ namespace EmploymentTracker
 				{"EmploymentTracker_" + "All (shift+e)", "全部（shift+e）" },
 				{"EmploymentTracker_" + "Routes (shift+v)", "路线（shift+v）" },
 				{"EmploymentTracker_" + "Buildings (shift+b)", "建筑物（shift+b）" },
+				{"EmploymentTracker_" + "Bulk Tool (shift+r)", "Bulk Tool (shift+r)" },
 				{"EmploymentTracker_" + "Students' Residences", "学生住址" },
 				{"EmploymentTracker_" + "Residents' Workplaces", "居民工作地" },
 				{"EmploymentTracker_" + "Employee Residences", "员工住址" },
