@@ -1,4 +1,5 @@
-﻿using Colossal.Mathematics;
+﻿using Colossal;
+using Colossal.Mathematics;
 using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
@@ -55,30 +56,33 @@ namespace EmploymentTracker
 		public bool incomingRoutesTransit;
 
 		[NativeDisableParallelForRestriction]
-		public NativeStream.Writer results;
-
-
+		public NativeArray<NativeHashMap<CurveDef, int>> results;
+		public NativeCounter.Concurrent curveCounter;
 
 		public void Execute(int start, int count)
 		{
 			int batchIndex = start / batchSize;
 
-			results.BeginForEachIndex(batchIndex);
-
+			int added = 0;
 			for (int i = start; i < start + count; ++i)
 			{
-				this.writeEntityRoute(this.input[i]);
+				added += this.writeEntityRoute(this.input[i], batchIndex);
 			}
 
-			results.EndForEachIndex();
+			if (added > 0)
+			{
+				this.curveCounter.Increment(added);
+			}
 		}
 
-		private void writeEntityRoute(Entity entity)
+		private int writeEntityRoute(Entity entity, int batchIndex)
 		{
 			if (!this.isValidEntity(entity))
 			{
-				return;
+				return 0;
 			}
+
+			int added = 0;
 
 			if (this.pathOnwerLookup.TryGetComponent(entity, out PathOwner pathOwner))
 			{
@@ -89,7 +93,8 @@ namespace EmploymentTracker
 						PathElement element = pathElements[i];
 						if (this.curveLookup.TryGetComponent(element.m_Target, out Curve curve))
 						{
-							this.results.Write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta, true));
+							this.write(this.getCurveDef(element.m_Target, curve.m_Bezier, element.m_TargetDelta, true), batchIndex);
+							++added;
 						}
 						else if (this.ownerLookup.TryGetComponent(element.m_Target, out Owner owner))
 						{
@@ -104,12 +109,12 @@ namespace EmploymentTracker
 
 										if (wrapAround)
 										{
-											this.getTrackRouteCurves(waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, 3);
-											this.getTrackRouteCurves(0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
+											added += this.getTrackRouteCurves(batchIndex, waypoint1.m_Index, routeSegmentBuffer.Length, routeSegmentBuffer, 3);
+											added += this.getTrackRouteCurves(batchIndex, 0, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
 										}
 										else
 										{
-											this.getTrackRouteCurves(waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
+											added += this.getTrackRouteCurves(batchIndex, waypoint1.m_Index, math.min(waypoint2.m_Index, routeSegmentBuffer.Length), routeSegmentBuffer, 3);
 										}
 									}
 								}
@@ -119,10 +124,12 @@ namespace EmploymentTracker
 				}
 			}
 
-			this.getRouteNavigationCurves(entity);
+			added += this.getRouteNavigationCurves(entity, batchIndex);
+
+			return added;
 		}
 
-		private int getTrackRouteCurves(int startSegment, int endSegment, DynamicBuffer<RouteSegment> routeSegmentBuffer, byte type = 3)
+		private int getTrackRouteCurves(int batchIndex, int startSegment, int endSegment, DynamicBuffer<RouteSegment> routeSegmentBuffer, byte type = 3)
 		{
 			int writeCount = 0;
 			for (int trackInd = startSegment; trackInd < endSegment; trackInd++)
@@ -134,7 +141,8 @@ namespace EmploymentTracker
 					{						
 						if (this.curveLookup.TryGetComponent(trackCurves[i].m_Target, out Curve curve))
 						{
-							this.results.Write(new CurveDef(curve.m_Bezier, type));
+							this.write(new CurveDef(curve.m_Bezier, type), batchIndex);
+							++writeCount;
 						}
 					}
 				}
@@ -143,16 +151,17 @@ namespace EmploymentTracker
 			return writeCount;
 		}
 
-		private int getRouteNavigationCurves(Entity entity)
+		private int getRouteNavigationCurves(Entity entity, int batchIndex)
 		{
 			int writeCount = 0;
-			if (this.carNavigationLaneSegmentLookup.TryGetBuffer(entity, out DynamicBuffer<CarNavigationLane> pathElements) && !pathElements.IsEmpty)
+			if (this.carNavigationLaneSegmentLookup.TryGetBuffer(entity, out DynamicBuffer<CarNavigationLane> pathElements))
 			{
 				for (int i = 0; i < pathElements.Length; i++)
 				{
 					if (this.curveLookup.TryGetComponent(pathElements[i].m_Lane, out Curve curve))
 					{
-						this.results.Write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition, true));
+						this.write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition, true), batchIndex);
+						++writeCount;
 					}
 				}
 			}
@@ -201,6 +210,20 @@ namespace EmploymentTracker
 		private bool isValidEntity(Entity e)
 		{
 			return this.storageInfoLookup.Exists(e) && !this.deletedLookup.HasComponent(e);
+		}
+
+		private void write(CurveDef resultCurve, int batchIndex)
+		{
+			NativeHashMap<CurveDef, int> resultCurves = this.results[batchIndex];
+
+			if (resultCurves.ContainsKey(resultCurve))
+			{
+				++resultCurves[resultCurve];
+			}
+			else
+			{
+				resultCurves[resultCurve] = 1;
+			}
 		}
 	}
 }

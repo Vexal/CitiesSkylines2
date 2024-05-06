@@ -31,30 +31,15 @@ namespace EmploymentTracker
 
 		public void Execute()
 		{
-			this.minColorWeight = expFunc(1, this.routeHighlightOptions.routeWeightMultiplier);
-			this.maxVehichleWeight = expFunc(this.maxVehicleCount + 1, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight;
-			this.maxTransitWeight = expFunc(this.maxTransitCount + 1, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight;
-			this.maxPedestrianWeight = expFunc(this.maxPedestrianCount + 1, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight;
+			this.minColorWeight = MathUtil.expFunc(1, this.routeHighlightOptions.routeWeightMultiplier);
+			this.maxVehichleWeight = MathUtil.expFunc(this.maxVehicleCount + 1, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight;
+			this.maxTransitWeight = MathUtil.expFunc(this.maxTransitCount + 1, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight;
+			this.maxPedestrianWeight = MathUtil.expFunc(this.maxPedestrianCount + 1, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight;
 
 			for (int i = 0; i < this.curveDefs.Length; ++i)
 			{
 				CurveDef curve = this.curveDefs[i];
-				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, this.getCurveWidth(curve.type), this.routeHighlightOptions.routeRoundness);
-			}
-		}
-
-		public float getCurveWidth(byte type)
-		{
-			switch (type)
-			{
-				case 1:
-					return this.routeHighlightOptions.vehicleLineWidth;
-				case 2:
-					return this.routeHighlightOptions.pedestrianLineWidth;
-				case 3:
-					return this.routeHighlightOptions.vehicleLineWidth;
-				default:
-					return 1f;
+				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, this.routeHighlightOptions.getCurveWidth(curve.type), this.routeHighlightOptions.routeRoundness);
 			}
 		}
 
@@ -66,30 +51,24 @@ namespace EmploymentTracker
 			{
 				case 1:
 					color = this.routeHighlightOptions.vehicleLineColor;
-					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
+					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
 					break;
 				case 2:
 					color = this.routeHighlightOptions.pedestrianLineColor;
-					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxPedestrianWeight;
+					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxPedestrianWeight;
 					break;
 				case 3:
 					color = this.routeHighlightOptions.subwayLineColor;
-					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxTransitWeight;
+					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxTransitWeight;
 					break;
 				default:
 					color = this.routeHighlightOptions.vehicleLineColor;
-					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
+					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
 					break;
 			}
 
 			color.a = this.routeHighlightOptions.minRouteAlpha + opacityAdd;
 			return color;
-		}
-
-		[BurstCompile]
-		public static float expFunc(float weight, float multiplier)
-		{
-			return -math.pow(.7f, weight);
 		}
 	}
 }

@@ -60,5 +60,20 @@ namespace EmploymentTracker
 			this.incomingRoutes = settings.incomingRoutes;
 			this.incomingRoutesTransit = settings.incomingRoutesTransit;
 		}
+
+		public float getCurveWidth(byte type)
+		{
+			switch (type)
+			{
+				case 1:
+					return this.vehicleLineWidth;
+				case 2:
+					return this.pedestrianLineWidth;
+				case 3:
+					return this.vehicleLineWidth;
+				default:
+					return 1f;
+			}
+		}
 	}
 }
