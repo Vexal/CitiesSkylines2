@@ -10,14 +10,15 @@
 <LongDescription>
 
 <b>New update:</b>
-* Added Simplified Chinese translations
-* Bug fixes
-* UI enhancements
+* Added new bulk route highlight tool: highlights all routes going through a selected segment or object (road, ped path, transit station, parking lot, etc). Activate with
+the new tool icon at the top right or press shift+r. This function is a dedicated tool, unlike per-object route highlighting. It is a work-in-progress and still
+has major performance impact when active (when not toggled, there should be no impact).
 
 <b>Features</b>
 Selecting an object applies graphical highlighting to:
 * The route of the selected object
 * The routes of all objects en-route to the selected building (experimental) -- this feature is performance-intensive and optimizaztion is a work-in-progress
+* The routes of all objects passing through a segment (road, ped path, etc) or object (parking lot, transit station, etc -- anything that another object can pass through)
 * Destinations and routes of all passengers in a selected vehicle (car, train, bus, plane, boat, tram)
 * Employee residence buildings when selecting a building that contains a workplace
 * Household members' workplace buildings when selecting a residential building
@@ -57,13 +58,13 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/employee-tracker.1648804/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.14" />
+	<ModVersion Value="1.15" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Add Simplified Chinese translations; more menu/hotkey options; reworked route opacity formula; bug fixes for driving over tram lanes, selecting citizens from household list" />
+	<ChangeLog Value="Add bulk route highlight tool" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->

@@ -3,6 +3,7 @@ import tadaSrc from "./Traffic.svg";
 import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
 import { useLocalization } from "cs2/l10n";
+import { ToolTip, routeVolumeToolActive } from "./RouteVolumeButton";
 
 export const autoRefreshEntitiesBinding = bindValue<boolean>("EmploymentTracker", 'AutoRefreshTransitingEntitiesActive');
 export const debugStatsBinding = bindValue<boolean>("EmploymentTracker", 'DebugActive');
@@ -49,18 +50,25 @@ export default class HighlightOptionsMenuButton extends Component {
 		toggleAll: toggleAll.value,
 		buildingsToggled: routeHighlightingToggled.value,
 		routeHighlightingToggled: buildingsToggled.value,
+		routeVolumeToolActive: routeVolumeToolActive.value,
 
 		/** @type {[string[]] */
 		routeTimeMs: HighlightOptionsMenuButton.parseBindings(routeTimeBinding.value),
+		hovering: false
 	}
 
 	render() {
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
-		return <div>
+		return <>
 			<FloatingButton src={tadaSrc} selected={this.state.menuOpen} onSelect={() => {
 				this.setState({ menuOpen: !this.state.menuOpen }); console.log("route menu open");
 				
+			}} onMouseEnter={() => {
+				this.setState({ hovering: true })
+			}} onMouseLeave={() => {
+				this.setState({ hovering: false })
 			}} />
+			{this.state.hovering && <ToolTip text={"Route Highlighter Settings"} />}
 
 			{this.state.menuOpen && <div style={{backgroundColor:"#183e69AA", borderStyle:"solid", borderWidth:"1rem", borderColor:"lightblue", borderRadius:"5rem"} }>
 				<PanelSection>
@@ -70,7 +78,7 @@ export default class HighlightOptionsMenuButton extends Component {
 					<OptionToggle text="All (shift+e)" value={this.state.toggleAll} name={"toggleAll"} />
 					<OptionToggle text="Routes (shift+v)" value={this.state.routeHighlightingToggled} name={"quickToggleRouteHighlighting"} />
 					<OptionToggle text="Buildings (shift+b)" value={this.state.buildingsToggled} name={"toggleBuildings"} />
-					<OptionToggle text="Bulk Tool (shift+r)" value={this.state.buildingsToggled} name={"toggleBuildings"} />
+					<OptionToggle text="Road Segment Tool (shift+r)" value={this.state.routeVolumeToolActive} name={"toggleRouteVolumeToolActive"} />
 
 					<PanelSectionRow />
 					<SectionHeader text="Highlight Routes"/>
@@ -143,7 +151,7 @@ export default class HighlightOptionsMenuButton extends Component {
 					</div>}
 				</PanelSection>
 			</div>}
-		</div>
+		</>
 	}
 
 	componentDidMount() {
@@ -217,6 +225,10 @@ export default class HighlightOptionsMenuButton extends Component {
 
 		routeTimeBinding.subscribe(val => {
 			this.setState({ routeTimeMs: HighlightOptionsMenuButton.parseBindings(val) });
+		})
+
+		routeVolumeToolActive.subscribe(val => {
+			this.setState({ routeVolumeToolActive: val });
 		})
 	}
 

@@ -56,6 +56,7 @@ namespace EmploymentTracker
 		private ValueBinding<bool> highlightSelected;
 		private ValueBinding<bool> highlightPassengerRoutes;
 		private ValueBinding<bool> routeHighlightingToggled;
+		private ValueBinding<bool> routeVolumeToolActive;
 
 		protected override void OnCreate()
         {
@@ -115,18 +116,21 @@ namespace EmploymentTracker
 			this.incomingRoutesTransit = new ValueBinding<bool>("EmploymentTracker", "highlightEnrouteTransit", this.settings.incomingRoutesTransit);
 			this.highlightPassengerRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerRoutes", this.settings.highlightSelectedTransitVehiclePassengerRoutes);
 			this.routeHighlightingToggled = new ValueBinding<bool>("EmploymentTracker", "routeHighlightingToggled", true);
+			this.routeVolumeToolActive = new ValueBinding<bool>("EmploymentTracker", "routeVolumeToolActive", false);
 
 			AddBinding(this.incomingRoutes);
 			AddBinding(this.highlightSelected);
 			AddBinding(this.incomingRoutesTransit);
 			AddBinding(this.highlightPassengerRoutes);
 			AddBinding(this.routeHighlightingToggled);
+			AddBinding(this.routeVolumeToolActive);
 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); this.settings.incomingRoutesTransit = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); this.settings.highlightSelectedTransitVehiclePassengerRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "quickToggleRouteHighlighting", s => { this.togglePathing(s); }));
+			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleRouteVolumeToolActive", s => { this.toggleRouteVolumeToolActive(s); }));
 
 
 			//options
@@ -207,29 +211,14 @@ namespace EmploymentTracker
 
 			if (this.togglePathVolumeDisplayAction.WasPressedThisFrame())
 			{
-				if (!this.pathVolumeToggled)
-				{
-					this.defaultHasDebugSelect = this.defaultToolSystem.debugSelect;
-					this.pathVolumeToggled = true;
-					this.defaultToolSystem.debugSelect = true;
-				}
-				else
-				{
-					this.pathVolumeToggled = false;
-					this.defaultToolSystem.debugSelect = this.defaultHasDebugSelect;
-				}
-			}
-
-			if (!this.highlightFeatures.highlightAnything()) {
-				this.endFrame(clock);
-				return;
+				this.toggleRouteVolumeToolActive(!this.pathVolumeToggled);
 			}
 
 			Entity selected = this.getSelected();
 			SelectionType newSelectionType = this.getEntityRouteType(selected);
 			
 			//only compute most highlighting when object selection changes (except for dynamic pathfinding)
-			bool updatedSelection = this.toggled && (selected != this.selectedEntity || newSelectionType != this.selectionType);
+			bool updatedSelection = (this.toggled || this.pathVolumeToggled) && (selected != this.selectedEntity || newSelectionType != this.selectionType);
 			if (updatedSelection)
 			{
 				this.reset();
@@ -249,7 +238,7 @@ namespace EmploymentTracker
 				this.toggle(!this.toggled);
 			}
 
-			if (!this.toggled)
+			if (!this.toggled && !this.pathVolumeToggled)
 			{
 				this.endFrame(clock);
 				return;
@@ -260,7 +249,7 @@ namespace EmploymentTracker
 				this.togglePathing(!this.pathingToggled);
 			}
 
-			if (!this.pathingToggled)
+			if (!this.pathingToggled && !this.pathVolumeToggled)
 			{
 				this.endFrame(clock);
 				return;
@@ -747,6 +736,23 @@ namespace EmploymentTracker
 					this.routeHighlightingToggled.Update(this.pathingToggled);
 				}
 			}
+		}
+
+		public void toggleRouteVolumeToolActive(bool active)
+		{
+			if (active)
+			{
+				this.defaultHasDebugSelect = this.defaultToolSystem.debugSelect;
+				this.pathVolumeToggled = true;
+				this.defaultToolSystem.debugSelect = true;
+			}
+			else
+			{
+				this.pathVolumeToggled = false;
+				this.defaultToolSystem.debugSelect = this.defaultHasDebugSelect;
+			}
+
+			this.routeVolumeToolActive.Update(active);
 		}
 	}
 }

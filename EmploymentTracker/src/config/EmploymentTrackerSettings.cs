@@ -248,7 +248,7 @@ namespace EmploymentTracker
 				{"EmploymentTracker_" + "All (shift+e)", "全部（shift+e）" },
 				{"EmploymentTracker_" + "Routes (shift+v)", "路线（shift+v）" },
 				{"EmploymentTracker_" + "Buildings (shift+b)", "建筑物（shift+b）" },
-				{"EmploymentTracker_" + "Bulk Tool (shift+r)", "Bulk Tool (shift+r)" },
+				{"EmploymentTracker_" + "Road Segment Tool (shift+r)", "路段工具（shift+r）" },
 				{"EmploymentTracker_" + "Students' Residences", "学生住址" },
 				{"EmploymentTracker_" + "Residents' Workplaces", "居民工作地" },
 				{"EmploymentTracker_" + "Employee Residences", "员工住址" },
@@ -258,7 +258,10 @@ namespace EmploymentTracker
 				{"EmploymentTracker_" + "Incoming Routes", "正在前往路线" },
 				{"EmploymentTracker_" + "Highlight Routes", "高亮显示路线" },
 				{"EmploymentTracker_" + "Route Highlighter", "路线显示器" },
-				{"EmploymentTracker_" + "Highlight Buildings", "高亮显示建筑物" },   
+				{"EmploymentTracker_" + "Highlight Buildings", "高亮显示建筑物" },  
+				
+				{"EmploymentTracker_" + "Route Highlighter Road Segment Tool (shift+r)", "路线显示器路段工具（shift+r）" },   
+				{"EmploymentTracker_" + "Route Highlighter Settings", "路线显示器设置" },   
 			};
 		}
 
