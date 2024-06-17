@@ -14,6 +14,7 @@ using Game.Routes;
 using Game.Tools;
 using Game.UI;
 using Game.Vehicles;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Burst;
@@ -32,7 +33,8 @@ namespace EmploymentTracker
         private InputAction toggleSystemAction;
         private InputAction togglePathDisplayAction;
         private InputAction togglePathVolumeDisplayAction;
-		private OverlayRenderSystem overlayRenderSystem;
+		private SimpleOverlayRendererSystem overlayRenderSystem;
+		private OverlayRenderSystem overlayRenderSystem2;
 		private EmploymentTrackerSettings settings;
 		private EntityQuery hasTargetQuery;
 		private EntityQuery hasPathQuery;
@@ -40,6 +42,8 @@ namespace EmploymentTracker
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
+		private int threadBatchSize = 16;
+		private bool[] activeLaneIndexes = new bool[1024];
 		private DefaultToolSystem defaultToolSystem;
 
 		private ValueBinding<bool> debugActiveBinding;
@@ -165,7 +169,8 @@ namespace EmploymentTracker
 			this.toggleSystemAction.Enable();
 			this.togglePathDisplayAction.Enable();
 			this.togglePathVolumeDisplayAction.Enable();
-			this.overlayRenderSystem = World.GetExistingSystemManaged<OverlayRenderSystem>();
+			this.overlayRenderSystem = World.GetExistingSystemManaged<SimpleOverlayRendererSystem>();
+			this.overlayRenderSystem2 = World.GetExistingSystemManaged<OverlayRenderSystem>();
 
 			this.highlightFeatures = new HighlightFeatures(settings);
 			this.routeHighlightOptions = new RouteOptions(settings);
@@ -177,6 +182,7 @@ namespace EmploymentTracker
 					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings) gameSettings;
 					this.highlightFeatures = new HighlightFeatures(settings);
 					this.routeHighlightOptions = new RouteOptions(settings);
+					this.threadBatchSize = changedSettings.threadBatchSize;
 				}
 			};
 		}
@@ -321,7 +327,7 @@ namespace EmploymentTracker
 			NativeCounter totalCount = new NativeCounter(Allocator.TempJob);
 			calculateRoutesJob.curveCounter = totalCount.ToConcurrent();
 
-			int routeBatchSize = 16;
+			int routeBatchSize = this.threadBatchSize;
 
 			calculateRoutesJob.batchSize = routeBatchSize;
 
@@ -387,13 +393,13 @@ namespace EmploymentTracker
 				job.maxVehicleCount = maxVehicleWeight;
 				job.maxTransitCount = maxTransitWeight;
 				job.maxPedestrianCount = maxPedestrianWeight;
-				job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+				job.overlayBuffer = this.overlayRenderSystem2.GetBuffer(out JobHandle dependencies);
 				job.routeHighlightOptions = this.routeHighlightOptions;
 				JobHandle routeJobHandle = job.Schedule(dependencies);
 
 				curveArray.Dispose(routeJobHandle);
 				curveCount.Dispose(routeJobHandle);
-				this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
+				this.overlayRenderSystem2.AddBufferWriter(routeJobHandle);
 			}
 
 			resultCurves.Dispose();
@@ -666,6 +672,7 @@ namespace EmploymentTracker
 		private void reset()
 		{
 			this.selectedEntity = default;
+			this.resetActiveLanes(true);
 			if (this.commutingEntities.IsCreated)
 			{ 
 				this.commutingEntities.Dispose();
@@ -753,6 +760,20 @@ namespace EmploymentTracker
 			}
 
 			this.routeVolumeToolActive.Update(active);
+		}
+
+		private void selectOneLane(int laneIndex)
+		{
+			this.resetActiveLanes(false);
+			this.activeLaneIndexes[laneIndex] = true;
+		}
+
+		private void resetActiveLanes(bool val)
+		{
+			for (int i = 0; i < this.activeLaneIndexes.Length; i++) 
+			{
+				this.activeLaneIndexes[i] = val;
+			}
 		}
 	}
 }

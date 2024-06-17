@@ -30,6 +30,7 @@ namespace EmploymentTracker
 			this.vehicleRouteWidth = 4f;
 			this.routeOpacity = .7f;
 			this.routeOpacityMultilier = .7f;
+			this.threadBatchSize = 16;
 
 			this.incomingRoutes = true;
 			this.incomingRoutesTransit = true;
@@ -70,6 +71,10 @@ namespace EmploymentTracker
 		[SettingsUISection(kSection, routeHighlightOptions)]
 		public float routeOpacityMultilier { get; set; }
 
+		[SettingsUISlider(min = 1, max = 1024, step = 1, scalarMultiplier = 1, unit = Unit.kInteger)]
+		[SettingsUISection(kSection, routeHighlightOptions)]
+		public int threadBatchSize { get; set; }
+
 
 		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool highlightSelected { get; set; }
@@ -95,6 +100,7 @@ namespace EmploymentTracker
 			this.vehicleRouteWidth = 4f;
 			this.routeOpacity = .7f;
 			this.routeOpacityMultilier = .7f;
+			this.threadBatchSize = 16;
 
 			this.incomingRoutes = true;
 			this.incomingRoutesTransit = true;
@@ -167,6 +173,9 @@ namespace EmploymentTracker
 				
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), "Pedestrian Route Segment Line Width" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), $"The width of the route display line for pedestrians." },
+				
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), "Thread Batch Size" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), $"Advanced: the number of entities per highlight batch." },
 			};
 		}
 
@@ -241,6 +250,9 @@ namespace EmploymentTracker
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), "行人路线部分叠加线宽度" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.pedestrianRouteWidth)), $"The width of the route display line for pedestrians." },
 
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), "Thread Batch Size" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), $"Advanced: the number of entities per highlight batch." },
+				
 				{"EmploymentTracker_" + "Selected Object Route", "所选对象路线" },
 				{"EmploymentTracker_" + "On", "开" },
 				{"EmploymentTracker_" + "Off", "关" },
