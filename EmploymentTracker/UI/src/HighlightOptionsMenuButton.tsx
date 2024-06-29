@@ -239,7 +239,7 @@ export default class HighlightOptionsMenuButton extends Component {
 	}
 }
 
-function OptionToggle(props: { value: boolean, name: string, text: string | null }) {
+export function OptionToggle(props: { value: boolean, name: string, text: string | null }) {
 	const { translate } = useLocalization();
 
 	return <div style={{ display: "flex" }}>

@@ -1,14 +1,16 @@
-import { FloatingButton } from "cs2/ui";
+import { FloatingButton, PanelSection } from "cs2/ui";
 import tadaSrc from "./Roads.svg";
 import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
 import { useLocalization } from "cs2/l10n";
 
 export const routeVolumeToolActive = bindValue<boolean>("EmploymentTracker", 'routeVolumeToolActive');
+export const laneIdList = bindValue<string>("EmploymentTracker", 'laneIdList');
 
 export default class RouteVolumeButton extends Component {
 	state = {
 		routeVolumeToolActive: routeVolumeToolActive.value,
+		laneIdList: laneIdList.value,
 		hovering: false
 	}
 
@@ -21,7 +23,13 @@ export default class RouteVolumeButton extends Component {
 		}} onMouseLeave={() => {
 			this.setState({ hovering: false })
 			}} />
-			{this.state.hovering && <ToolTip text={"Route Highlighter Road Segment Tool (shift+r)"} /> }
+			{this.state.hovering && <ToolTip text={"Route Highlighter Road Segment Tool (shift+r)"} />}
+
+			{this.state.routeVolumeToolActive && this.state.laneIdList.length > 0 && <div style={{ backgroundColor: "#183e69AA", borderStyle: "solid", borderWidth: "1rem", borderColor: "lightblue", borderRadius: "5rem" }}>
+				<PanelSection>
+					
+				</PanelSection>
+			</div>}
 		</>
 
 		/*return <div className={iconStyles.fireButton + " " + (this.state.routeVolumeToolActive ? iconStyles.fireActive : "")}>
@@ -38,7 +46,11 @@ export default class RouteVolumeButton extends Component {
 	componentDidMount() {
 		routeVolumeToolActive.subscribe(val => {
 			this.setState({ routeVolumeToolActive: val });
-		})
+		});
+		laneIdList.subscribe(val => {
+			console.log("lane ids", val);
+			this.setState({ laneIdList: val });
+		});
 	}
 }
 

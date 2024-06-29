@@ -57,6 +57,7 @@ namespace EmploymentTracker
 		private ValueBinding<int> totalSegmentCount;
 		private ValueBinding<string> routeTimeMs;
 		private ValueBinding<string> selectionTypeBinding;
+		private ValueBinding<string> laneIdListBinding;
 
 		private ValueBinding<bool> incomingRoutes;
 		private ValueBinding<bool> incomingRoutesTransit;
@@ -132,6 +133,7 @@ namespace EmploymentTracker
 			this.highlightPassengerRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerRoutes", this.settings.highlightSelectedTransitVehiclePassengerRoutes);
 			this.routeHighlightingToggled = new ValueBinding<bool>("EmploymentTracker", "routeHighlightingToggled", true);
 			this.routeVolumeToolActive = new ValueBinding<bool>("EmploymentTracker", "routeVolumeToolActive", false);
+			this.laneIdListBinding = new ValueBinding<string>("EmploymentTracker", "laneIdList", "");
 
 			AddBinding(this.incomingRoutes);
 			AddBinding(this.highlightSelected);
@@ -139,6 +141,7 @@ namespace EmploymentTracker
 			AddBinding(this.highlightPassengerRoutes);
 			AddBinding(this.routeHighlightingToggled);
 			AddBinding(this.routeVolumeToolActive);
+			AddBinding(this.laneIdListBinding);
 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
@@ -306,6 +309,29 @@ namespace EmploymentTracker
 
 			if (this.pathVolumeToggled)
 			{
+				if (updatedSelection)
+				{
+					string laneIds = "";
+					if (EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
+					{
+						if (laneBuffer.Length == 1)
+						{
+							laneIds = "0";
+						}
+						else
+						{
+							for (int i = 0; i < laneBuffer.Length - 1; ++i)
+							{
+								laneIds += i + ",";
+							}
+
+							laneIds += (laneBuffer.Length - 1);
+						}
+					}
+
+					this.laneIdListBinding.Update(laneIds);
+				}
+
 				for (int i = 0; i < this.laneSelectActions.Length; i++)
 				{
 					if (this.laneSelectActions[i].WasPressedThisFrame())
@@ -764,6 +790,8 @@ namespace EmploymentTracker
 			{
 				this.trackedEntityCount.Update(0);
 			}
+
+			this.laneIdListBinding.Update("");
 		}
 
 		private void toggleAutoRefresh(bool active) 
