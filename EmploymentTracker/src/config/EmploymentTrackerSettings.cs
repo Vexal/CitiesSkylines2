@@ -99,7 +99,7 @@ namespace EmploymentTracker
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
 			this.routeOpacity = .7f;
-			this.routeOpacityMultilier = .7f;
+			this.routeOpacityMultilier = .1f;
 			this.threadBatchSize = 16;
 
 			this.incomingRoutes = true;

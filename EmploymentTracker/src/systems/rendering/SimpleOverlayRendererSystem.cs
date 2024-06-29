@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -83,10 +84,10 @@ namespace EmploymentTracker
 			{
 				Bezier4x2 inp = curve.xz;
 				float num = MathUtil.Length(ref inp);
-				this.DrawCurveImpl(color, color, 0f, (StyleFlags)0, curve, width, num + width * 2f, 0f, roundness, num);
+				this.DrawCurveImpl(color, color, curve, width, num + width * 2f, 0f, roundness, num);
 			}
 
-			private void DrawCurveImpl(Color outlineColor, Color fillColor, float outlineWidth, StyleFlags styleFlags, Bezier4x3 curve, float width, float dashLength, float gapLength, float2 roundness, float length)
+			private void DrawCurveImpl(Color outlineColor, Color fillColor, Bezier4x3 curve, float width, float dashLength, float gapLength, float2 roundness, float length)
 			{
 				if (!(length < 0.01f))
 				{
@@ -94,8 +95,8 @@ namespace EmploymentTracker
 					value.m_Size = new float2(width, length);
 					value.m_DashLengths = new float2(gapLength, dashLength);
 					value.m_Roundness = roundness;
-					value.m_OutlineWidth = outlineWidth;
-					value.m_FillStyle = (float)(styleFlags & StyleFlags.Grid);
+					value.m_OutlineWidth = 0;
+					value.m_FillStyle = (float)(0 & StyleFlags.Grid);
 					MathUtil.BuildCurveMatrix(ref curve, length, out value.m_Curve);
 					value.m_OutlineColor = outlineColor.linear;
 					value.m_FillColor = fillColor.linear;
@@ -400,7 +401,8 @@ namespace EmploymentTracker
 			}
 		}
 
-		private void GetMesh(ref Mesh mesh, bool box)
+		[BurstCompile]
+		private static void GetMesh(ref Mesh mesh, bool box)
 		{
 			if (mesh == null)
 			{

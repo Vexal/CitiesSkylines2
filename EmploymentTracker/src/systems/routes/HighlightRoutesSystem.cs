@@ -33,12 +33,15 @@ namespace EmploymentTracker
         private InputAction toggleSystemAction;
         private InputAction togglePathDisplayAction;
         private InputAction togglePathVolumeDisplayAction;
+        private InputAction toggleRenderTypeAction;
+		private InputAction[] laneSelectActions = new InputAction[10];
 		private SimpleOverlayRendererSystem overlayRenderSystem;
 		private OverlayRenderSystem overlayRenderSystem2;
 		private EmploymentTrackerSettings settings;
 		private EntityQuery hasTargetQuery;
 		private EntityQuery hasPathQuery;
 		private ToolSystem toolSystem;
+		private LaneHighlightToolSystem laneHighlightToolSystem;
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
@@ -63,8 +66,8 @@ namespace EmploymentTracker
 		private ValueBinding<bool> routeVolumeToolActive;
 
 		protected override void OnCreate()
-        {
-            base.OnCreate();
+		{
+			base.OnCreate();
 
 			this.hasTargetQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -108,11 +111,19 @@ namespace EmploymentTracker
 			//Init UI and IO
 			this.settings = Mod.INSTANCE.getSettings();
 			this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
-            this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
+			this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
 			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
 			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
 			this.togglePathVolumeDisplayAction = new InputAction("shiftPathingVolume", InputActionType.Button);
 			this.togglePathVolumeDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/r").With("Modifier", "<keyboard>/shift");
+			this.toggleRenderTypeAction = new InputAction("renderType", InputActionType.Button);
+			this.toggleRenderTypeAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
+
+			for (int i = 0; i < 10; i++)
+			{
+				this.laneSelectActions[i] = new InputAction("laneSelect" + i, InputActionType.Button);
+				this.laneSelectActions[i].AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/" + i).With("Modifier", "<keyboard>/shift");
+			}
 
 			//route toggles
 			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
@@ -161,6 +172,7 @@ namespace EmploymentTracker
 
 			this.toolSystem = World.GetExistingSystemManaged<ToolSystem>();
 			this.defaultToolSystem = World.GetExistingSystemManaged<DefaultToolSystem>();
+			this.laneHighlightToolSystem = World.GetExistingSystemManaged<LaneHighlightToolSystem>();
 		}
 
 		protected override void OnStartRunning()
@@ -169,6 +181,11 @@ namespace EmploymentTracker
 			this.toggleSystemAction.Enable();
 			this.togglePathDisplayAction.Enable();
 			this.togglePathVolumeDisplayAction.Enable();
+			this.toggleRenderTypeAction.Enable();
+			for (int i = 0; i < 10; i++)
+			{
+				this.laneSelectActions[i].Enable();
+			}
 			this.overlayRenderSystem = World.GetExistingSystemManaged<SimpleOverlayRendererSystem>();
 			this.overlayRenderSystem2 = World.GetExistingSystemManaged<OverlayRenderSystem>();
 
@@ -193,6 +210,10 @@ namespace EmploymentTracker
             this.toggleSystemAction.Disable();
             this.togglePathDisplayAction.Disable();
             this.togglePathVolumeDisplayAction.Disable();
+			for (int i = 0; i < 10; i++)
+			{
+				this.laneSelectActions[i].Disable();
+			}
 			this.reset();
 		}
 
@@ -218,6 +239,22 @@ namespace EmploymentTracker
 			if (this.togglePathVolumeDisplayAction.WasPressedThisFrame())
 			{
 				this.toggleRouteVolumeToolActive(!this.pathVolumeToggled);
+			}
+			if (this.toggleRenderTypeAction.WasPressedThisFrame())
+			{
+				this.useNewRenderer = !this.useNewRenderer;
+			}
+
+			{
+				for (int i = 0; i < this.laneSelectActions.Length; i++)
+				{
+					if (this.laneSelectActions[i].WasPressedThisFrame())
+					{
+						this.toolSystem.activeTool = this.laneHighlightToolSystem;
+						//this.selectOneLane(i);
+						//updatedSelection = true;
+					}
+				}
 			}
 
 			Entity selected = this.getSelected();
@@ -267,6 +304,19 @@ namespace EmploymentTracker
 				return;
 			}
 
+			if (this.pathVolumeToggled)
+			{
+				for (int i = 0; i < this.laneSelectActions.Length; i++)
+				{
+					if (this.laneSelectActions[i].WasPressedThisFrame())
+					{
+						this.toolSystem.activeTool = this.laneHighlightToolSystem;
+						//this.selectOneLane(i);
+						updatedSelection = true;
+					}
+				}
+			}
+
 			//only need to update building/target highlights when selection changes
 			if (updatedSelection || (this.refreshTransitingEntitiesBinding.value && (++this.frameCount % 64 == 0)))
 			{	
@@ -291,6 +341,8 @@ namespace EmploymentTracker
 
 			this.endFrame(clock);
 		}
+
+		private bool useNewRenderer = true;
 
 		private void doRouteJobs(bool ignoreTransit)
 		{
@@ -387,29 +439,46 @@ namespace EmploymentTracker
 					++ind;
 				}
 
-				RouteRenderJob job = new RouteRenderJob();
-				job.curveDefs = curveArray;
-				job.curveCounts = curveCount;
-				job.maxVehicleCount = maxVehicleWeight;
-				job.maxTransitCount = maxTransitWeight;
-				job.maxPedestrianCount = maxPedestrianWeight;
-				job.overlayBuffer = this.overlayRenderSystem2.GetBuffer(out JobHandle dependencies);
-				job.routeHighlightOptions = this.routeHighlightOptions;
-				JobHandle routeJobHandle = job.Schedule(dependencies);
+				resultCurves.Dispose();
+
+				JobHandle routeJobHandle;
+				if (this.useNewRenderer)
+				{
+					RouteRenderJob job = new RouteRenderJob();
+					job.curveDefs = curveArray;
+					job.curveCounts = curveCount;
+					job.maxVehicleCount = maxVehicleWeight;
+					job.maxTransitCount = maxTransitWeight;
+					job.maxPedestrianCount = maxPedestrianWeight;
+					job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+					job.routeHighlightOptions = this.routeHighlightOptions;
+					routeJobHandle = job.Schedule(dependencies);
+				}
+				else
+				{
+					RouteRenderJobOld job = new RouteRenderJobOld();
+					job.curveDefs = curveArray;
+					job.curveCounts = curveCount;
+					job.maxVehicleCount = maxVehicleWeight;
+					job.maxTransitCount = maxTransitWeight;
+					job.maxPedestrianCount = maxPedestrianWeight;
+					job.overlayBuffer = this.overlayRenderSystem2.GetBuffer(out JobHandle dependencies);
+					job.routeHighlightOptions = this.routeHighlightOptions;
+					routeJobHandle = job.Schedule(dependencies);
+				}
 
 				curveArray.Dispose(routeJobHandle);
 				curveCount.Dispose(routeJobHandle);
 				this.overlayRenderSystem2.AddBufferWriter(routeJobHandle);
+				//routeJobHandle.Complete();
 			}
-
-			resultCurves.Dispose();
 
 			stopwatch.Stop();
 
 			if (this.debugActiveBinding.value)
 			{
-				//var renderTime = stopwatch.ElapsedMilliseconds;
-				//this.bindings["Render Time (ms)"] = renderTime.ToString();
+				var renderTime = stopwatch.ElapsedMilliseconds;
+				this.bindings["Render Time (ms)" + (this.useNewRenderer ? " - n" : "")] = renderTime.ToString();
 				this.bindings["Stream Time (ms)"] = streamReadTime.ToString();
 			}
 		}
@@ -419,19 +488,12 @@ namespace EmploymentTracker
 			return this.toolSystem.selected;
 		}
 
-		private void populateRouteEntities()
+		private NativeHashSet<Entity> getSelectionTargets()
 		{
-			if (this.commutingEntities.IsCreated)
-			{
-				this.commutingEntities.Dispose();
-			}
-
-			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
+			NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
 
 			if (this.pathVolumeToggled)
 			{
-				NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
-
 				if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
 				{
 					targets.Add(renterBuffer[0].m_Renter);
@@ -443,7 +505,6 @@ namespace EmploymentTracker
 						targets.Add(laneBuffer[i].m_SubLane);
 					}
 				}
-
 				if (EntityManager.TryGetBuffer<SubObject>(this.selectedEntity, true, out var subnetBuffer))
 				{
 					for (int i = 0; i < subnetBuffer.Length; ++i)
@@ -457,6 +518,27 @@ namespace EmploymentTracker
 						}
 					}
 				}
+			}
+			else if (this.laneHighlightToolSystem == this.toolSystem.activeTool && EntityManager.Exists(this.laneHighlightToolSystem.selectedLane))
+			{
+				targets.Add(this.laneHighlightToolSystem.selectedLane);
+			}
+			return targets;
+		}
+
+		private void populateRouteEntities()
+		{
+			if (this.commutingEntities.IsCreated)
+			{
+				this.commutingEntities.Dispose();
+			}
+
+			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
+
+			if (this.pathVolumeToggled || this.laneHighlightToolSystem == this.toolSystem.activeTool)
+			{
+				NativeHashSet<Entity> targets = this.getSelectionTargets();
+				
 
 				if (this.debugActiveBinding.value)
 				{

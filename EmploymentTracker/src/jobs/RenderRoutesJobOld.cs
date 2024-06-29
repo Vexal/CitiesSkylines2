@@ -8,10 +8,9 @@ using Unity.Mathematics;
 namespace EmploymentTracker
 {
 	//[BurstCompile]
-	public struct RouteRenderJob : IJob
+	public struct RouteRenderJobOld : IJob
 	{
-		//public OverlayRenderSystem.Buffer overlayBuffer;
-		public SimpleOverlayRendererSystem.Buffer overlayBuffer;
+		public OverlayRenderSystem.Buffer overlayBuffer;
 		[ReadOnly]
 		public NativeArray<CurveDef> curveDefs;
 		[ReadOnly]
@@ -44,57 +43,23 @@ namespace EmploymentTracker
 			}
 		}
 
-		private const float maxColor = .8f;
-		private const float colorMultiplier = .08f;
-
 		public UnityEngine.Color getCurveColor(byte type, float weight)
 		{
 			UnityEngine.Color color;
 			float opacityAdd = 0;
-			
 			switch (type)
 			{
-				case 4:
+				case 1:
 					color = this.routeHighlightOptions.vehicleLineColor;
-					//color.g = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
-					//opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
-					if (weight > 1)
-					{
-						color.r += weight * colorMultiplier;
-						color.b += weight * colorMultiplier;
-
-						color.r = Math.Min(color.r, maxColor);
-						color.b = Math.Min(color.b, maxColor);
-					}
+					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
 					break;
 				case 2:
 					color = this.routeHighlightOptions.pedestrianLineColor;
-					//opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxPedestrianWeight;
-					if (weight > 1)
-					{
-						color.r += weight * colorMultiplier;
-						color.g += weight * colorMultiplier;
-
-						color.r = Math.Min(color.r, maxColor);
-						color.g = Math.Min(color.g, maxColor);
-					}
+					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxPedestrianWeight;
 					break;
 				case 3:
 					color = this.routeHighlightOptions.subwayLineColor;
 					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxTransitWeight;
-					break;
-				case 1:
-					color = new UnityEngine.Color(1f, 0f, 0f);
-					//color.g = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
-					//opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
-					if (weight > 1)
-					{
-						color.g += weight * .05f;
-						color.b += weight * .05f;
-
-						color.g = Math.Min(color.r, maxColor);
-						color.b = Math.Min(color.b, maxColor);
-					}
 					break;
 				default:
 					color = this.routeHighlightOptions.vehicleLineColor;
@@ -102,7 +67,7 @@ namespace EmploymentTracker
 					break;
 			}
 
-			color.a = 1;// this.routeHighlightOptions.minRouteAlpha + opacityAdd;
+			color.a = this.routeHighlightOptions.minRouteAlpha + opacityAdd;
 			return color;
 		}
 	}
