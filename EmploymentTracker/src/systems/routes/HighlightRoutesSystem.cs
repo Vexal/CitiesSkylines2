@@ -27,7 +27,7 @@ using UnityEngine.InputSystem;
 namespace EmploymentTracker
 {
 	[BurstCompile]
-	internal partial class HighlightRoutesSystem : InfoSectionBase
+	internal partial class HighlightRoutesSystem : UISystemBase
     {
         private Entity selectedEntity = default;
 		private SelectionType selectionType;
@@ -71,7 +71,6 @@ namespace EmploymentTracker
 		{
 			base.OnCreate();
 
-			m_InfoUISystem.AddMiddleSection(this);
 			this.hasTargetQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
@@ -151,6 +150,7 @@ namespace EmploymentTracker
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); this.settings.highlightSelectedTransitVehiclePassengerRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "quickToggleRouteHighlighting", s => { this.togglePathing(s); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleRouteVolumeToolActive", s => { this.toggleRouteVolumeToolActive(s); }));
+			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleActiveLanes", s => { this.setActiveLanes(s); }));
 
 
 			//options
@@ -235,7 +235,6 @@ namespace EmploymentTracker
 			var clock = new Stopwatch();
 			clock.Start();
 			base.OnUpdate();
-			visible = true;
 			if (this.highlightFeatures.dirty)
 			{
 				this.reset();
@@ -249,18 +248,6 @@ namespace EmploymentTracker
 			if (this.toggleRenderTypeAction.WasPressedThisFrame())
 			{
 				this.useNewRenderer = !this.useNewRenderer;
-			}
-
-			{
-				for (int i = 0; i < this.laneSelectActions.Length; i++)
-				{
-					if (this.laneSelectActions[i].WasPressedThisFrame())
-					{
-						this.toolSystem.activeTool = this.laneHighlightToolSystem;
-						//this.selectOneLane(i);
-						//updatedSelection = true;
-					}
-				}
 			}
 
 			Entity selected = this.getSelected();
@@ -328,21 +315,11 @@ namespace EmploymentTracker
 								laneIds += "true,";
 							}
 
-							laneIds += (laneBuffer.Length - 1);
+							laneIds += "true";
 						}
 					}
 
 					this.laneIdListBinding.Update(laneIds);
-				}
-
-				for (int i = 0; i < this.laneSelectActions.Length; i++)
-				{
-					if (this.laneSelectActions[i].WasPressedThisFrame())
-					{
-						this.toolSystem.activeTool = this.laneHighlightToolSystem;
-						//this.selectOneLane(i);
-						updatedSelection = true;
-					}
 				}
 			}
 
@@ -809,8 +786,6 @@ namespace EmploymentTracker
 
 		private Dictionary<string, string> bindings = new Dictionary<string, string>();
 
-		protected override string group => "GroupName";
-
 		private void updateBindings()
 		{
 			List<string> bindingList = new List<string>(this.bindings.Count);
@@ -883,27 +858,21 @@ namespace EmploymentTracker
 			this.activeLaneIndexes[laneIndex] = true;
 		}
 
+		private void setActiveLanes(string laneList)
+		{
+			string[] laneVals = laneList.Split(',');
+			for (int i = 0; i < laneVals.Length; i++)
+			{
+				this.activeLaneIndexes[i] = laneVals[i] == "true";
+			}
+		}
+
 		private void resetActiveLanes(bool val)
 		{
 			for (int i = 0; i < this.activeLaneIndexes.Length; i++) 
 			{
 				this.activeLaneIndexes[i] = val;
 			}
-		}
-
-		protected override void Reset()
-		{
-			
-		}
-
-		protected override void OnProcess()
-		{
-			
-		}
-
-		public override void OnWriteProperties(IJsonWriter writer)
-		{
-			
 		}
 	}
 }

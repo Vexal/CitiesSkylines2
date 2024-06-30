@@ -10,7 +10,7 @@ const register: ModRegistrar = (moduleRegistry) => {
 
 	moduleRegistry.append('GameTopRight', HighlightOptionsMenuButton);
 	moduleRegistry.append('GameTopRight', RouteVolumeButton);
-	moduleRegistry.extend("game-ui/game/components/selected-info-panel/selected-info-sections/selected-info-sections.tsx", 'selectedInfoSectionComponents', SelectedInfoPanelTogglesComponent);
+	//moduleRegistry.extend("game-ui/game/components/selected-info-panel/selected-info-sections/selected-info-sections.tsx", 'selectedInfoSectionComponents', SelectedInfoPanelTogglesComponent);
 
 	console.log("Route highlighter UI module registrations completed.");
 }
