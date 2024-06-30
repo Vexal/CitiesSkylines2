@@ -43,6 +43,7 @@ namespace DCMilestoneRewards
 			{
 				{ settings.GetSettingsLocaleID(), "Difficulty: Milestone Rewards" },
 				{ settings.GetOptionTabLocaleID(Setting.kSection), "Main" },
+				{ settings.GetOptionGroupLocaleID(Setting.moneyGroup), "Difficulty Config: Milestone Rewards" },
 
 				{ settings.GetOptionLabelLocaleID(nameof(Setting.disableMilestoneRewards)), "Disable Milestone Rewards" },
 				{ settings.GetOptionDescLocaleID(nameof(Setting.disableMilestoneRewards)), $"Remove the money bonus when reaching a milestone" },

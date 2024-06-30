@@ -1,27 +1,33 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="82675" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="DCMilestoneRewards" />
+	<DisplayName Value="Disable Milestone Rewards - Difficulty Config" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Config option for disablign milestone rewards" />
+	<ShortDescription Value="Config option for disabling milestone money rewards. Part of the Difficulty Config series." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Config option for disablign milestone rewards" /-->
 	<LongDescription>
-Config option for disablign milestone rewards
+		Difficulty Config: Disable Milestone Rewards
+		
+		
+		Config option for disabling milestone reward money; option disabled by default and can be enabled in the game options menu.
+		
+		
+		Part of the Difficulty Config series. See the attached forum link for other mods in the Difficulty Config series.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="" />
 	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
+	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/difficulty-config-mod-series.1686868/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
@@ -29,5 +35,5 @@ Config option for disablign milestone rewards
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<ExternalLink Type="github" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/DCMilestoneRewards" />
 </Publish>
