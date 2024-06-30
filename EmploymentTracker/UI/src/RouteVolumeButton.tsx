@@ -11,6 +11,7 @@ export default class RouteVolumeButton extends Component {
 	state = {
 		routeVolumeToolActive: routeVolumeToolActive.value,
 		laneIdList: laneIdList.value,
+		activeLanes: laneIdList.value.split(",").map(v => v === "true" ? true : false),
 		hovering: false
 	}
 

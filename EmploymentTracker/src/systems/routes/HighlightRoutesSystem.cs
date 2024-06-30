@@ -13,6 +13,7 @@ using Game.Rendering;
 using Game.Routes;
 using Game.Tools;
 using Game.UI;
+using Game.UI.InGame;
 using Game.Vehicles;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ using UnityEngine.InputSystem;
 namespace EmploymentTracker
 {
 	[BurstCompile]
-	internal partial class HighlightRoutesSystem : UISystemBase
+	internal partial class HighlightRoutesSystem : InfoSectionBase
     {
         private Entity selectedEntity = default;
 		private SelectionType selectionType;
@@ -70,6 +71,7 @@ namespace EmploymentTracker
 		{
 			base.OnCreate();
 
+			m_InfoUISystem.AddMiddleSection(this);
 			this.hasTargetQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
@@ -232,7 +234,8 @@ namespace EmploymentTracker
 		{
 			var clock = new Stopwatch();
 			clock.Start();
-
+			base.OnUpdate();
+			visible = true;
 			if (this.highlightFeatures.dirty)
 			{
 				this.reset();
@@ -316,13 +319,13 @@ namespace EmploymentTracker
 					{
 						if (laneBuffer.Length == 1)
 						{
-							laneIds = "0";
+							laneIds = "true";
 						}
 						else
 						{
 							for (int i = 0; i < laneBuffer.Length - 1; ++i)
 							{
-								laneIds += i + ",";
+								laneIds += "true,";
 							}
 
 							laneIds += (laneBuffer.Length - 1);
@@ -806,6 +809,8 @@ namespace EmploymentTracker
 
 		private Dictionary<string, string> bindings = new Dictionary<string, string>();
 
+		protected override string group => "GroupName";
+
 		private void updateBindings()
 		{
 			List<string> bindingList = new List<string>(this.bindings.Count);
@@ -884,6 +889,21 @@ namespace EmploymentTracker
 			{
 				this.activeLaneIndexes[i] = val;
 			}
+		}
+
+		protected override void Reset()
+		{
+			
+		}
+
+		protected override void OnProcess()
+		{
+			
+		}
+
+		public override void OnWriteProperties(IJsonWriter writer)
+		{
+			
 		}
 	}
 }
