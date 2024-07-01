@@ -17,13 +17,15 @@ namespace EmploymentTracker
 		}
 
 		[BurstCompile]
-		public static NativeHashMap<CurveDef, int> mergeResultCurves(ref NativeArray<NativeHashMap<CurveDef, int>> results, out int maxVehicleWeight, out int maxPedestrianWeight, out int maxTransitWeight)
+		public static NativeHashMap<CurveDef, int> mergeResultCurves(ref NativeArray<NativeHashMap<CurveDef, int>> results,
+			out int maxVehicleWeight, out int maxPedestrianWeight, out int maxTransitWeight, out int maxGenericWeight)
 		{
 			NativeHashMap<CurveDef, int> resultCurves = new NativeHashMap<CurveDef, int>(20000, Allocator.Temp);
 
 			maxVehicleWeight = 1;
 			maxPedestrianWeight = 1;
 			maxTransitWeight = 1;
+			maxGenericWeight = 1;
 
 			for (int i = 0; i < results.Length; ++i)
 			{
@@ -45,9 +47,12 @@ namespace EmploymentTracker
 						{
 							maxTransitWeight = Math.Max(newWeight, maxTransitWeight);
 						}
-						else
+						else if (resultCurve.type == 4)
 						{
 							maxVehicleWeight = Math.Max(newWeight, maxVehicleWeight);
+						} else if (resultCurve.type == 1)
+						{
+							maxGenericWeight = Math.Max(newWeight, maxGenericWeight);
 						}
 
 					}

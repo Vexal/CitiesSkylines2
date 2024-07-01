@@ -1,5 +1,6 @@
 ﻿using Colossal;
 using Colossal.Entities;
+using Colossal.Mathematics;
 using Colossal.UI.Binding;
 using Game;
 using Game.Buildings;
@@ -21,6 +22,7 @@ using System.Diagnostics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using UnityEngine.InputSystem;
 
@@ -31,41 +33,18 @@ namespace EmploymentTracker
     {
         private Entity selectedEntity = default;
 		private SelectionType selectionType;
-        private InputAction toggleSystemAction;
-        private InputAction togglePathDisplayAction;
-        private InputAction togglePathVolumeDisplayAction;
-        private InputAction toggleRenderTypeAction;
-		private InputAction[] laneSelectActions = new InputAction[10];
 		private SimpleOverlayRendererSystem overlayRenderSystem;
 		private OverlayRenderSystem overlayRenderSystem2;
 		private EmploymentTrackerSettings settings;
 		private EntityQuery hasTargetQuery;
 		private EntityQuery hasPathQuery;
 		private ToolSystem toolSystem;
-		private LaneHighlightToolSystem laneHighlightToolSystem;
 
 		private HighlightFeatures highlightFeatures = new HighlightFeatures();
 		private RouteOptions routeHighlightOptions = new RouteOptions();
 		private int threadBatchSize = 16;
 		private bool[] activeLaneIndexes = new bool[1024];
 		private DefaultToolSystem defaultToolSystem;
-
-		private ValueBinding<bool> debugActiveBinding;
-		private ValueBinding<bool> refreshTransitingEntitiesBinding;
-
-		private ValueBinding<int> trackedEntityCount;
-		private ValueBinding<int> uniqueSegmentCount;
-		private ValueBinding<int> totalSegmentCount;
-		private ValueBinding<string> routeTimeMs;
-		private ValueBinding<string> selectionTypeBinding;
-		private ValueBinding<string> laneIdListBinding;
-
-		private ValueBinding<bool> incomingRoutes;
-		private ValueBinding<bool> incomingRoutesTransit;
-		private ValueBinding<bool> highlightSelected;
-		private ValueBinding<bool> highlightPassengerRoutes;
-		private ValueBinding<bool> routeHighlightingToggled;
-		private ValueBinding<bool> routeVolumeToolActive;
 
 		protected override void OnCreate()
 		{
@@ -112,113 +91,30 @@ namespace EmploymentTracker
 
 			//Init UI and IO
 			this.settings = Mod.INSTANCE.getSettings();
-			this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
-			this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
-			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
-			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
-			this.togglePathVolumeDisplayAction = new InputAction("shiftPathingVolume", InputActionType.Button);
-			this.togglePathVolumeDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/r").With("Modifier", "<keyboard>/shift");
-			this.toggleRenderTypeAction = new InputAction("renderType", InputActionType.Button);
-			this.toggleRenderTypeAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
-
-			for (int i = 0; i < 10; i++)
-			{
-				this.laneSelectActions[i] = new InputAction("laneSelect" + i, InputActionType.Button);
-				this.laneSelectActions[i].AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/" + i).With("Modifier", "<keyboard>/shift");
-			}
-
-			//route toggles
-			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
-			this.highlightSelected = new ValueBinding<bool>("EmploymentTracker", "highlightSelectedRoute", this.settings.highlightSelected);
-			this.incomingRoutesTransit = new ValueBinding<bool>("EmploymentTracker", "highlightEnrouteTransit", this.settings.incomingRoutesTransit);
-			this.highlightPassengerRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerRoutes", this.settings.highlightSelectedTransitVehiclePassengerRoutes);
-			this.routeHighlightingToggled = new ValueBinding<bool>("EmploymentTracker", "routeHighlightingToggled", true);
-			this.routeVolumeToolActive = new ValueBinding<bool>("EmploymentTracker", "routeVolumeToolActive", false);
-			this.laneIdListBinding = new ValueBinding<string>("EmploymentTracker", "laneIdList", "");
-
-			AddBinding(this.incomingRoutes);
-			AddBinding(this.highlightSelected);
-			AddBinding(this.incomingRoutesTransit);
-			AddBinding(this.highlightPassengerRoutes);
-			AddBinding(this.routeHighlightingToggled);
-			AddBinding(this.routeVolumeToolActive);
-			AddBinding(this.laneIdListBinding);
-
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnrouteTransit", s => { this.incomingRoutesTransit.Update(s); this.settings.incomingRoutesTransit = s; this.saveSettings(); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightPassengerRoutes", s => { this.highlightPassengerRoutes.Update(s); this.settings.highlightSelectedTransitVehiclePassengerRoutes = s; this.saveSettings(); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "quickToggleRouteHighlighting", s => { this.togglePathing(s); }));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleRouteVolumeToolActive", s => { this.toggleRouteVolumeToolActive(s); }));
-			AddBinding(new TriggerBinding<string>("EmploymentTracker", "toggleActiveLanes", s => { this.setActiveLanes(s); }));
-
-
-			//options
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
-			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleDebug", this.toggleDebug));
-
-			this.debugActiveBinding = new ValueBinding<bool>("EmploymentTracker", "DebugActive", false);
-			this.refreshTransitingEntitiesBinding = new ValueBinding<bool>("EmploymentTracker", "AutoRefreshTransitingEntitiesActive", true);
-
-			AddBinding(this.debugActiveBinding);
-			AddBinding(this.refreshTransitingEntitiesBinding);
-
-			//stats
-			this.trackedEntityCount = new ValueBinding<int>("EmploymentTracker", "TrackedEntityCount", 0);
-			AddBinding(this.trackedEntityCount);
-			this.uniqueSegmentCount = new ValueBinding<int>("EmploymentTracker", "UniqueSegmentCount", 0);
-			AddBinding(this.uniqueSegmentCount);
-			this.totalSegmentCount = new ValueBinding<int>("EmploymentTracker", "TotalSegmentCount", 0);
-			AddBinding(this.totalSegmentCount);
-			this.routeTimeMs = new ValueBinding<string>("EmploymentTracker", "RouteTimeMs", "");
-			AddBinding(this.routeTimeMs);
-			this.selectionTypeBinding = new ValueBinding<string>("EmploymentTracker", "selectionType", "");
-			AddBinding(this.selectionTypeBinding);
+			this.initBindings();
 
 			this.toolSystem = World.GetExistingSystemManaged<ToolSystem>();
 			this.defaultToolSystem = World.GetExistingSystemManaged<DefaultToolSystem>();
-			this.laneHighlightToolSystem = World.GetExistingSystemManaged<LaneHighlightToolSystem>();
 		}
 
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-			this.toggleSystemAction.Enable();
-			this.togglePathDisplayAction.Enable();
-			this.togglePathVolumeDisplayAction.Enable();
-			this.toggleRenderTypeAction.Enable();
-			for (int i = 0; i < 10; i++)
-			{
-				this.laneSelectActions[i].Enable();
-			}
+			this.enableBindings();
+
 			this.overlayRenderSystem = World.GetExistingSystemManaged<SimpleOverlayRendererSystem>();
 			this.overlayRenderSystem2 = World.GetExistingSystemManaged<OverlayRenderSystem>();
 
 			this.highlightFeatures = new HighlightFeatures(settings);
 			this.routeHighlightOptions = new RouteOptions(settings);
 
-			this.settings.onSettingsApplied += gameSettings =>
-			{
-				if (gameSettings.GetType() == typeof(EmploymentTrackerSettings))
-				{
-					EmploymentTrackerSettings changedSettings = (EmploymentTrackerSettings) gameSettings;
-					this.highlightFeatures = new HighlightFeatures(settings);
-					this.routeHighlightOptions = new RouteOptions(settings);
-					this.threadBatchSize = changedSettings.threadBatchSize;
-				}
-			};
+			this.settings.onSettingsApplied += this.applySettings;
 		}
 
 		protected override void OnStopRunning()
 		{
 			base.OnStopRunning();
-            this.toggleSystemAction.Disable();
-            this.togglePathDisplayAction.Disable();
-            this.togglePathVolumeDisplayAction.Disable();
-			for (int i = 0; i < 10; i++)
-			{
-				this.laneSelectActions[i].Disable();
-			}
+			this.disableBindings();
 			this.reset();
 		}
 
@@ -226,7 +122,11 @@ namespace EmploymentTracker
 		private bool pathingToggled = true;
 		private bool pathVolumeToggled = false;
 		private bool defaultHasDebugSelect = false;
+		private bool laneSetDirty = false;
+		private int hoverLane = -1;
+		private Bezier4x3 hoverCurve = default;
 		private NativeHashSet<Entity> commutingEntities;
+		private NativeList<Bezier4x3> targetLaneCurves = default;
 
 		long frameCount = 0;
 
@@ -269,29 +169,7 @@ namespace EmploymentTracker
 			}
 
 			//check if hot key disable/enable highlighting was pressed
-			if (this.toggleSystemAction.WasPressedThisFrame())
-			{
-				this.toggle(!this.toggled);
-			}
-
-			if (!this.toggled && !this.pathVolumeToggled)
-			{
-				this.endFrame(clock);
-				return;
-			}
-
-			if (this.togglePathDisplayAction.WasPressedThisFrame())
-			{
-				this.togglePathing(!this.pathingToggled);
-			}
-
-			if (!this.pathingToggled && !this.pathVolumeToggled)
-			{
-				this.endFrame(clock);
-				return;
-			}
-
-			if (this.selectedEntity == null || this.selectedEntity == default(Entity) || (this.selectionType == SelectionType.UNKNOWN && !this.pathVolumeToggled))
+			if (!this.checkFrameToggles())
 			{
 				this.endFrame(clock);
 				return;
@@ -301,31 +179,14 @@ namespace EmploymentTracker
 			{
 				if (updatedSelection)
 				{
-					string laneIds = "";
-					if (EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
-					{
-						if (laneBuffer.Length == 1)
-						{
-							laneIds = "true";
-						}
-						else
-						{
-							for (int i = 0; i < laneBuffer.Length - 1; ++i)
-							{
-								laneIds += "true,";
-							}
-
-							laneIds += "true";
-						}
-					}
-
-					this.laneIdListBinding.Update(laneIds);
+					this.resetActiveLanes();
 				}
 			}
 
 			//only need to update building/target highlights when selection changes
-			if (updatedSelection || (this.refreshTransitingEntitiesBinding.value && (++this.frameCount % 64 == 0)))
-			{	
+			if (updatedSelection || this.laneSetDirty || (this.refreshTransitingEntitiesBinding.value && (++this.frameCount % 64 == 0)))
+			{
+				this.laneSetDirty = false;
 				var searchTimer = new Stopwatch();
 				searchTimer.Start();
 
@@ -347,8 +208,6 @@ namespace EmploymentTracker
 
 			this.endFrame(clock);
 		}
-
-		private bool useNewRenderer = true;
 
 		private void doRouteJobs(bool ignoreTransit)
 		{
@@ -410,7 +269,8 @@ namespace EmploymentTracker
 			stopwatch.Restart();
 
 			//Weight segments with multiple entities passing over heavier
-			NativeHashMap<CurveDef, int> resultCurves = MathUtil.mergeResultCurves(ref calculateRoutesJob.results, out int maxVehicleWeight, out int maxPedestrianWeight, out int maxTransitWeight);
+			NativeHashMap<CurveDef, int> resultCurves = MathUtil.mergeResultCurves(ref calculateRoutesJob.results,
+				out int maxVehicleWeight, out int maxPedestrianWeight, out int maxTransitWeight, out int maxGenericWeight);
 
 
 			stopwatch.Stop();
@@ -446,7 +306,6 @@ namespace EmploymentTracker
 				}
 
 				resultCurves.Dispose();
-
 				JobHandle routeJobHandle;
 				if (this.useNewRenderer)
 				{
@@ -455,10 +314,20 @@ namespace EmploymentTracker
 					job.curveCounts = curveCount;
 					job.maxVehicleCount = maxVehicleWeight;
 					job.maxTransitCount = maxTransitWeight;
+					job.maxGenericVehicleCount = maxGenericWeight;
 					job.maxPedestrianCount = maxPedestrianWeight;
+					job.selectedCurves = this.targetLaneCurves;
 					job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
 					job.routeHighlightOptions = this.routeHighlightOptions;
+					if (this.hoverLane >= 0)
+					{
+						job.hoverCurve = this.hoverCurve;
+						job.isHovering = true;
+					}
+
+
 					routeJobHandle = job.Schedule(dependencies);
+					this.overlayRenderSystem.AddBufferWriter(routeJobHandle);
 				}
 				else
 				{
@@ -470,12 +339,13 @@ namespace EmploymentTracker
 					job.maxPedestrianCount = maxPedestrianWeight;
 					job.overlayBuffer = this.overlayRenderSystem2.GetBuffer(out JobHandle dependencies);
 					job.routeHighlightOptions = this.routeHighlightOptions;
+
 					routeJobHandle = job.Schedule(dependencies);
+					this.overlayRenderSystem2.AddBufferWriter(routeJobHandle);
 				}
 
 				curveArray.Dispose(routeJobHandle);
 				curveCount.Dispose(routeJobHandle);
-				this.overlayRenderSystem2.AddBufferWriter(routeJobHandle);
 				//routeJobHandle.Complete();
 			}
 
@@ -494,44 +364,6 @@ namespace EmploymentTracker
 			return this.toolSystem.selected;
 		}
 
-		private NativeHashSet<Entity> getSelectionTargets()
-		{
-			NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
-
-			if (this.pathVolumeToggled)
-			{
-				if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
-				{
-					targets.Add(renterBuffer[0].m_Renter);
-				}
-				if (EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
-				{
-					for (int i = 0; i < laneBuffer.Length; ++i)
-					{
-						targets.Add(laneBuffer[i].m_SubLane);
-					}
-				}
-				if (EntityManager.TryGetBuffer<SubObject>(this.selectedEntity, true, out var subnetBuffer))
-				{
-					for (int i = 0; i < subnetBuffer.Length; ++i)
-					{
-						if (EntityManager.TryGetBuffer<SubLane>(subnetBuffer[i].m_SubObject, true, out var subnetLaneBuffer))
-						{
-							for (int j = 0; j < subnetLaneBuffer.Length; ++j)
-							{
-								targets.Add(subnetLaneBuffer[j].m_SubLane);
-							}
-						}
-					}
-				}
-			}
-			else if (this.laneHighlightToolSystem == this.toolSystem.activeTool && EntityManager.Exists(this.laneHighlightToolSystem.selectedLane))
-			{
-				targets.Add(this.laneHighlightToolSystem.selectedLane);
-			}
-			return targets;
-		}
-
 		private void populateRouteEntities()
 		{
 			if (this.commutingEntities.IsCreated)
@@ -541,9 +373,9 @@ namespace EmploymentTracker
 
 			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
 
-			if (this.pathVolumeToggled || this.laneHighlightToolSystem == this.toolSystem.activeTool)
+			if (this.pathVolumeToggled)
 			{
-				NativeHashSet<Entity> targets = this.getSelectionTargets();
+				NativeHashSet<Entity> targets = this.getSelectedEntityTargets();
 				
 
 				if (this.debugActiveBinding.value)
@@ -675,6 +507,54 @@ namespace EmploymentTracker
 			}
 		}
 
+		private NativeHashSet<Entity> getSelectedEntityTargets()
+		{
+			NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
+
+			if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
+			{
+				targets.Add(renterBuffer[0].m_Renter);
+			}
+			if (EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
+			{
+				if (this.targetLaneCurves.IsCreated)
+				{
+					this.targetLaneCurves.Dispose();
+				}
+
+				if (laneBuffer.Length > 0)
+				{
+					this.targetLaneCurves = new NativeList<Bezier4x3>(16, Allocator.Persistent);
+					for (int i = 0; i < laneBuffer.Length; ++i)
+					{
+						if (this.activeLaneIndexes[i])
+						{
+							targets.Add(laneBuffer[i].m_SubLane);
+							if (EntityManager.TryGetComponent<Curve>(laneBuffer[i].m_SubLane, out Curve curve))
+							{
+								this.targetLaneCurves.Add(curve.m_Bezier);
+							}
+						}
+					}
+				}
+			}
+			if (EntityManager.TryGetBuffer<SubObject>(this.selectedEntity, true, out var subnetBuffer))
+			{
+				for (int i = 0; i < subnetBuffer.Length; ++i)
+				{
+					if (EntityManager.TryGetBuffer<SubLane>(subnetBuffer[i].m_SubObject, true, out var subnetLaneBuffer))
+					{
+						for (int j = 0; j < subnetLaneBuffer.Length; ++j)
+						{
+							targets.Add(subnetLaneBuffer[j].m_SubLane);
+						}
+					}
+				}
+			}
+
+			return targets;
+		}
+
 		private SelectionType getEntityRouteType(Entity e)
 		{
 			if (EntityManager.HasComponent<Road>(e))
@@ -760,7 +640,7 @@ namespace EmploymentTracker
 		private void reset()
 		{
 			this.selectedEntity = default;
-			this.resetActiveLanes(true);
+			this.resetActiveLanes();
 			if (this.commutingEntities.IsCreated)
 			{ 
 				this.commutingEntities.Dispose();
@@ -771,30 +651,10 @@ namespace EmploymentTracker
 				this.trackedEntityCount.Update(0);
 			}
 
-			this.laneIdListBinding.Update("");
-		}
-
-		private void toggleAutoRefresh(bool active) 
-		{
-			this.refreshTransitingEntitiesBinding.Update(active);  
-		}
-
-		private void toggleDebug(bool active)
-		{
-			this.debugActiveBinding.Update(active);
-		}
-
-		private Dictionary<string, string> bindings = new Dictionary<string, string>();
-
-		private void updateBindings()
-		{
-			List<string> bindingList = new List<string>(this.bindings.Count);
-			foreach (var b in this.bindings)
+			if (this.targetLaneCurves.IsCreated)
 			{
-				bindingList.Add(b.Key + "," +  b.Value);
+				this.targetLaneCurves.Dispose();
 			}
-
-			this.routeTimeMs.Update(string.Join(":", bindingList));
 		}
 
 		private void endFrame(Stopwatch startTime)
@@ -808,71 +668,59 @@ namespace EmploymentTracker
 			}
 		}
 
-		private void saveSettings()
-		{
-			this.settings.ApplyAndSave();
-		}
-
-		public void toggle(bool active)
-		{
-			if (active != this.toggled)
-			{
-				this.reset();
-				this.toggled = active;
-			}
-		}
-
-		private void togglePathing(bool active)
-		{
-			if (active != this.pathingToggled)
-			{
-				this.reset();
-				this.pathingToggled = active;
-				if (this.routeHighlightingToggled.value != this.pathingToggled)
-				{
-					this.routeHighlightingToggled.Update(this.pathingToggled);
-				}
-			}
-		}
-
-		public void toggleRouteVolumeToolActive(bool active)
-		{
-			if (active)
-			{
-				this.defaultHasDebugSelect = this.defaultToolSystem.debugSelect;
-				this.pathVolumeToggled = true;
-				this.defaultToolSystem.debugSelect = true;
-			}
-			else
-			{
-				this.pathVolumeToggled = false;
-				this.defaultToolSystem.debugSelect = this.defaultHasDebugSelect;
-			}
-
-			this.routeVolumeToolActive.Update(active);
-		}
-
-		private void selectOneLane(int laneIndex)
-		{
-			this.resetActiveLanes(false);
-			this.activeLaneIndexes[laneIndex] = true;
-		}
-
 		private void setActiveLanes(string laneList)
 		{
 			string[] laneVals = laneList.Split(',');
 			for (int i = 0; i < laneVals.Length; i++)
 			{
-				this.activeLaneIndexes[i] = laneVals[i] == "true";
+				this.activeLaneIndexes[i] = laneVals[i] == "1";
 			}
+
+			this.laneSetDirty = true;
+			this.updateLaneBinding();
 		}
 
-		private void resetActiveLanes(bool val)
+		private void resetActiveLanes()
 		{
-			for (int i = 0; i < this.activeLaneIndexes.Length; i++) 
+			if (EntityManager.Exists(this.selectedEntity) && EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
 			{
-				this.activeLaneIndexes[i] = val;
+				this.laneCount = laneBuffer.Length;
+				for (int i = 0; i < this.laneCount; i++)
+				{
+					this.activeLaneIndexes[i] = true;
+				}
+			} else
+			{
+				this.laneCount = 0;
 			}
+
+			this.hoverCurve = default;
+			this.hoverLane = -1;
+			this.laneSetDirty = false;
+
+			this.updateLaneBinding();
+		}
+
+		private int laneCount = 0;
+
+		private void updateLaneBinding()
+		{
+			string laneIds = "";
+			if (this.laneCount == 1)
+			{
+				laneIds = this.activeLaneIndexes[0] ? "1" : "0";
+			}
+			else if (this.laneCount > 0)
+			{
+				for (int i = 0; i < this.laneCount - 1; ++i)
+				{
+					laneIds += this.activeLaneIndexes[i] ? "1," : "0,";
+				}
+
+				laneIds += this.activeLaneIndexes[this.laneCount - 1] ? "1" : "0";
+			}
+
+			this.laneIdListBinding.Update(laneIds);
 		}
 	}
 }
