@@ -61,16 +61,16 @@ namespace EmploymentTracker
 			this.incomingRoutesTransit = settings.incomingRoutesTransit;
 		}
 
-		public float getCurveWidth(byte type)
+		public static float getCurveWidth(byte type)
 		{
 			switch (type)
 			{
 				case 1:
-					return this.vehicleLineWidth;
+					return 1f;
 				case 2:
-					return this.pedestrianLineWidth;
+					return .85f;
 				case 3:
-					return this.vehicleLineWidth;
+					return 1f;
 				default:
 					return 1f;
 			}

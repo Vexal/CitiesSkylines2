@@ -48,12 +48,12 @@ namespace EmploymentTracker
 			{	
 				for (int i = 0; i < this.selectedCurves.Length; ++i)
 				{
-					this.overlayBuffer.DrawCurve(new UnityEngine.Color(.7f, .7f, 1f, .3f), this.selectedCurves[i], 5f, new float2 { x = 1, y = 1 });
+					this.overlayBuffer.DrawCurve(new UnityEngine.Color(.7f, .7f, 1f, .3f), this.selectedCurves[i], 3f, new float2 { x = 1, y = 1 });
 				}
 			}
 			if (this.isHovering)
 			{
-				this.overlayBuffer.DrawCurve(new UnityEngine.Color(.7f, .7f, 1f, .6f), this.hoverCurve, 5f, new float2 { x = 1, y = 1 });
+				this.overlayBuffer.DrawCurve(new UnityEngine.Color(.7f, 1f, 1f, .95f), this.hoverCurve, 2.5f, new float2 { x = 1, y = 1 });
 			}
 
 			this.minColorWeight = MathUtil.expFunc(1, this.routeHighlightOptions.routeWeightMultiplier);
@@ -64,12 +64,13 @@ namespace EmploymentTracker
 			for (int i = 0; i < this.curveDefs.Length; ++i)
 			{
 				CurveDef curve = this.curveDefs[i];
-				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, this.routeHighlightOptions.getCurveWidth(curve.type), this.routeHighlightOptions.routeRoundness);
+				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, curve.type == 2 ? .85f : 1f, roundness);
 			}
 		}
 
 		private const float maxColor = .8f;
 		private const float colorMultiplier = .08f;
+		private static readonly float2 roundness = new float2() { x = 1, y = 1 };
 		private UnityEngine.Color yellowInverse;
 		private UnityEngine.Color yellowIncrement;
 

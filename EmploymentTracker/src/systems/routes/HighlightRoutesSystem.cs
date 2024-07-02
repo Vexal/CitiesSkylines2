@@ -236,6 +236,8 @@ namespace EmploymentTracker
 			calculateRoutesJob.currentTransportLookup = GetComponentLookup<CurrentTransport>(true);
 			calculateRoutesJob.currentVehicleLookup = GetComponentLookup<CurrentVehicle>(true);
 			calculateRoutesJob.deletedLookup = GetComponentLookup<Deleted>(true);
+			calculateRoutesJob.humanLaneLookup = GetComponentLookup<HumanCurrentLane>(true);
+			calculateRoutesJob.carLaneLookup = GetComponentLookup<CarCurrentLane>(true);
 			calculateRoutesJob.pathElementLookup = GetBufferLookup<PathElement>(true);
 			calculateRoutesJob.routeSegmentLookup = GetBufferLookup<RouteSegment>(true);
 			calculateRoutesJob.carNavigationLaneSegmentLookup = GetBufferLookup<CarNavigationLane>(true);
@@ -353,8 +355,8 @@ namespace EmploymentTracker
 
 			if (this.debugActiveBinding.value)
 			{
-				var renderTime = stopwatch.ElapsedMilliseconds;
-				this.bindings["Render Time (ms)" + (this.useNewRenderer ? " - n" : "")] = renderTime.ToString();
+				//var renderTime = stopwatch.ElapsedMilliseconds;
+				//this.bindings["Render Time (ms)" + (this.useNewRenderer ? " - n" : "")] = renderTime.ToString();
 				this.bindings["Stream Time (ms)"] = streamReadTime.ToString();
 			}
 		}
@@ -507,6 +509,22 @@ namespace EmploymentTracker
 			}
 		}
 
+		private bool isLanePathable(SubLane lane)
+		{
+			if (!(lane.m_PathMethods.HasFlag(PathMethod.Road) || lane.m_PathMethods.HasFlag(PathMethod.Pedestrian)
+							 || lane.m_PathMethods.HasFlag(PathMethod.Track)))
+			{
+				return false;
+			}
+
+			if (EntityManager.TryGetComponent(lane.m_SubLane, out CarLane carLane) && carLane.m_Flags.HasFlag(Game.Net.CarLaneFlags.SideConnection))
+			{
+				return false;
+			}
+
+			return true;
+		}
+
 		private NativeHashSet<Entity> getSelectedEntityTargets()
 		{
 			NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
@@ -525,12 +543,20 @@ namespace EmploymentTracker
 				if (laneBuffer.Length > 0)
 				{
 					this.targetLaneCurves = new NativeList<Bezier4x3>(16, Allocator.Persistent);
+					int pathableCount = 0;
 					for (int i = 0; i < laneBuffer.Length; ++i)
 					{
-						if (this.activeLaneIndexes[i])
+						bool isPathable = this.isLanePathable(laneBuffer[i]);
+
+						if (this.selectionType != SelectionType.BUILDING && !isPathable)
+						{
+							continue;
+						}
+
+						if (this.selectionType == SelectionType.BUILDING || this.activeLaneIndexes[pathableCount++])
 						{
 							targets.Add(laneBuffer[i].m_SubLane);
-							if (EntityManager.TryGetComponent<Curve>(laneBuffer[i].m_SubLane, out Curve curve))
+							if (EntityManager.TryGetComponent(laneBuffer[i].m_SubLane, out Curve curve))
 							{
 								this.targetLaneCurves.Add(curve.m_Bezier);
 							}
@@ -682,16 +708,24 @@ namespace EmploymentTracker
 
 		private void resetActiveLanes()
 		{
-			if (EntityManager.Exists(this.selectedEntity) && EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
+			this.laneCount = 0;
+
+			if (this.selectionType != SelectionType.BUILDING && EntityManager.Exists(this.selectedEntity) && EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
 			{
-				this.laneCount = laneBuffer.Length;
-				for (int i = 0; i < this.laneCount; i++)
+				for (int i = 0; i < laneBuffer.Length; i++)
 				{
-					this.activeLaneIndexes[i] = true;
+					bool isPathable = this.isLanePathable(laneBuffer[i]);
+
+					if (isPathable)
+					{
+						this.activeLaneIndexes[this.laneCount++] = true;
+					}
 				}
-			} else
+			}
+
+			if (this.targetLaneCurves.IsCreated)
 			{
-				this.laneCount = 0;
+				this.targetLaneCurves.Dispose();
 			}
 
 			this.hoverCurve = default;
@@ -706,7 +740,11 @@ namespace EmploymentTracker
 		private void updateLaneBinding()
 		{
 			string laneIds = "";
-			if (this.laneCount == 1)
+			if (this.selectionType == SelectionType.BUILDING)
+			{
+				laneIds = "";
+			}
+			else if (this.laneCount == 1)
 			{
 				laneIds = this.activeLaneIndexes[0] ? "1" : "0";
 			}
@@ -720,6 +758,7 @@ namespace EmploymentTracker
 				laneIds += this.activeLaneIndexes[this.laneCount - 1] ? "1" : "0";
 			}
 
+			info("lane toggles: " + laneIds);
 			this.laneIdListBinding.Update(laneIds);
 		}
 	}

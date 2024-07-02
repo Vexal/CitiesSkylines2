@@ -39,7 +39,7 @@ namespace EmploymentTracker
 			for (int i = 0; i < this.curveDefs.Length; ++i)
 			{
 				CurveDef curve = this.curveDefs[i];
-				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, this.routeHighlightOptions.getCurveWidth(curve.type), this.routeHighlightOptions.routeRoundness);
+				overlayBuffer.DrawCurve(this.getCurveColor(curve.type, this.curveCounts[i]), curve.curve, 1, this.routeHighlightOptions.routeRoundness);
 			}
 		}
 

@@ -85,10 +85,25 @@ namespace EmploymentTracker
 				if (this.hoverLane >= 0 && EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer) &&
 				this.hoverLane < laneBuffer.Length)
 				{
-					if (EntityManager.TryGetComponent<Curve>(laneBuffer[this.hoverLane].m_SubLane, out Curve curve))
+					int pathableIndex = -1;
+					for (int i = 0; i < laneBuffer.Length; i++)
 					{
-						this.hoverCurve = curve.m_Bezier;
+						if (this.isLanePathable(laneBuffer[i]))
+						{
+							++pathableIndex;
+						}
+
+						if (pathableIndex == this.hoverLane)
+						{
+							if (EntityManager.TryGetComponent(laneBuffer[i].m_SubLane, out Curve curve))
+							{
+								this.hoverCurve = curve.m_Bezier;
+							}
+
+							break;
+						}
 					}
+					
 				}
 			}));
 
@@ -234,6 +249,8 @@ namespace EmploymentTracker
 				this.pathVolumeToggled = false;
 				this.defaultToolSystem.debugSelect = this.defaultHasDebugSelect;
 			}
+
+			this.resetActiveLanes();
 
 			this.routeVolumeToolActive.Update(active);
 		}

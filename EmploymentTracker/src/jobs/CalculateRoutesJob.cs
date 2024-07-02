@@ -33,6 +33,10 @@ namespace EmploymentTracker
 		[ReadOnly]
 		public ComponentLookup<PedestrianLane> pedestrianLaneLookup;
 		[ReadOnly]
+		public ComponentLookup<HumanCurrentLane> humanLaneLookup;
+		[ReadOnly]
+		public ComponentLookup<CarCurrentLane> carLaneLookup;
+		[ReadOnly]
 		public ComponentLookup<TrackLane> trackLaneLookup;
 		[ReadOnly]
 		public ComponentLookup<SecondaryLane> secondaryLaneLookup;
@@ -156,17 +160,43 @@ namespace EmploymentTracker
 			int writeCount = 0;
 			if (this.carNavigationLaneSegmentLookup.TryGetBuffer(entity, out DynamicBuffer<CarNavigationLane> pathElements))
 			{
+				/*Bezier4x3 prevCurve = default;
 				for (int i = 0; i < pathElements.Length; i++)
 				{
 					if (this.curveLookup.TryGetComponent(pathElements[i].m_Lane, out Curve curve))
 					{
 						//this.write(this.getCurveDef(pathElements[i].m_Lane, curve.m_Bezier, pathElements[i].m_CurvePosition, true), batchIndex);
+						if (i > 0)
+						{
+							this.write(new CurveDef(MathUtils.Join(prevCurve, curve.m_Bezier), 4), batchIndex);
+						}
+						prevCurve = MathUtils.Cut(curve.m_Bezier, pathElements[i].m_CurvePosition);
+						this.write(new CurveDef(prevCurve, 4), batchIndex);
+						++writeCount;
+					}
+				}*/
+				Bezier4x3 prevCurve = default;
+				for (int i = 0; i < pathElements.Length; i++)
+				{
+					if (this.curveLookup.TryGetComponent(pathElements[i].m_Lane, out Curve curve))
+					{
 						this.write(new CurveDef(MathUtils.Cut(curve.m_Bezier, pathElements[i].m_CurvePosition), 4), batchIndex);
 						++writeCount;
 					}
 				}
 			}
-
+			if (this.humanLaneLookup.TryGetComponent(entity, out HumanCurrentLane humanLane) && this.curveLookup.TryGetComponent(humanLane.m_Lane, out Curve humanCurve))
+			{
+				this.write(new CurveDef(MathUtils.Cut(humanCurve.m_Bezier, humanLane.m_CurvePosition), 2), batchIndex);
+				++writeCount;
+			}
+			if (this.carLaneLookup.TryGetComponent(entity, out CarCurrentLane carLane) && this.curveLookup.TryGetComponent(carLane.m_Lane, out Curve carCurve))
+			{
+				//this.write(new CurveDef(carCurve.m_Bezier, 4), batchIndex);
+				this.write(new CurveDef(MathUtils.Cut(carCurve.m_Bezier, carLane.m_CurvePosition.xy), 4), batchIndex);
+				++writeCount;
+			}
+			
 			return writeCount;
 		}
 
