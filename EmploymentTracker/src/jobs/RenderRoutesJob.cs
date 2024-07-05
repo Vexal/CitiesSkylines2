@@ -77,20 +77,14 @@ namespace EmploymentTracker
 		public UnityEngine.Color getCurveColor(byte type, float weight)
 		{
 			UnityEngine.Color color;
-			float opacityAdd = 0;
-
-			
 
 			switch (type)
 			{
 				case 4:
 					color = this.routeHighlightOptions.vehicleLineColor;
-					//color.g = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
-					//opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
 					break;
 				case 2:
 					color = this.routeHighlightOptions.pedestrianLineColor;
-					//opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxPedestrianWeight;
 					if (weight > 1)
 					{
 						color.r += weight * colorMultiplier;
@@ -102,7 +96,6 @@ namespace EmploymentTracker
 					break;
 				case 3:
 					color = this.routeHighlightOptions.subwayLineColor;
-					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxTransitWeight;
 					break;
 				case 1:
 					float mult2 = .05f;
@@ -115,25 +108,17 @@ namespace EmploymentTracker
 						mult2 = .03f;
 					}
 					color = UnityEngine.Color.yellow;
-					//color.g = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
-					//opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
 					if (weight > 1)
 					{
-						/*color.g += (weight - 1) * mult2;
-						color.b += (weight - 1) * mult2;
-
-						color.g = Math.Min(color.g, maxColor);
-						color.b = Math.Min(color.b, maxColor);*/
 						color += this.yellowIncrement * (weight - 1);
 					}
 					break;
 				default:
 					color = this.routeHighlightOptions.vehicleLineColor;
-					opacityAdd = (1f - this.routeHighlightOptions.minRouteAlpha) * (MathUtil.expFunc(weight, this.routeHighlightOptions.routeWeightMultiplier) - this.minColorWeight) / this.maxVehichleWeight;
 					break;
 			}
 
-			color.a = .8f;// this.routeHighlightOptions.minRouteAlpha + opacityAdd;
+			color.a = .8f;
 			return color;
 		}
 	}
