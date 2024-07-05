@@ -18,7 +18,7 @@ namespace EmploymentTracker
 		private InputAction toggleSystemAction;
 		private InputAction togglePathDisplayAction;
 		private InputAction togglePathVolumeDisplayAction;
-		private InputAction toggleRenderTypeAction;
+		//private InputAction toggleRenderTypeAction;
 
 		private ValueBinding<bool> debugActiveBinding;
 		private ValueBinding<bool> refreshTransitingEntitiesBinding;
@@ -49,8 +49,8 @@ namespace EmploymentTracker
 			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
 			this.togglePathVolumeDisplayAction = new InputAction("shiftPathingVolume", InputActionType.Button);
 			this.togglePathVolumeDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/r").With("Modifier", "<keyboard>/shift");
-			this.toggleRenderTypeAction = new InputAction("renderType", InputActionType.Button);
-			this.toggleRenderTypeAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
+			//this.toggleRenderTypeAction = new InputAction("renderType", InputActionType.Button);
+			//this.toggleRenderTypeAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
 
 			//route toggles
 			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
@@ -136,7 +136,7 @@ namespace EmploymentTracker
 			this.toggleSystemAction.Enable();
 			this.togglePathDisplayAction.Enable();
 			this.togglePathVolumeDisplayAction.Enable();
-			this.toggleRenderTypeAction.Enable();
+			//this.toggleRenderTypeAction.Enable();
 		}
 
 		private void disableBindings()
@@ -144,7 +144,7 @@ namespace EmploymentTracker
 			this.toggleSystemAction.Disable();
 			this.togglePathDisplayAction.Disable();
 			this.togglePathVolumeDisplayAction.Disable();
-			this.toggleRenderTypeAction.Disable();
+			//this.toggleRenderTypeAction.Disable();
 		}
 
 		private void updateBindings()

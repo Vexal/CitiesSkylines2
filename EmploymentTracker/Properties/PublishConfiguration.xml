@@ -2,7 +2,7 @@
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
 	<ModId Value="76662" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="Cim Route Highlighter (Formerly Employee Tracker)" />
+	<DisplayName Value="Cim Route Highlighter" />
 	<!--Short description of the mod-->
 	<ShortDescription Value="Highlights pathing routes; residents' workplaces; employees' residences and in-transit commuters; vehicle passenger destinations." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
@@ -10,9 +10,8 @@
 <LongDescription>
 
 <b>New update:</b>
-* Added new bulk route highlight tool: highlights all routes going through a selected segment or object (road, ped path, transit station, parking lot, etc). Activate with
-the new tool icon at the top right or press shift+r. This function is a dedicated tool, unlike per-object route highlighting. It is a work-in-progress and still
-has major performance impact when active (when not toggled, there should be no impact).
+* Added prototype for selecting which lane to highlight; the UI is a draft and will be improved in the future
+* Updated the colors for route highlight to reflect the different pathing mechanisms (cars only compute a specific lane 8 nodes ahead, and then store only the road as a whole). The 8 lanes are in green, the remaining are in yellow.
 
 <b>Features</b>
 Selecting an object applies graphical highlighting to:
@@ -30,12 +29,12 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 * <b>shift+e</b> to deactivate/reactivate all highlighting
 * <b>shift+v</b> to deactivate/reactivate path routing highlighting
 * <b>shift+b</b> to deactivate/reactivate building highlighting
+* <b>shift+r</b> to deactivate/reactivate road traversal highlighting
 * Additional settings can be accessed from the main menu settings for this mod, or the in-game overlay menu from the button at the top right of the screen
 * Quick-toggle controls do not change the settings permanently; all other settings persist between games
 
 <b>Future Planned Updates:</b>
-* Highlight routes of objects traversing through, but not stopping at, a path node
-* Performance improvements
+* UI Improvements
 
 <b>Other notes:</b>
 * Discord username: Vexal / porkchopsnbutter
@@ -58,13 +57,13 @@ Regarding route pathing highlight: This is still experimental. For entities whos
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/employee-tracker.1648804/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.15" />
+	<ModVersion Value="1.16" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Add bulk route highlight tool" />
+	<ChangeLog Value="Added lane selection tool; updated highlight colors; performance improvements" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->

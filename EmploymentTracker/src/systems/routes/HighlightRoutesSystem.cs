@@ -145,10 +145,10 @@ namespace EmploymentTracker
 			{
 				this.toggleRouteVolumeToolActive(!this.pathVolumeToggled);
 			}
-			if (this.toggleRenderTypeAction.WasPressedThisFrame())
+			/*if (this.toggleRenderTypeAction.WasPressedThisFrame())
 			{
 				this.useNewRenderer = !this.useNewRenderer;
-			}
+			}*/
 
 			Entity selected = this.getSelected();
 			SelectionType newSelectionType = this.getEntityRouteType(selected);

@@ -274,6 +274,7 @@ namespace EmploymentTracker
 				
 				{"EmploymentTracker_" + "Route Highlighter Road Segment Tool (shift+r)", "路线显示器路段工具（shift+r）" },   
 				{"EmploymentTracker_" + "Route Highlighter Settings", "路线显示器设置" },   
+				{"EmploymentTracker_" + "Lane Selection", "车道选择"},   
 			};
 		}
 
