@@ -11,7 +11,7 @@ namespace NoTrafficDespawn
 		public static ILog log = LogManager.GetLogger($"{nameof(NoTrafficDespawn)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
 		public static Mod INSTANCE;
 
-		public Setting settings;
+		public TrafficDespawnSettings settings;
 
 		public void OnLoad(UpdateSystem updateSystem)
 		{
@@ -21,12 +21,13 @@ namespace NoTrafficDespawn
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
 				log.Info($"Current mod asset at {asset.path}");
 
-			settings = new Setting(this);
+			settings = new TrafficDespawnSettings(this);
 			settings.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(settings));
 
-			AssetDatabase.global.LoadSettings(nameof(NoTrafficDespawn), settings, new Setting(this));
-			updateSystem.UpdateBefore<DisableTrafficDespawnSystem>(SystemUpdatePhase.GameSimulation);
+			AssetDatabase.global.LoadSettings(nameof(NoTrafficDespawn), settings, new TrafficDespawnSettings(this));
+			updateSystem.UpdateBefore<NewStuckMovingObjectSystem>(SystemUpdatePhase.Modification1);
+			updateSystem.UpdateAfter<DisableTrafficDespawnSystem>(SystemUpdatePhase.Modification1);
 		}
 
 		public void OnDispose()

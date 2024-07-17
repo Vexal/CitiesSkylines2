@@ -8,31 +8,33 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
-		This mod prevents vehicles from despawning when a pathing issue occurs. This mod is off by default and you must toggle the option to disable respawns in the options menu "No Traffic Despawn".
+		This mod controls whether vehicles are despawned based on stuck/deadlock detection.
 		
-		This setting is global and works for both cars and public transit (including trains). Future versions will hopefully add the option to select which type of vehicles are subject to despawning.
-
-		Use this mod at your own risk; pathing issues occur frequently and it is necessary to manually look for deadlocks when despawning is disabled.
-
-		If a deadlock is noticed, you can temporarily untoggle the mod in the settings menu and all deadlocks will immediately be cleared.
+		Major update: Vehicle despawn logic is now configurable in this mod, as opposed to a single toggle for all on/off. The configuration allows granularly configuring
+		the parameters used by the game to decide if a vehicle's pathing conflict is unrecoverable; the base game is overly aggressive. The recommended settings for this mod are to enable
+		despawn for explicit deadlock detection only.
+		
+		There is also an option to highlight objects that have been detected as stuck/deadlocked to visualize the bottlenecks in the city's traffic, add a delay timer and rate-limiting to removing stuck objects to increase the chance
+		the simulation resolves the deadlock itself.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/ntds1.jpg" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="Properties/ntds1.jpg" />
 	<Screenshot Value="Properties/ntds2.jpg" />
+	<Screenshot Value="Properties/ntdso.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-vehicle-despawn-mod.1695356/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0" />
+	<ModVersion Value="1.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="" />
+	<ChangeLog Value="Add despawn algorithm configuration options; added stuck vehicle highlighting" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
