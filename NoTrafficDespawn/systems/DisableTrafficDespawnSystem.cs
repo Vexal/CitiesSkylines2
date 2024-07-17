@@ -20,7 +20,7 @@ namespace NoTrafficDespawn
 		private EntityQuery stuckObjectQuery;
 		//private EntityQuery stuckObjectRemovalQuery;
 		private EntityQuery unstuckObjectQuery;
-		private InputAction singleFrameDeadlockRemovalAction;
+		//private InputAction singleFrameDeadlockRemovalAction;
 		private StuckType removeType;
 		private bool highlightDirty = false;
 		private bool wasHighlighting = false;
@@ -95,7 +95,7 @@ namespace NoTrafficDespawn
 				}
 			});*/
 
-			this.singleFrameDeadlockRemovalAction = new InputAction("renderType", InputActionType.Button);
+			//this.singleFrameDeadlockRemovalAction = new InputAction("renderType", InputActionType.Button);
 			//this.singleFrameDeadlockRemovalAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
 		}
 
@@ -195,13 +195,13 @@ namespace NoTrafficDespawn
 		protected override void OnStartRunning()
 		{
 			base.OnStartRunning();
-			this.singleFrameDeadlockRemovalAction.Enable();
+			//this.singleFrameDeadlockRemovalAction.Enable();
 		}
 
 		protected override void OnStopRunning()
 		{
 			base.OnStopRunning();
-			this.singleFrameDeadlockRemovalAction.Disable();
+			//this.singleFrameDeadlockRemovalAction.Disable();
 		}
 
 		private void updateSettings(TrafficDespawnSettings settings)
@@ -210,7 +210,6 @@ namespace NoTrafficDespawn
 			this.Enabled = settings.despawnBehavior != DespawnBehavior.Vanilla;
 
 			this.despawnBehavior = settings.despawnBehavior;
-			Mod.log.Info("despawn behavior is: " + this.despawnBehavior.ToString());
 			this.highlightStuckObjects = settings.highlightStuckObjects;
 			this.deadlockLingerFrames = settings.deadlockLingerFrames;
 			this.deadlockSearchDepth = settings.deadlockSearchDepth;
