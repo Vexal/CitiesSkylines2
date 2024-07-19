@@ -66,12 +66,15 @@ namespace NoTrafficDespawn
 			NativeArray<PathOwner> nativeArray7 = chunk.GetNativeArray(ref m_PathOwnerType);
 			NativeArray<AnimalCurrentLane> nativeArray8 = chunk.GetNativeArray(ref m_AnimalCurrentLaneType);
 
+			//All entities in the same chunk have the same component set, so only need to check before the loop
+			bool wasStuck = chunk.Has<StuckObject>();
+
 			for (int i = 0; i < nativeArray2.Length; i++)
 			{
 				Blocker blocker = nativeArray2[i];
 				if (!(blocker.m_Blocker != Entity.Null) || blocker.m_MaxSpeed >= this.minStuckSpeed)
 				{
-					if (this.stuckObjectLookup.HasComponent(nativeArray[i]))
+					if (wasStuck)
 					{
 						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, nativeArray[i]);
 					}
@@ -124,6 +127,11 @@ namespace NoTrafficDespawn
 
 				if (!flag)
 				{
+					if (wasStuck)
+					{
+						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, nativeArray[i]);
+					}
+
 					continue;
 				}
 
@@ -134,7 +142,7 @@ namespace NoTrafficDespawn
 					{
 						if (entity != Entity.Null)
 						{
-							if (!this.stuckObjectLookup.HasComponent(entity))
+							if (!wasStuck)
 							{
 								this.commandBuffer.AddComponent(unfilteredChunkIndex, entity, new StuckObject(0));
 							}

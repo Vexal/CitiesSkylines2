@@ -18,6 +18,8 @@ namespace NoTrafficDespawn
 		private StuckMovingObjectSystem stuckMovingObjectSystem;
 		private SimulationSystem simulationSystem;
 		private EntityQuery stuckObjectQuery;
+		private EntityQuery cleanupQuery;
+
 		//private EntityQuery stuckObjectRemovalQuery;
 		private EntityQuery unstuckObjectQuery;
 		//private InputAction singleFrameDeadlockRemovalAction;
@@ -77,11 +79,10 @@ namespace NoTrafficDespawn
 				}
 			});
 
-			/*this.stuckObjectRemovalQuery = GetEntityQuery(new EntityQueryDesc
+			this.cleanupQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<StuckObject>()
 			},
 				Any = new ComponentType[]
 			{
@@ -91,12 +92,10 @@ namespace NoTrafficDespawn
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
 				ComponentType.ReadOnly<Building>(),
+				ComponentType.ReadOnly<StuckObject>(),
 				ComponentType.ReadOnly<UnstuckObject>(),
 				}
-			});*/
-
-			//this.singleFrameDeadlockRemovalAction = new InputAction("renderType", InputActionType.Button);
-			//this.singleFrameDeadlockRemovalAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
+			});
 		}
 
 		private int frameCount = 0;
@@ -111,6 +110,13 @@ namespace NoTrafficDespawn
 		{
 			if (this.simulationSystem.selectedSpeed <= 0)
 			{
+				return;
+			}
+
+			if (this.shouldDisable)
+			{
+				this.cleanupAfterDisable();
+				this.Enabled = false;
 				return;
 			}
 
@@ -139,8 +145,6 @@ namespace NoTrafficDespawn
 					{
 						EntityManager.RemoveComponent<UnstuckObject>(stuckEntity);
 					}
-
-					highlightDirty = false;
 				}
 				if (!EntityManager.HasComponent<Blocker>(stuckEntity))
 				{
@@ -179,6 +183,8 @@ namespace NoTrafficDespawn
 				}
 			}
 
+			highlightDirty = false;
+
 			if (this.highlightStuckObjects)
 			{
 				NativeArray<Entity> unstuckEntities = this.unstuckObjectQuery.ToEntityArray(Allocator.Temp);
@@ -192,22 +198,16 @@ namespace NoTrafficDespawn
 			}
 		}
 
-		protected override void OnStartRunning()
-		{
-			base.OnStartRunning();
-			//this.singleFrameDeadlockRemovalAction.Enable();
-		}
-
-		protected override void OnStopRunning()
-		{
-			base.OnStopRunning();
-			//this.singleFrameDeadlockRemovalAction.Disable();
-		}
+		private bool shouldDisable;
 
 		private void updateSettings(TrafficDespawnSettings settings)
 		{
 			this.stuckMovingObjectSystem.Enabled = settings.despawnBehavior == DespawnBehavior.Vanilla;
-			this.Enabled = settings.despawnBehavior != DespawnBehavior.Vanilla;
+			this.shouldDisable = settings.despawnBehavior == DespawnBehavior.Vanilla;
+			if (!this.shouldDisable)
+			{
+				this.Enabled = true;
+			}
 
 			this.despawnBehavior = settings.despawnBehavior;
 			this.highlightStuckObjects = settings.highlightStuckObjects;
@@ -221,6 +221,27 @@ namespace NoTrafficDespawn
 			}
 
 			this.wasHighlighting = this.highlightStuckObjects;
+		}
+
+		private void cleanupAfterDisable()
+		{
+			NativeArray<Entity> cleanupEntities = this.stuckObjectQuery.ToEntityArray(Allocator.Temp);
+			for (int i = 0; i < cleanupEntities.Length; ++i)
+			{
+				if (EntityManager.HasComponent<Highlighted>(cleanupEntities[i]))
+				{
+					EntityManager.RemoveComponent<Highlighted>(cleanupEntities[i]);
+					EntityManager.AddComponent<BatchesUpdated>(cleanupEntities[i]);
+				}
+				if (EntityManager.HasComponent<UnstuckObject>(cleanupEntities[i]))
+				{
+					EntityManager.RemoveComponent<UnstuckObject>(cleanupEntities[i]);
+				}
+				if (EntityManager.HasComponent<StuckObject>(cleanupEntities[i]))
+				{
+					EntityManager.RemoveComponent<StuckObject>(cleanupEntities[i]);
+				}
+			}
 		}
 	}
 }

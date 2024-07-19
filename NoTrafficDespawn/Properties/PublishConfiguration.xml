@@ -8,33 +8,36 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
-		This mod controls whether vehicles are despawned based on stuck/deadlock detection.
+This mod controls whether vehicles are despawned based on stuck/deadlock detection.
 		
-		Major update: Vehicle despawn logic is now configurable in this mod, as opposed to a single toggle for all on/off. The configuration allows granularly configuring
-		the parameters used by the game to decide if a vehicle's pathing conflict is unrecoverable; the base game is overly aggressive. The recommended settings for this mod are to enable
-		despawn for explicit deadlock detection only.
+*Major update*: Vehicle despawn logic is now configurable in this mod, as opposed to a single toggle for all on/off. 
 		
-		There is also an option to highlight objects that have been detected as stuck/deadlocked to visualize the bottlenecks in the city's traffic, add a delay timer and rate-limiting to removing stuck objects to increase the chance
-		the simulation resolves the deadlock itself.
+		
+* The configuration allows granularly configuring the parameters used by the game to decide if a vehicle's pathing conflict is unrecoverable; the base game is overly aggressive.
+* The recommended settings for this mod are to enable
+	despawn for explicit deadlock detection only.
+* There is also an option to highlight objects that have been detected as stuck/deadlocked to visualize the bottlenecks in the city's traffic, add a delay timer and rate-limiting to removing stuck objects to increase the chance
+	the simulation resolves the deadlock itself.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/ntds1.jpg" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="Properties/ntds1.jpg" />
-	<Screenshot Value="Properties/ntds2.jpg" />
-	<Screenshot Value="Properties/ntdso.jpg" />
+	<Screenshot Value="Properties/ntds3.jpg" />
+	<Screenshot Value="Properties/ntds4.jpg" />
+	<Screenshot Value="Properties/ntds5.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-vehicle-despawn-mod.1695356/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.1" />
+	<ModVersion Value="1.3" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Add despawn algorithm configuration options; added stuck vehicle highlighting" />
+	<ChangeLog Value="Fix issues with highlighting options; minor optimizations" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
