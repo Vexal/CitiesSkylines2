@@ -20,7 +20,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DCGameLoss", "DCGameLoss\DC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DCBulldozerCost", "DCBulldozerCost\DCBulldozerCost.csproj", "{A14BE01A-FD41-47D5-BBF0-91457582DC28}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoTrafficDespawn", "NoTrafficDespawn\NoTrafficDespawn.csproj", "{15A88840-6246-46CC-B381-55037C83E89D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoTrafficDespawn", "NoTrafficDespawn\NoTrafficDespawn.csproj", "{15A88840-6246-46CC-B381-55037C83E89D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CimCensus", "CimCensus\CimCensus.csproj", "{2F30A4B6-435D-4457-9AED-5328B60898A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +58,10 @@ Global
 		{15A88840-6246-46CC-B381-55037C83E89D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15A88840-6246-46CC-B381-55037C83E89D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15A88840-6246-46CC-B381-55037C83E89D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,32 @@
+.cimCensusPanel {
+	/**color:red;
+	width:500px;
+	position:absolute;
+	margin-top:50rem;*/
+	/*background-color: #183e69AA;
+	border-style:solid;
+	border-width:1rem;
+	border-color:lightblue;
+	border-radius:5rem;*/
+	margin-top: 50rem;
+	position: absolute;
+	min-width: 550rem;
+	background-color: rgba(42, 55, 83, 0.4375);
+}
+
+.cimCensusPanelHeader {
+	color: rgba(75,195,241,1);
+	text-align: center;
+	background-color: rgba(24, 33, 51, 0.599922);
+	backdrop-filter: blur(5px);
+	border-bottom-left-radius: 4rem 4rem;
+	border-bottom-right-radius: 4rem 4rem;
+	border-top-left-radius: 4rem 4rem;
+	border-top-right-radius: 4rem 4rem;
+	padding-top: 5rem;
+	padding-bottom: 5rem;
+}
+
+.cimCensusPanelBody {
+	color: white;
+}
