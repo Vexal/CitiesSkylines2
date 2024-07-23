@@ -1,6 +1,6 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="85825" />
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="Cim Census" />
 	<!--Short description of the mod-->
@@ -8,9 +8,9 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Calculates and displays statistics about the number of cims and vehicles in your city" /-->
 	<LongDescription>
-Calculates and displays statistics about the number of cims and vehicles active/inactive inside/outside your city limits.
+Cim Census lets you view the number of current active/inactive cims/vehicles/workers/students/commuters inside/outside your city limits in real-time.
 
-View the number of cims currently at work, school, shopping, commuting and other information that is not available in the base game.
+These numbers are based on the actual number of each type of active agent in the simulation, and give a more detailed representation of what the simulation is actually doing than the base game.
 
 The correctness of the agent counting methodology is still being verified; Please report any numbers that don't look correct in the forum.
 	</LongDescription>
@@ -21,7 +21,7 @@ The correctness of the agent counting methodology is still being verified; Pleas
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/cim-census.1696456/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
@@ -33,5 +33,5 @@ The correctness of the agent counting methodology is still being verified; Pleas
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/CimCensus" />
 </Publish>
