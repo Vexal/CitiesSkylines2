@@ -2,26 +2,30 @@
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
 	<ModId Value="" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="CimCensus" />
+	<DisplayName Value="Cim Census" />
 	<!--Short description of the mod-->
 	<ShortDescription Value="Calculates and displays statistics about the number of cims and vehicles in your city" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Calculates and displays statistics about the number of cims and vehicles in your city" /-->
 	<LongDescription>
-Calculates and displays statistics about the number of cims and vehicles in your city
+Calculates and displays statistics about the number of cims and vehicles active/inactive inside/outside your city limits.
+
+View the number of cims currently at work, school, shopping, commuting and other information that is not available in the base game.
+
+The correctness of the agent counting methodology is still being verified; Please report any numbers that don't look correct in the forum.
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Thumbnail Value="Properties/censusthumb.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="Properties/cimcensus.jpg" />
 	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
+	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
