@@ -68,7 +68,15 @@ export default class CimCensusButton extends Component {
 						</div>
 						<PanelSectionRow />
 						{this.state.dataBindings.map(data => <DataItem key={data[0]} name={data[0]} text={data[1]} />)}
-					
+						{false && <DataSection dataCategory="Cims">
+
+							<DataSection dataCategory="Cims">
+
+							</DataSection>
+							<DataSection dataCategory="Cims">
+
+							</DataSection>
+						</DataSection>}
 					</PanelSection>
 				</div>
 			</div>}
@@ -81,10 +89,36 @@ export default class CimCensusButton extends Component {
 		})
 	}
 
+	getCimsData = () => {
+		const results = [];
+		for (let i = 0; i < this.state.dataBindings.length; ++i) {
+			if (this.state.dataBindings[i][0].indexOf("Cims - ") === 0) {
+				results.push({ name: this.state.dataBindings[i][0].substring("Cims - ".length), value: this.state.dataBindings[i][1] });
+			}
+		}
+
+		return results;
+	}
+
 	static parseBindings(stringList: string) {
 		const results = stringList.split(":");
 
 		return results.map(kv => kv.split(","));
+	}
+}
+
+type DSProps = {
+	dataCategory: string,
+	children:any[]
+}
+
+class DataSection extends Component<DSProps, any> {
+	render() {
+		return <div>
+			{this.props.children && this.props.children.map(subCategory => <div>
+				{subCategory }
+			</div>)}
+		</div>
 	}
 }
 

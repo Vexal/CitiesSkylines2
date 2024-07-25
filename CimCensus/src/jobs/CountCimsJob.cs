@@ -179,15 +179,16 @@ namespace CimCensus
 						{
 							++cimsInBuildings;
 						}
+
+						if (hasHousehold && !this.propertyRenterLookup.HasComponent(householdMembers[i].m_Household))
+						{
+							++homelessCims;
+						}
 					}
 					else
 					{
 						++totalCimsOutsideCityT;
 						++nativeCimsOutsideCity;
-						if (hasHousehold && !this.propertyRenterLookup.HasComponent(householdMembers[i].m_Household))
-						{
-							++homelessCims;
-						}
 					}
 				}
 
