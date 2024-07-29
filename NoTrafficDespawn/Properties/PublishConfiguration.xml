@@ -8,9 +8,9 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
-This mod controls whether vehicles are despawned based on stuck/deadlock detection.
+This mod controls whether vehicles and pedestrians are despawned based on stuck/deadlock detection.
 		
-*Major update*: Vehicle despawn logic is now configurable in this mod, as opposed to a single toggle for all on/off. 
+*New*: Despawning can now be turned on/off for specific object types in the settings menu. 
 		
 		
 * The configuration allows granularly configuring the parameters used by the game to decide if a vehicle's pathing conflict is unrecoverable; the base game is overly aggressive.
@@ -31,13 +31,13 @@ This mod controls whether vehicles are despawned based on stuck/deadlock detecti
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-vehicle-despawn-mod.1695356/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.3" />
+	<ModVersion Value="1.4" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Fix issues with highlighting options; minor optimizations" />
+	<ChangeLog Value="Added options for which object types to allow despawn" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->

@@ -6,6 +6,7 @@ using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Objects;
+using Game.Routes;
 using Game.Tools;
 using Game.UI;
 using Game.Vehicles;
@@ -19,11 +20,13 @@ namespace CimCensus
 	public partial class StatisticsCalculationSystem : UISystemBase
 	{
 		private ValueBinding<string> dataBindings;
+		private ValueBinding<bool> autoRefreshActiveBinding;
 		private Dictionary<string, string> dataValues = new Dictionary<string, string>();
 		private List<string> dataOrderings = new List<string>();
 
 		private EntityQuery getAllVehiclesQuery;
 		private EntityQuery workerQuery;
+		private EntityQuery transitStopQuery;
 
 		private EntityQuery cimsQuery;
 		private bool isActive = false;
@@ -35,6 +38,9 @@ namespace CimCensus
 			this.dataBindings = new ValueBinding<string>("CimCensus", "dataBindings", "");
 			AddBinding(this.dataBindings);
 
+			this.autoRefreshActiveBinding = new ValueBinding<bool>("CimCensus", "autoRefreshActive", false);
+			AddBinding(this.autoRefreshActiveBinding);
+
 			this.getAllVehiclesQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
@@ -45,8 +51,7 @@ namespace CimCensus
 			{
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
-				ComponentType.ReadOnly<Hidden>(),
-				ComponentType.ReadOnly<Controller>()
+				ComponentType.ReadOnly<Hidden>()
 				}
 			});
 
@@ -83,8 +88,23 @@ namespace CimCensus
 				}
 			});
 
+			this.transitStopQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<WaitingPassengers>()
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<Hidden>()
+				}
+			});
+
 			AddBinding(new TriggerBinding<bool>("CimCensus", "toggle", s => {
 				this.isActive = s;
+				this.autoRefreshActiveBinding.Update(s);
 				this.frameCount = 0;
 				if (s)
 				{
@@ -106,6 +126,8 @@ namespace CimCensus
 			this.dataValues.Clear();
 			this.dataBindings.Update("");
 			this.isActive = false;
+			this.autoRefreshActiveBinding.Update(false);
+			this.frameCount = 0;
 		}
 
 		long frameCount = 0;
@@ -132,6 +154,14 @@ namespace CimCensus
 
 		private void handleWorkers()
 		{
+			NativeArray<WaitingPassengers> waitingPassengers = this.transitStopQuery.ToComponentDataArray<WaitingPassengers>(Allocator.Temp);
+			int totalWaitingPassengers = 0;
+
+			for (int i = 0; i < waitingPassengers.Length; i++)
+			{
+				totalWaitingPassengers += waitingPassengers[i].m_Count;
+			}
+
 			NativeCounter totalCimsInCityLimits = new NativeCounter(Allocator.TempJob);
 			NativeCounter totalCimsOutsideCity = new NativeCounter(Allocator.TempJob);
 			NativeCounter totalExtraCimsOutsideCity = new NativeCounter(Allocator.TempJob);
@@ -152,6 +182,10 @@ namespace CimCensus
 			NativeCounter personalVehicles = new NativeCounter(Allocator.TempJob);
 			NativeCounter dispatchedAmbulances = new NativeCounter(Allocator.TempJob);
 			NativeCounter totalStudents = new NativeCounter(Allocator.TempJob);
+			NativeCounter personalVehiclePassengers = new NativeCounter(Allocator.TempJob);
+			NativeCounter publicTransitPassengers = new NativeCounter(Allocator.TempJob);
+			NativeCounter taxiCount = new NativeCounter(Allocator.TempJob);
+			NativeCounter taxiPassengers = new NativeCounter(Allocator.TempJob);
 
 			CountWorkersJob countWorkersJob = new CountWorkersJob();
 			countWorkersJob.init();
@@ -215,6 +249,9 @@ namespace CimCensus
 			countVehiclesJob.parkedCarHandle = GetComponentTypeHandle<ParkedCar>(true);
 			countVehiclesJob.publicTransoprtHandle = GetComponentTypeHandle<PublicTransport>(true);
 			countVehiclesJob.cargoTransportHandle = GetComponentTypeHandle<CargoTransport>(true);
+			countVehiclesJob.controllerHandle = GetComponentTypeHandle<Controller>(true);
+			countVehiclesJob.entityHandle = GetEntityTypeHandle();
+			countVehiclesJob.passengerHandle = GetBufferTypeHandle<Passenger>(true);
 
 			countVehiclesJob.outsideConnectionLookup = GetComponentLookup<Game.Net.OutsideConnection>(true);
 
@@ -224,6 +261,10 @@ namespace CimCensus
 			countVehiclesJob.deliveryTraffic = deliveryTraffic.ToConcurrent();
 			countVehiclesJob.dispatchedAmbulances = dispatchedAmbulances.ToConcurrent();
 			countVehiclesJob.parkedVehicles = parkedVehicles.ToConcurrent();
+			countVehiclesJob.personalVehiclePassengers = personalVehiclePassengers.ToConcurrent();
+			countVehiclesJob.publicTransitPassengers = publicTransitPassengers.ToConcurrent();
+			countVehiclesJob.taxiCount = taxiCount.ToConcurrent();
+			countVehiclesJob.taxiPassengers = taxiPassengers.ToConcurrent();
 
 			Unity.Jobs.JobHandle countWorkersHandle = countWorkersJob.ScheduleParallel(this.workerQuery, default);
 			Unity.Jobs.JobHandle countCimsHandle = countCimsJob.ScheduleParallel(this.cimsQuery, default);
@@ -241,6 +282,10 @@ namespace CimCensus
 			this.setData("Cims - Outside City - Misc", totalExtraCimsOutsideCity);
 			this.setData("Cims - Going Home", cimsGoingHome);
 			this.setData("Cims - Shopping", cimsShopping);
+			this.setData("Cims - In Personal Vehicles", personalVehiclePassengers);
+			this.setData("Cims - In Public Transit", publicTransitPassengers);
+			this.setData("Cims - In Taxis", taxiPassengers);
+			this.setData("Cims - Awaiting Public Transit", totalWaitingPassengers);
 
 			this.setData("Workers - Total", countWorkersJob.totalWorkersN);
 			this.setData("Workers - Source (local/foreign)", countWorkersJob.localWorkersN, countWorkersJob.outsideWorkersN);
@@ -258,6 +303,7 @@ namespace CimCensus
 				+ " (" + realTraffic.Count.ToString() + " / " + dummyTraffic.Count.ToString() + ")");
 			this.setData("Vehicles - Active - Personal", personalVehicles);
 			this.setData("Vehicles - Active - Commercial", deliveryTraffic);
+			this.setData("Vehicles - Active - Taxis", taxiCount);
 			this.setData("Vehicles - Parked", parkedVehicles);
 			this.setData("Ambulances - Active", dispatchedAmbulances);
 
@@ -283,6 +329,10 @@ namespace CimCensus
 			personalVehicles.Dispose();
 			dispatchedAmbulances.Dispose();
 			totalStudents.Dispose();
+			personalVehiclePassengers.Dispose();
+			publicTransitPassengers.Dispose();
+			taxiCount.Dispose();
+			taxiPassengers.Dispose();
 		}
 
 		private void updateBindings()

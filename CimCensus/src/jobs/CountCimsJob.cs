@@ -2,7 +2,6 @@
 using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;
-using Game.Companies;
 using Game.Objects;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;

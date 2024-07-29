@@ -8,13 +8,15 @@ using System.Collections.Generic;
 namespace NoTrafficDespawn
 {
 	[FileLocation(nameof(NoTrafficDespawn))]
-	[SettingsUIGroupOrder(kToggleGroup)]
-	[SettingsUIShowGroupName(kToggleGroup)]
+	[SettingsUIGroupOrder(kToggleGroup, despawnTypeGroup)]
+	[SettingsUIShowGroupName(despawnTypeGroup)]
 	public class TrafficDespawnSettings : ModSetting
 	{
 		public const string kSection = "Main";
 
 		public const string kToggleGroup = "Toggle";
+
+		public const string despawnTypeGroup = "DespawnTypes";
 
 		public TrafficDespawnSettings(IMod mod) : base(mod)
 		{
@@ -25,6 +27,13 @@ namespace NoTrafficDespawn
 			this.deadlockSearchDepth = 100;
 			this.maxStuckObjectRemovalCount = 1;
 			this.maxStuckObjectSpeed = 3;
+			this.despawnAll = true;
+			this.despawnCommercialVehicles = true;
+			this.despawnPedestrians = true;
+			this.despawnPersonalVehicles = true;
+			this.despawnPublicTransit = true;
+			this.despawnServiceVehicles = true;
+			this.despawnTaxis = true;
 		}
 
 		[SettingsUISection(kSection, kToggleGroup)]
@@ -43,8 +52,6 @@ namespace NoTrafficDespawn
 		[SettingsUISection(kSection, kToggleGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
 		public bool highlightStuckObjects { get; set; }
-
-
 
 
 		[SettingsUISlider(min = 0, max = 10000, step = 5, scalarMultiplier = 1, unit = Unit.kInteger)]
@@ -67,6 +74,39 @@ namespace NoTrafficDespawn
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
 		public int maxStuckObjectSpeed { get; set; }
 
+
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableAllDespawnOption))]
+		public bool despawnAll { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnCommercialVehicles { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnPedestrians { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnPersonalVehicles { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnPublicTransit { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnServiceVehicles { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnTaxis { get; set; }
+
+		private bool disableDespawnTypeOptions => this.disableDespawnOptions || this.despawnAll || (this.despawnBehavior == DespawnBehavior.NoDespawn);
+		private bool disableAllDespawnOption => this.disableDespawnOptions || (this.despawnBehavior == DespawnBehavior.NoDespawn);
+
 		public override void SetDefaults()
 		{
 			//this.trafficDespawnDisabled = false;
@@ -76,6 +116,13 @@ namespace NoTrafficDespawn
 			this.deadlockSearchDepth = 100;
 			this.maxStuckObjectRemovalCount = 1;
 			this.maxStuckObjectSpeed = 3;
+			this.despawnAll = true;
+			this.despawnCommercialVehicles = true;
+			this.despawnPedestrians = true;
+			this.despawnPersonalVehicles = true;
+			this.despawnPublicTransit = true;
+			this.despawnServiceVehicles = true;
+			this.despawnTaxis = true;
 		}
 	}
 
@@ -136,6 +183,31 @@ namespace NoTrafficDespawn
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.maxStuckObjectSpeed)), "Max Stuck Vehicle Speed" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.maxStuckObjectSpeed)), $"The maximum speed at which the game will consider an object in a blocking path to be fast enough to not cause upstream traffic to be stuck." },
+			
+				//Despawn Typesa
+				{m_Setting.GetOptionGroupLocaleID(TrafficDespawnSettings.despawnTypeGroup), "Despawn Object Types" },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnAll)), "All" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnAll)), $"Despawn stuck objects of any type." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnCommercialVehicles)), "Commercial Vehicles" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnCommercialVehicles)), $"Despawn stuck commercial vehicles such as delivery trucks." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPedestrians)), "Pedestrians" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPedestrians)), $"Despawn stuck pedestrians." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPersonalVehicles)), "Personal Vehicles" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPersonalVehicles)), $"Despawn stuck personal vehicles." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnServiceVehicles)), "Service / Misc Vehicles" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnServiceVehicles)), $"Despawn stuck service vehicles such ambulances, garbage trucks, etc and other vehicles not covered by other categories." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTaxis)), "Taxis" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTaxis)), $"Despawn stuck taxis." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), "Public Transit" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), $"Despawn stuck public transit vehicles (buses, trams, trains, etc)." },
+
 			};
 		}
 

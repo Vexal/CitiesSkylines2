@@ -11,6 +11,7 @@ import styles from "cimcensusbutton.module.scss"
 export const MOD_NAME = "CimCensus";
 
 export const dataBindings = bindValue<string>(MOD_NAME, 'dataBindings');
+export const autoRefreshActive = bindValue<boolean>(MOD_NAME, 'autoRefreshActive');
 
 export default class CimCensusButton extends Component {
 	state = {
@@ -18,7 +19,7 @@ export default class CimCensusButton extends Component {
 		/** @type {[string[]] */
 		dataBindings: CimCensusButton.parseBindings(dataBindings.value),
 		hovering: false,
-		autoRefresh: false
+		autoRefresh: autoRefreshActive.value
 	}
 
 	render() {
@@ -86,6 +87,9 @@ export default class CimCensusButton extends Component {
 	componentDidMount() {
 		dataBindings.subscribe(val => {
 			this.setState({ dataBindings: CimCensusButton.parseBindings(val) });
+		})
+		autoRefreshActive.subscribe(val => {
+			this.setState({ autoRefreshActive: autoRefreshActive.value });
 		})
 	}
 

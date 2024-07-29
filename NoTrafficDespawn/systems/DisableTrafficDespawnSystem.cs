@@ -18,7 +18,6 @@ namespace NoTrafficDespawn
 		private StuckMovingObjectSystem stuckMovingObjectSystem;
 		private SimulationSystem simulationSystem;
 		private EntityQuery stuckObjectQuery;
-		private EntityQuery cleanupQuery;
 
 		//private EntityQuery stuckObjectRemovalQuery;
 		private EntityQuery unstuckObjectQuery;
@@ -26,6 +25,13 @@ namespace NoTrafficDespawn
 		private StuckType removeType;
 		private bool highlightDirty = false;
 		private bool wasHighlighting = false;
+		private bool despawnAll;
+		private bool despawnCommercialVehicles;
+		private bool despawnPedestrians;
+		private bool despawnPersonalVehicles;
+		private bool despawnPublicTransit;
+		private bool despawnServiceVehicles;
+		private bool despawnTaxis;
 
 		protected override void OnCreate()
 		{
@@ -78,24 +84,6 @@ namespace NoTrafficDespawn
 				ComponentType.ReadOnly<UnstuckObject>(),
 				}
 			});
-
-			this.cleanupQuery = GetEntityQuery(new EntityQueryDesc
-			{
-				All = new ComponentType[]
-			{
-			},
-				Any = new ComponentType[]
-			{
-			},
-				None = new ComponentType[]
-			{
-				ComponentType.ReadOnly<Deleted>(),
-				ComponentType.ReadOnly<Temp>(),
-				ComponentType.ReadOnly<Building>(),
-				ComponentType.ReadOnly<StuckObject>(),
-				ComponentType.ReadOnly<UnstuckObject>(),
-				}
-			});
 		}
 
 		private int frameCount = 0;
@@ -133,6 +121,7 @@ namespace NoTrafficDespawn
 			for (int i = 0; i < stuckEntities.Length; i++)
 			{
 				Entity stuckEntity = stuckEntities[i];
+				bool updated = false;
 
 				if (highlightDirty)
 				{
@@ -144,11 +133,13 @@ namespace NoTrafficDespawn
 					if (EntityManager.HasComponent<UnstuckObject>(stuckEntity))
 					{
 						EntityManager.RemoveComponent<UnstuckObject>(stuckEntity);
+						updated = true;
 					}
 				}
 				if (!EntityManager.HasComponent<Blocker>(stuckEntity))
 				{
 					EntityManager.RemoveComponent<StuckObject>(stuckEntity);
+					updated = true;
 					if (this.highlightStuckObjects)
 					{
 						EntityManager.RemoveComponent<Highlighted>(stuckEntity);
@@ -158,20 +149,39 @@ namespace NoTrafficDespawn
 				else 
 				{
 					StuckObject stuck = stuckComponents[i];
-					if (this.despawnBehavior != DespawnBehavior.NoDespawn) {
-						if ((stuck.frameCount+=4) >= this.deadlockLingerFrames && availableRemovalCount > 0)
+					if (this.despawnBehavior != DespawnBehavior.NoDespawn) 
+					{
+						if ((stuck.frameCount += 4) >= this.deadlockLingerFrames && availableRemovalCount > 0)
 						{
-							if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+							if (this.despawnAll ||
+								(this.despawnCommercialVehicles && EntityManager.HasComponent<DeliveryTruck>(stuckEntity)) ||
+								(this.despawnPedestrians && EntityManager.HasComponent<Creature>(stuckEntity)) ||
+								(this.despawnPersonalVehicles && EntityManager.HasComponent<PersonalCar>(stuckEntity)) ||
+								(this.despawnPublicTransit && EntityManager.HasComponent<PassengerTransport>(stuckEntity)) ||
+								(this.despawnTaxis && EntityManager.HasComponent<Taxi>(stuckEntity)) ||
+								(this.despawnServiceVehicles && (
+										!EntityManager.HasComponent<Creature>(stuckEntity) &&
+										!EntityManager.HasComponent<PersonalCar>(stuckEntity) &&
+										!EntityManager.HasComponent<Taxi>(stuckEntity) &&
+										!EntityManager.HasComponent<DeliveryTruck>(stuckEntity) &&
+										!EntityManager.HasComponent<PassengerTransport>(stuckEntity)
+									)
+								)
+							)
 							{
-								pathOwner.m_State |= PathFlags.Stuck;
-								EntityManager.SetComponentData(stuckEntity, pathOwner);
-								EntityManager.AddComponent<BatchesUpdated>(stuckEntity);
-								--availableRemovalCount;
+								if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+								{
+									pathOwner.m_State |= PathFlags.Stuck;
+									EntityManager.SetComponentData(stuckEntity, pathOwner);
+									updated = true;
+									--availableRemovalCount;
+								}
 							}
 						}
 						else
 						{
 							EntityManager.SetComponentData(stuckEntity, stuck);
+							updated = true;
 						}
 					}
 					
@@ -180,6 +190,11 @@ namespace NoTrafficDespawn
 						EntityManager.AddComponent<Highlighted>(stuckEntity);
 						EntityManager.AddComponent<BatchesUpdated>(stuckEntity);
 					}					
+				}
+
+				if (updated && !EntityManager.HasComponent<Updated>(stuckEntity))
+				{
+					EntityManager.AddComponent<Updated>(stuckEntity);
 				}
 			}
 
@@ -194,6 +209,10 @@ namespace NoTrafficDespawn
 					EntityManager.RemoveComponent<Highlighted>(unstuckEntities[i]);
 					EntityManager.RemoveComponent<UnstuckObject>(unstuckEntities[i]);
 					EntityManager.AddComponent<BatchesUpdated>(unstuckEntities[i]);
+					if (!EntityManager.HasComponent<Updated>(unstuckEntities[i]))
+					{
+						EntityManager.AddComponent<Updated>(unstuckEntities[i]);
+					}
 				}
 			}
 		}
@@ -221,6 +240,14 @@ namespace NoTrafficDespawn
 			}
 
 			this.wasHighlighting = this.highlightStuckObjects;
+
+			this.despawnAll = settings.despawnAll;
+			this.despawnCommercialVehicles = settings.despawnCommercialVehicles;
+			this.despawnPedestrians = settings.despawnPedestrians;
+			this.despawnPersonalVehicles = settings.despawnPersonalVehicles;
+			this.despawnPublicTransit = settings.despawnPublicTransit;
+			this.despawnServiceVehicles = settings.despawnServiceVehicles;
+			this.despawnTaxis = settings.despawnTaxis;
 		}
 
 		private void cleanupAfterDisable()
@@ -236,10 +263,12 @@ namespace NoTrafficDespawn
 				if (EntityManager.HasComponent<UnstuckObject>(cleanupEntities[i]))
 				{
 					EntityManager.RemoveComponent<UnstuckObject>(cleanupEntities[i]);
+					EntityManager.AddComponent<Updated>(cleanupEntities[i]);
 				}
 				if (EntityManager.HasComponent<StuckObject>(cleanupEntities[i]))
 				{
 					EntityManager.RemoveComponent<StuckObject>(cleanupEntities[i]);
+					EntityManager.AddComponent<Updated>(cleanupEntities[i]);
 				}
 			}
 		}
