@@ -34,5 +34,5 @@ Preventing vehicles from using trailers may impact gameplay because trailers inc
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="github" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/NoVehicleTrailers" />
 </Publish>
