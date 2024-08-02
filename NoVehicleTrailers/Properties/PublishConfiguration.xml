@@ -1,6 +1,6 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="86553" />
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="No Car Trailers" />
 	<!--Short description of the mod-->
