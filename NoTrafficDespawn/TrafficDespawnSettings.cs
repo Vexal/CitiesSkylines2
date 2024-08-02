@@ -34,6 +34,8 @@ namespace NoTrafficDespawn
 			this.despawnPublicTransit = true;
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
+			//this.attemptReroute = false;
+			//this.attemptRerouteFrames = 100;
 		}
 
 		[SettingsUISection(kSection, kToggleGroup)]
@@ -54,10 +56,21 @@ namespace NoTrafficDespawn
 		public bool highlightStuckObjects { get; set; }
 
 
-		[SettingsUISlider(min = 0, max = 10000, step = 5, scalarMultiplier = 1, unit = Unit.kInteger)]
+		[SettingsUISlider(min = 0, max = 10000, step = 1, scalarMultiplier = 1, unit = Unit.kInteger)]
 		[SettingsUISection(kSection, kToggleGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
 		public int deadlockLingerFrames { get; set; }
+
+		/*[SettingsUISection(kSection, kToggleGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
+		public bool attemptReroute { get; set; }
+
+		private bool showAttemptRerouteCondition => this.attemptReroute && !this.disableDespawnOptions;
+
+		[SettingsUISlider(min = 0, max = 10000, step = 1, scalarMultiplier = 1, unit = Unit.kInteger)]
+		[SettingsUISection(kSection, kToggleGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(showAttemptRerouteCondition))]
+		public int attemptRerouteFrames { get; set; }*/
 
 		[SettingsUISlider(min = 100, max = 10000, step = 5, scalarMultiplier = 1, unit = Unit.kInteger)]
 		[SettingsUISection(kSection, kToggleGroup)]
@@ -123,6 +136,8 @@ namespace NoTrafficDespawn
 			this.despawnPublicTransit = true;
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
+			//this.attemptReroute = false;
+			//this.attemptRerouteFrames = 100;
 		}
 	}
 
@@ -174,9 +189,16 @@ namespace NoTrafficDespawn
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.deadlockLingerFrames)), "Deadlocked Vehicle Removal Wait Frames" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.deadlockLingerFrames)), $"The number of frames the simulation will wait before removing vehicles it detects to be stuck. Increasing this number may allow the simulation to recover on its own, but the vanilla default is 0." },
+/*
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.attemptReroute)), "Attempt Reroute Before Despawn" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.attemptReroute)), $"Force vehicles to attempt a different route before resorting to despawning them." },
+				
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.attemptRerouteFrames)), "Deadlocked Vehicle Reroute Wait Frames" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.attemptRerouteFrames)), $"The number of frames the simulation will wait before forcing vehicles it detects to be stuck to attempt to reroute." },
+*/
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.deadlockSearchDepth)), "Vehicle Chain Search Depth" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.deadlockSearchDepth)), $"The number of vehicles the simulation will traverse to find a circular loop. Reaching the limit with 'desawpn explicit deadlocks only' set will do nothing, otherwise the vehicle will be marked as stuck." },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.deadlockSearchDepth)), $"The number of vehicles the simulation will traverse to find a circular loop. Reaching the limit with 'despawn explicit deadlocks only' set will do nothing, otherwise the vehicle will be marked as stuck." },
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.maxStuckObjectRemovalCount)), "Max Per-frame Stuck Vehicle Removal Count" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.maxStuckObjectRemovalCount)), $"The maximum number of stuck vehicles the game will move per frame. Decreasing this value increases the chance the simulation will recover from deadlocks on its own with fewer vehicles removed." },
@@ -205,7 +227,7 @@ namespace NoTrafficDespawn
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTaxis)), "Taxis" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTaxis)), $"Despawn stuck taxis." },
 
-				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), "Public Transit" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), "Public Transit" },	
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), $"Despawn stuck public transit vehicles (buses, trams, trains, etc)." },
 
 			};

@@ -1,0 +1,38 @@
+﻿<Publish>
+	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
+	<ModId Value="" />
+	<!--Name of the mod to display to players-->
+	<DisplayName Value="No Car Trailers" />
+	<!--Short description of the mod-->
+	<ShortDescription Value="Prevent cars from having trailers" />
+	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
+	<!--LongDescription Value="This is a long description" /-->
+	<LongDescription>
+Prevents cars from being spawned with trailers. This option must be enabled in the settings menu, and can be switched on/off at any time.
+
+Additionally, there is a button to remove all existing trailers from the map.
+
+Preventing vehicles from using trailers may impact gameplay because trailers increase the storage and passenger space for vehicles. This effect is unresearched.
+	</LongDescription>
+	<!--Thumbnail-->
+	<Thumbnail Value="Properties/notrailers.jpg" />
+	<!--Screenshot, can be set multiple times-->
+	<Screenshot Value="Properties/notrailers.jpg" />
+	<Screenshot Value="Properties/notrailersmenu.jpg" />
+	<!--Tag, can be set multiple times-->
+	<Tag Value="" />
+	<!--Link to the forum post where the mod can be discussed-->
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-car-trailers.1697791/" />
+	<!--Version of the mod-->
+	<ModVersion Value="1.0" />
+	<!--Recommended version of the base game to use the mod-->
+	<GameVersion Value="1.1.*" />
+	<!--Dependency for the mod, can be set multiple times-->
+	<Dependency Id="" />
+	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
+	<ChangeLog Value="" />
+	<!--ChangeLog>
+	</ChangeLog-->
+	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
+	<ExternalLink Type="github" Url="" />
+</Publish>

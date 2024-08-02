@@ -24,6 +24,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoTrafficDespawn", "NoTraff
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CimCensus", "CimCensus\CimCensus.csproj", "{2F30A4B6-435D-4457-9AED-5328B60898A0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Game", "..\..\..\Documents\cs2code\Game.csproj", "{AA66C1A8-D2C3-41C5-8148-6DCB5D7C7190}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoVehicleTrailers", "NoVehicleTrailers\NoVehicleTrailers.csproj", "{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +66,14 @@ Global
 		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F30A4B6-435D-4457-9AED-5328B60898A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA66C1A8-D2C3-41C5-8148-6DCB5D7C7190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA66C1A8-D2C3-41C5-8148-6DCB5D7C7190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA66C1A8-D2C3-41C5-8148-6DCB5D7C7190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA66C1A8-D2C3-41C5-8148-6DCB5D7C7190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

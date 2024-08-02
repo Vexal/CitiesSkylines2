@@ -172,6 +172,7 @@ namespace NoTrafficDespawn
 								if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
 								{
 									pathOwner.m_State |= PathFlags.Stuck;
+									//pathOwner.m_State |=  PathFlags.Obsolete;
 									EntityManager.SetComponentData(stuckEntity, pathOwner);
 									updated = true;
 									--availableRemovalCount;
