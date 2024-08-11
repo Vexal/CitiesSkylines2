@@ -21,6 +21,7 @@ namespace NoVehicleTrailers
 		}
 
 		[SettingsUISection(kSection, kButtonGroup)]
+		[SettingsUIDisableByCondition(typeof(Setting), nameof(disableOption))]
 		public bool disableCarTrailers { get; set; }
 
 		[SettingsUIButton]
@@ -32,6 +33,8 @@ namespace NoVehicleTrailers
 		{
 			this.disableCarTrailers = false;
 		}
+
+		private bool disableOption => true;
 	}
 
 	public class LocaleEN : IDictionarySource

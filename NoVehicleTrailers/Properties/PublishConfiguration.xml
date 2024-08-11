@@ -8,6 +8,8 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
+*Update*: The toggle functionality of this mod is currently disabled due to a critical issue with save game compatibility; the 'remove all existing trailers' button still is available to manually clear trailers. I apologize for the inconvenience.
+
 Prevents cars from being spawned with trailers. This option must be enabled in the settings menu, and can be switched on/off at any time.
 
 Additionally, there is a button to remove all existing trailers from the map.
@@ -24,13 +26,13 @@ Preventing vehicles from using trailers may impact gameplay because trailers inc
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-car-trailers.1697791/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0" />
+	<ModVersion Value="1.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="" />
+	<ChangeLog Value="Temporarily disabled the toggle functionality due to critical issue with save games. The 'remove all trailers' button still can be manually used." />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->

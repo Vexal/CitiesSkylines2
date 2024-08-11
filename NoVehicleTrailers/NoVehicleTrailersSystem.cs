@@ -89,7 +89,7 @@ namespace NoVehicleTrailers
 
 		private void togglePersonalTrailers(bool disable)
 		{
-			NativeArray<Entity> trailerPrefabs = this.personalTrailerPrefabQuery.ToEntityArray(Allocator.Temp);
+			/*NativeArray<Entity> trailerPrefabs = this.personalTrailerPrefabQuery.ToEntityArray(Allocator.Temp);
 			for (int i = 0; i < trailerPrefabs.Length; i++)
 			{
 				if (EntityManager.TryGetComponent<Game.Prefabs.PersonalCarData>(trailerPrefabs[i], out var component))
@@ -105,7 +105,7 @@ namespace NoVehicleTrailers
 
 					EntityManager.AddComponent<Updated>(trailerPrefabs[i]);
 				}
-			}
+			}*/
 		}
 	}
 }
