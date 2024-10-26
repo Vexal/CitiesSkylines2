@@ -3,6 +3,7 @@ using Colossal.UI.Binding;
 using Game.Net;
 using Game.Settings;
 using Game.UI;
+using Game.UI.InGame;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ using UnityEngine.InputSystem;
 
 namespace EmploymentTracker
 {
-	partial class HighlightRoutesSystem : UISystemBase
+	partial class HighlightRoutesSystem : InfoSectionBase
 	{
 		private InputAction toggleSystemAction;
 		private InputAction togglePathDisplayAction;
@@ -191,12 +192,12 @@ namespace EmploymentTracker
 				return false;
 			}
 
-			if (this.selectedEntity == null || this.selectedEntity == default(Entity) || (this.selectionType == SelectionType.UNKNOWN && !this.pathVolumeToggled))
-			{
-				return false;
-			}
-
 			return true;
+		}
+
+		private bool isNothingSelected()
+		{
+			return this.selectedEntity == null || this.selectedEntity == default(Entity) || (this.selectionType == SelectionType.UNKNOWN && !this.pathVolumeToggled);
 		}
 
 		private void toggleAutoRefresh(bool active)

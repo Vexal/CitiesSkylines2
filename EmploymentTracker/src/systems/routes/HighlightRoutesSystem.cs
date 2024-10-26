@@ -29,8 +29,8 @@ using UnityEngine.InputSystem;
 namespace EmploymentTracker
 {
 	[BurstCompile]
-	internal partial class HighlightRoutesSystem : UISystemBase
-    {
+	internal partial class HighlightRoutesSystem : InfoSectionBase
+	{
         private Entity selectedEntity = default;
 		private SelectionType selectionType;
 		private SimpleOverlayRendererSystem overlayRenderSystem;
@@ -49,6 +49,7 @@ namespace EmploymentTracker
 		protected override void OnCreate()
 		{
 			base.OnCreate();
+			m_InfoUISystem.AddMiddleSection(this);
 
 			this.hasTargetQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -154,7 +155,7 @@ namespace EmploymentTracker
 			SelectionType newSelectionType = this.getEntityRouteType(selected);
 			
 			//only compute most highlighting when object selection changes (except for dynamic pathfinding)
-			bool updatedSelection = (this.toggled || this.pathVolumeToggled) && (selected != this.selectedEntity || newSelectionType != this.selectionType);
+			bool updatedSelection = (this.toggled || this.pathVolumeToggled || this.settings.showCountsOnInfoPanel) && (selected != this.selectedEntity || newSelectionType != this.selectionType);
 			if (updatedSelection)
 			{
 				this.reset();
@@ -168,8 +169,17 @@ namespace EmploymentTracker
 				}
 			}
 
+			//info panel row visibility
+			visible = this.showOnInfoPanel;
+
+			if (this.isNothingSelected())
+			{
+				this.endFrame(clock);
+				return;
+			}
+
 			//check if hot key disable/enable highlighting was pressed
-			if (!this.checkFrameToggles())
+			if (!this.checkFrameToggles() && !this.settings.showCountsOnInfoPanel)
 			{
 				this.endFrame(clock);
 				return;
@@ -201,9 +211,9 @@ namespace EmploymentTracker
 				}				
 			}
 
-			if (this.commutingEntities.IsCreated)
+			if (this.shouldRenderRoutes() && this.commutingEntities.IsCreated)
 			{
-				this.doRouteJobs(this.selectionType == SelectionType.BUILDING && !this.routeHighlightOptions.incomingRoutesTransit);
+				this.doRouteJobs(this.isStructureSelected && !this.routeHighlightOptions.incomingRoutesTransit);
 			}
 
 			this.endFrame(clock);
@@ -366,6 +376,9 @@ namespace EmploymentTracker
 			return this.toolSystem.selected;
 		}
 
+		private int incomingCimCount = 0;
+		private int incomingEntityCount = 0;
+
 		private void populateRouteEntities()
 		{
 			if (this.commutingEntities.IsCreated)
@@ -375,11 +388,10 @@ namespace EmploymentTracker
 
 			this.commutingEntities = new NativeHashSet<Entity>(128, Allocator.Persistent);
 
-			if (this.pathVolumeToggled)
+			if (this.pathVolumeToggled || this.computePassThroughCount)
 			{
 				NativeHashSet<Entity> targets = this.getSelectedEntityTargets();
 				
-
 				if (this.debugActiveBinding.value)
 				{
 					this.bindings["Target Count"] = targets.Count.ToString();
@@ -387,8 +399,8 @@ namespace EmploymentTracker
 
 				if (targets.Count > 0)
 				{
-					var searchCounter = new Colossal.NativeCounter(Allocator.TempJob);
-					var resultCounter = new Colossal.NativeCounter(Allocator.TempJob);
+					var searchCounter = new NativeCounter(Allocator.TempJob);
+					var resultCounter = new NativeCounter(Allocator.TempJob);
 
 					EntityPathSearchJob searchJob = new EntityPathSearchJob();
 					searchJob.targets = targets;
@@ -423,6 +435,9 @@ namespace EmploymentTracker
 						}
 					}
 
+					this.incomingCimCount = resultCounter.Count;
+					this.incomingEntityCount = this.commutingEntities.Count;
+
 					searchCounter.Dispose();
 					resultCounter.Dispose();
 
@@ -433,7 +448,7 @@ namespace EmploymentTracker
                      targets.Dispose();
                 }
 			}
-			else if (this.selectionType == SelectionType.BUILDING && this.routeHighlightOptions.incomingRoutes)
+			else if (this.isStructureSelected && this.routeHighlightOptions.incomingRoutes)
 			{
 				EntityTargetSearchJob searchJob = new EntityTargetSearchJob();
 				searchJob.searchTarget = this.selectedEntity;
@@ -476,6 +491,7 @@ namespace EmploymentTracker
 					}
 				}
 
+				this.incomingCimCount = this.commutingEntities.Count;
 				searchJob.results.Dispose();	
 			}
 			else if (this.routeHighlightOptions.highlightSelected)
@@ -528,10 +544,25 @@ namespace EmploymentTracker
 		private NativeHashSet<Entity> getSelectedEntityTargets()
 		{
 			NativeHashSet<Entity> targets = new NativeHashSet<Entity>(16, Allocator.TempJob);
+			targets.Add(this.selectedEntity);
 
 			if (EntityManager.TryGetBuffer<Renter>(this.selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
 			{
 				targets.Add(renterBuffer[0].m_Renter);
+			}
+			if (EntityManager.TryGetBuffer<ConnectedRoute>(this.selectedEntity, true, out var transitRouteBuffer))
+			{
+				for (int i = 0; i < transitRouteBuffer.Length; i++)
+				{
+					targets.Add(transitRouteBuffer[i].m_Waypoint);
+				}
+			}
+			if (EntityManager.TryGetBuffer<SpawnLocationElement>(this.selectedEntity, true, out var spawnLocations))
+			{
+				for (int i = 0; i < spawnLocations.Length; i++)
+				{
+					targets.Add(spawnLocations[i].m_SpawnLocation);
+				}
 			}
 			if (EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
 			{
@@ -548,15 +579,15 @@ namespace EmploymentTracker
 					{
 						bool isPathable = this.isLanePathable(laneBuffer[i]);
 
-						if (this.selectionType != SelectionType.BUILDING && !isPathable)
+						if (!this.isStructureSelected && !isPathable)
 						{
 							continue;
 						}
 
-						if (this.selectionType == SelectionType.BUILDING || this.activeLaneIndexes[pathableCount++])
+						if (this.isStructureSelected || this.activeLaneIndexes[pathableCount++])
 						{
 							targets.Add(laneBuffer[i].m_SubLane);
-							if (EntityManager.TryGetComponent(laneBuffer[i].m_SubLane, out Curve curve))
+							if (this.pathVolumeToggled && EntityManager.TryGetComponent(laneBuffer[i].m_SubLane, out Curve curve))
 							{
 								this.targetLaneCurves.Add(curve.m_Bezier);
 							}
@@ -606,7 +637,15 @@ namespace EmploymentTracker
 					return SelectionType.TRANSIT;
 				}
 			}
-			if (EntityManager.HasComponent<Building>(e))
+			if (EntityManager.HasComponent<PublicTransportStation>(e) || EntityManager.HasComponent<BusStop>(e))
+			{
+				return SelectionType.TRANSIT_STATION;
+			}
+			else if (EntityManager.HasComponent<ParkingFacility>(e))
+			{
+				return SelectionType.PARKING;
+			}
+			else if (EntityManager.HasComponent<Building>(e))
 			{
 				return SelectionType.BUILDING;
 			}
@@ -710,7 +749,7 @@ namespace EmploymentTracker
 		{
 			this.laneCount = 0;
 
-			if (this.selectionType != SelectionType.BUILDING && EntityManager.Exists(this.selectedEntity) && EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
+			if (!this.isStructureSelected && EntityManager.Exists(this.selectedEntity) && EntityManager.TryGetBuffer<SubLane>(this.selectedEntity, true, out var laneBuffer))
 			{
 				for (int i = 0; i < laneBuffer.Length; i++)
 				{
@@ -737,10 +776,44 @@ namespace EmploymentTracker
 
 		private int laneCount = 0;
 
+		protected override string group
+		{
+			get
+			{
+				if (this.commutingEntities.IsCreated)
+				{
+					string rowName = "";
+					switch (this.selectionType)
+					{
+						case SelectionType.TRANSIT_STATION:
+							rowName = "Cims passing through station";
+							break;
+						case SelectionType.PARKING:
+							rowName = "En-route Cims";
+							break;
+						case SelectionType.BUILDING:
+							rowName = "En-route Cims";
+							break;
+						case SelectionType.ROAD:
+							rowName = "Cims Passing Through Road";
+								break;
+						default:
+							return "";
+					}
+
+					return rowName + "," + this.commutingEntities.Count;
+				}
+				else
+				{
+					return "";
+				}
+			}
+		}
+
 		private void updateLaneBinding()
 		{
 			string laneIds = "";
-			if (this.selectionType == SelectionType.BUILDING)
+			if (this.isStructureSelected)
 			{
 				laneIds = "";
 			}
@@ -760,6 +833,67 @@ namespace EmploymentTracker
 
 			info("lane toggles: " + laneIds);
 			this.laneIdListBinding.Update(laneIds);
+		}
+
+		protected override void Reset()
+		{
+
+		}
+
+		protected override void OnProcess()
+		{
+
+		}
+
+		public override void OnWriteProperties(IJsonWriter writer)
+		{
+
+		}
+
+		public bool computePassThroughCount
+		{
+			get
+			{
+				return this.selectionType == SelectionType.ROAD || this.selectionType == SelectionType.PARKING || this.selectionType == SelectionType.TRANSIT_STATION;
+			}
+		}
+
+		public bool isStructureSelected
+		{
+			get
+			{
+				return this.selectionType == SelectionType.BUILDING || this.selectionType == SelectionType.PARKING || this.selectionType == SelectionType.TRANSIT_STATION;
+			}
+		}
+
+		public bool showOnInfoPanel
+		{
+			get
+			{
+				return this.settings.showCountsOnInfoPanel && (this.selectionType == SelectionType.BUILDING || this.selectionType == SelectionType.ROAD || this.selectionType == SelectionType.PARKING || this.selectionType == SelectionType.TRANSIT_STATION);
+			}
+		}
+
+		private bool shouldRenderRoutes()
+		{
+			if (this.pathVolumeToggled)
+			{
+				return true;
+			}
+
+			if (!this.toggled)
+			{
+				return false;
+			}
+
+			if (this.isStructureSelected)
+			{
+				return this.routeHighlightOptions.incomingRoutes;
+			}
+			else
+			{
+				return this.routeHighlightOptions.highlightSelected;
+			}
 		}
 	}
 }

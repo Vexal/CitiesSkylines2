@@ -38,15 +38,15 @@ function handleClick(eventName: string) {
 export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 	// I believe you should not put anything here.
 	componentList["EmploymentTracker.HighlightRoutesSystem"] = (e: InfoSectionComponent) => {
+		const parts = e.group.split(",");
 		// These get the value of the bindings.
 		return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
 			<InfoRow
-				left={"test"}
+				left={parts[0]}
 				right=
 				{
-					"Hello"
+					parts[1]
 				}
-				tooltip={"ok?"}
 				uppercase={true}
 				disableFocus={true}
 				subRow={false}

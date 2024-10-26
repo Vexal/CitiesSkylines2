@@ -60,7 +60,7 @@ export default class HighlightOptionsMenuButton extends Component {
 	render() {
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
 		return <>
-			<FloatingButton src={tadaSrc} selected={this.state.menuOpen} onSelect={() => {
+			<FloatingButton selected={this.state.menuOpen} onSelect={() => {
 				this.setState({ menuOpen: !this.state.menuOpen }); console.log("route menu open");
 				
 			}} onMouseEnter={() => {
@@ -70,7 +70,7 @@ export default class HighlightOptionsMenuButton extends Component {
 			}} />
 			{this.state.hovering && <ToolTip text={"Route Highlighter Settings"} />}
 
-			{this.state.menuOpen && <div style={{backgroundColor:"#183e69AA", borderStyle:"solid", borderWidth:"1rem", borderColor:"lightblue", borderRadius:"5rem"} }>
+			{this.state.menuOpen && <div style={{backgroundColor:"#183e69AA", position:"absolute", marginTop:"50rem", borderStyle:"solid", borderWidth:"1rem", borderColor:"lightblue", borderRadius:"5rem"} }>
 				<PanelSection>
 					<SectionHeader text="Route Highlighter" />
 					<PanelSectionRow />

@@ -25,7 +25,7 @@ export default class CimCensusButton extends Component {
 	render() {
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
 		return <>
-			<FloatingButton src={tadaSrc} selected={this.state.menuOpen} onSelect={() => {
+			<FloatingButton selected={this.state.menuOpen} onSelect={() => {
 				const shouldOpen = !this.state.menuOpen;
 				trigger(MOD_NAME, "update", shouldOpen);
 				if (!shouldOpen) {

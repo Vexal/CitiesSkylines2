@@ -25,6 +25,8 @@ namespace EmploymentTracker
 		AIRPLANE,
 		ANIMAL,
 		RESIDENT,
-		ROAD
+		ROAD,
+		PARKING,
+		TRANSIT_STATION
 	}
 }

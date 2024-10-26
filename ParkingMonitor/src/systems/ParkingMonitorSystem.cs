@@ -4,6 +4,7 @@ using Game.Common;
 using Game.Net;
 using Game.Objects;
 using Game.Pathfind;
+using Game.Simulation;
 using Game.Tools;
 using Game.Vehicles;
 using System;
@@ -21,13 +22,15 @@ namespace ParkingMonitor
 	public partial class ParkingMonitorSystem : GameSystemBase
 	{
 		private EntityCommandBufferSystem entityCommandBufferSystem;
+		private TimeSystem timeSystem;
 		private EntityQuery movingVehiclesQuery;
 		private EntityQuery obsoleteParkingQuery;
 
 		protected override void OnCreate()
 		{
 			base.OnCreate();
-			this.entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationBarrier1>();
+			this.entityCommandBufferSystem = World.GetOrCreateSystemManaged<ModificationBarrier1>();
+			this.timeSystem = World.GetOrCreateSystemManaged<TimeSystem>();
 
 			this.movingVehiclesQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -86,6 +89,9 @@ namespace ParkingMonitor
 
 		protected override void OnUpdate()
 		{
+			DateTime currentTime = this.timeSystem.GetCurrentDateTime();
+			long timeTicks = currentTime.Ticks;
+
 			FindParkingTargetsJob job = new FindParkingTargetsJob { 
 				commandBuffer = this.entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter(),
 				targetTypeHandle = SystemAPI.GetComponentTypeHandle<Target>(),
@@ -97,6 +103,8 @@ namespace ParkingMonitor
 				ownerLookup = SystemAPI.GetComponentLookup<Owner>(),
 				parkingFacilityLookup = SystemAPI.GetComponentLookup<ParkingFacility>(),
 				parkingLaneLookup = SystemAPI.GetComponentLookup<ParkingLane>(),
+				failedParkingAttemptsLookup = SystemAPI.GetBufferLookup<FailedParkingAttempt>(),
+				currentTime = timeTicks
 			};
 
 			base.Dependency = JobChunkExtensions.ScheduleParallel(job, this.movingVehiclesQuery, base.Dependency);
@@ -134,6 +142,9 @@ namespace ParkingMonitor
 		public ComponentLookup<ParkingFacility> parkingFacilityLookup;
 		[ReadOnly]
 		public ComponentLookup<ParkingLane> parkingLaneLookup;
+		public BufferLookup<FailedParkingAttempt> failedParkingAttemptsLookup;
+		[ReadOnly]
+		public long currentTime;
 
 
 		public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -158,7 +169,7 @@ namespace ParkingMonitor
 			while (chunkIterator.NextEntityIndex(out int i))
 			{
 				bool foundParking = false;
-				Entity pathingTarget;
+				Entity pathingTarget = default;
 				if (hasCarLanes)
 				{
 					DynamicBuffer<CarNavigationLane> carNavigationLanes = carNavigationLaneAccessor[i];
@@ -172,29 +183,6 @@ namespace ParkingMonitor
 								pathingTarget = owner.m_Owner;
 								foundParking = true;
 								break;
-								if (alreadyHasParkingTarget)
-								{
-									if (parkingTargets[i].currentTarget != owner.m_Owner)
-									{
-										ParkingTarget parkingTarget = parkingTargets[i];
-										parkingTarget.currentTarget = owner.m_Owner; 
-										if (parkingTarget.currentDestination == targets[i].m_Target)
-										{
-											parkingTarget.attemptCount += 1;
-										}
-										else
-										{
-											parkingTarget.attemptCount = 1;
-											parkingTarget.currentDestination = targets[i].m_Target;
-										}
-
-										parkingTargets[i] = parkingTarget;
-									}
-								}
-								else
-								{
-									this.commandBuffer.AddComponent(unfilteredChunkIndex, entities[i], new ParkingTarget(owner.m_Owner, 1, targets[i].m_Target));
-								}
 							}
 						}
 					}
@@ -212,61 +200,62 @@ namespace ParkingMonitor
 						{
 							if (this.parkingFacilityLookup.HasComponent(owner.m_Owner) || this.parkingLaneLookup.HasComponent(pathElement.m_Target))
 							{
-								if (alreadyHasParkingTarget)
-								{
-									if (parkingTargets[i].currentTarget != owner.m_Owner)
-									{
-										ParkingTarget parkingTarget = parkingTargets[i];
-										parkingTarget.currentTarget = owner.m_Owner;
-										if (parkingTarget.currentDestination == Entity.Null)
-										{
-											parkingTarget.attemptCount += 1;
-											parkingTarget.currentDestination = targets[i].m_Target;
-										}
-										else if (parkingTarget.currentDestination == targets[i].m_Target)
-										{
-											parkingTarget.attemptCount += 1;
-										}
-										else
-										{
-											parkingTarget.attemptCount = 1;
-											parkingTarget.currentDestination = targets[i].m_Target;
-										}
-
-										parkingTargets[i] = parkingTarget;
-									}
-								}
-								else
-								{
-									this.commandBuffer.AddComponent(unfilteredChunkIndex, entities[i], new ParkingTarget(owner.m_Owner, 1, targets[i].m_Target));
-								}
+								pathingTarget = owner.m_Owner;
+								foundParking = true;
+								break;
 							}
 						}
 					}
 				}
 
-				if (alreadyHasParkingTarget)
+				if (foundParking)
 				{
-					if (parkingTargets[i].currentTarget != owner.m_Owner)
+					while (this.ownerLookup.TryGetComponent(pathingTarget, out Owner newOwner))
 					{
-						ParkingTarget parkingTarget = parkingTargets[i];
-						parkingTarget.currentTarget = owner.m_Owner;
-						if (parkingTarget.currentDestination == targets[i].m_Target)
-						{
-							parkingTarget.attemptCount += 1;
-						}
-						else
-						{
-							parkingTarget.attemptCount = 1;
-							parkingTarget.currentDestination = targets[i].m_Target;
-						}
-
-						parkingTargets[i] = parkingTarget;
+						pathingTarget = newOwner.m_Owner;
 					}
-				}
-				else
-				{
-					this.commandBuffer.AddComponent(unfilteredChunkIndex, entities[i], new ParkingTarget(owner.m_Owner, 1, targets[i].m_Target));
+
+					if (alreadyHasParkingTarget)
+					{
+						if (parkingTargets[i].currentTarget != pathingTarget)
+						{
+							ParkingTarget parkingTarget = parkingTargets[i];
+							parkingTarget.currentTarget = pathingTarget;
+							if (parkingTarget.currentDestination == Entity.Null)
+							{
+								//for backwards compatibility
+								parkingTarget.attemptCount += 1;
+								parkingTarget.currentDestination = targets[i].m_Target;
+							}
+							else if (parkingTarget.currentDestination == targets[i].m_Target)
+							{
+								parkingTarget.attemptCount += 1;
+								if (parkingTarget.attemptCount > 1)
+								{
+									DynamicBuffer<FailedParkingAttempt> parkingAttemptBuffer;
+									//if (!this.failedParkingAttemptsLookup.TryGetBuffer(pathingTarget, out parkingAttemptBuffer))
+									if (!this.failedParkingAttemptsLookup.HasBuffer(pathingTarget))
+									{
+										parkingAttemptBuffer = this.commandBuffer.AddBuffer<FailedParkingAttempt>(unfilteredChunkIndex, pathingTarget);
+									}
+
+									//parkingAttemptBuffer.Add(new FailedParkingAttempt(this.currentTime));
+									this.commandBuffer.AppendToBuffer(unfilteredChunkIndex, pathingTarget, new FailedParkingAttempt(this.currentTime));
+								}
+							}
+							else
+							{
+								parkingTarget.attemptCount = 1;
+								parkingTarget.currentDestination = targets[i].m_Target;
+							}
+
+							parkingTargets[i] = parkingTarget;
+						}
+					}
+					else
+					{
+						this.commandBuffer.AddComponent(unfilteredChunkIndex, entities[i], new ParkingTarget(pathingTarget, 1, targets[i].m_Target));
+					}
 				}
 			}
 		}

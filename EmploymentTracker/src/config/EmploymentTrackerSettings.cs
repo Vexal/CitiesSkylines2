@@ -8,14 +8,15 @@ using System.Collections.Generic;
 namespace EmploymentTracker
 {
 	[FileLocation(nameof(EmploymentTracker))]
-	[SettingsUIGroupOrder(routeHighlightTypes, objectHighlightTypes, routeHighlightTypes, routeHighlightOptions)]
-	[SettingsUIShowGroupName(routeHighlightTypes, objectHighlightTypes, routeHighlightOptions)]
+	[SettingsUIGroupOrder(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, routeHighlightTypes, routeHighlightOptions)]
+	[SettingsUIShowGroupName(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, routeHighlightOptions)]
 	public class EmploymentTrackerSettings : ModSetting
 	{
 		public const string kSection = "Main";
 
 		public const string routeHighlightOptions = "Route Highlight Options";
 		public const string routeHighlightTypes = "Route Highlight Types";
+		public const string infoPanelOptions = "Selected Object Info Panel Options";
 		public const string objectHighlightTypes = "Object Highlight Types";
 
 		public EmploymentTrackerSettings(IMod mod) : base(mod)
@@ -36,6 +37,7 @@ namespace EmploymentTracker
 			this.incomingRoutesTransit = true;
 			this.highlightSelectedTransitVehiclePassengerRoutes = true;
 			this.highlightSelected = true;
+			this.showCountsOnInfoPanel = true;
 		}
 
 		//[SettingsUISection(kSection, objectHighlightTypes)]
@@ -85,6 +87,8 @@ namespace EmploymentTracker
 		public bool incomingRoutesTransit { get; set; }
 		[SettingsUISection(kSection, routeHighlightTypes)]
 		public bool highlightSelectedTransitVehiclePassengerRoutes { get; set; }
+		[SettingsUISection(kSection, infoPanelOptions)]
+		public bool showCountsOnInfoPanel { get; set; }
 
 		private bool hideSubIncomingOption => !this.incomingRoutes;
 
@@ -106,6 +110,7 @@ namespace EmploymentTracker
 			this.incomingRoutesTransit = true;
 			this.highlightSelectedTransitVehiclePassengerRoutes = true;
 			this.highlightSelected = true;
+			this.showCountsOnInfoPanel = true;
 		}
 	}
 
@@ -176,6 +181,11 @@ namespace EmploymentTracker
 				
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), "Thread Batch Size" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), $"Advanced: the number of entities per highlight batch." },
+
+				//Info Panel Options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.infoPanelOptions), "Selected Object Info Panel Options" },
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.showCountsOnInfoPanel)), "Show Incoming Cim Count" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.showCountsOnInfoPanel)), $"Display the number of cims en-route to or passing through the selected object on the info panel." },
 			};
 		}
 
@@ -252,6 +262,11 @@ namespace EmploymentTracker
 
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), "Thread Batch Size" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), $"Advanced: the number of entities per highlight batch." },
+				
+				//Info Panel Options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.infoPanelOptions), "Selected Object Info Panel Options" },
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.showCountsOnInfoPanel)), "Show Incoming Cim Count" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.showCountsOnInfoPanel)), $"Display the number of cims en-route to or passing through the selected object on the info panel." },
 				
 				{"EmploymentTracker_" + "Selected Object Route", "所选对象路线" },
 				{"EmploymentTracker_" + "On", "开" },

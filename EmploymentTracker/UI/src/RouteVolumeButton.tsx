@@ -24,7 +24,7 @@ export default class RouteVolumeButton extends Component {
 	render() {
 		return <>
 			<FloatingButton
-				src={tadaSrc}
+				
 				selected={this.state.routeVolumeToolActive}
 				onSelect={() => { trigger("EmploymentTracker", "toggleRouteVolumeToolActive", !this.state.routeVolumeToolActive); }}
 				onMouseEnter={() => { this.setState({ hovering: true }) }}
