@@ -1,5 +1,6 @@
 ﻿using Colossal;
 using Colossal.IO.AssetDatabase;
+using Game.Input;
 using Game.Modding;
 using Game.Settings;
 using Game.UI;
@@ -8,16 +9,22 @@ using System.Collections.Generic;
 namespace EmploymentTracker
 {
 	[FileLocation(nameof(EmploymentTracker))]
-	[SettingsUIGroupOrder(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, routeHighlightTypes, routeHighlightOptions)]
-	[SettingsUIShowGroupName(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, routeHighlightOptions)]
+	[SettingsUIKeyboardAction(Mod.toggleAllActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.toggleBuildingsActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.togglePathDisplayActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.toggleRouteToolActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIGroupOrder(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, routeHighlightTypes, kKeybindingGroup, routeHighlightOptions)]
+	[SettingsUIShowGroupName(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, kKeybindingGroup, routeHighlightOptions)]
 	public class EmploymentTrackerSettings : ModSetting
 	{
 		public const string kSection = "Main";
+		public const string keyBindingsSection = "KeyBindings";
 
 		public const string routeHighlightOptions = "Route Highlight Options";
 		public const string routeHighlightTypes = "Route Highlight Types";
 		public const string infoPanelOptions = "Selected Object Info Panel Options";
 		public const string objectHighlightTypes = "Object Highlight Types";
+		public const string kKeybindingGroup = "KeyBinding";
 
 		public EmploymentTrackerSettings(IMod mod) : base(mod)
 		{
@@ -26,6 +33,7 @@ namespace EmploymentTracker
 			this.highlightStudentResidences = true;
 			this.highlightEmployeeCommuters = true;
 			this.highlightEmployeeResidences = true;
+			this.showToolIconsInUI = true;
 			//this.highlightRoutes = true;
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
@@ -57,6 +65,9 @@ namespace EmploymentTracker
 		
 		[SettingsUISection(kSection, objectHighlightTypes)]
 		public bool highlightDestinations { get; set; }
+		
+		[SettingsUISection(kSection, routeHighlightOptions)]
+		public bool showToolIconsInUI { get; set; }
 
 		[SettingsUISlider(min = .5f, max = 20f, step = .5f, scalarMultiplier = 1, unit = Unit.kFloatSingleFraction)]
 		[SettingsUISection(kSection, routeHighlightOptions)]
@@ -92,6 +103,25 @@ namespace EmploymentTracker
 
 		private bool hideSubIncomingOption => !this.incomingRoutes;
 
+		/*
+		 * Key bindings
+		 */
+		[SettingsUIKeyboardBinding(BindingKeyboard.E, Mod.toggleAllActionName, shift: true)]
+		[SettingsUISection(keyBindingsSection, kKeybindingGroup)]
+		public ProxyBinding toggleAllBinding { get; set; }
+
+		[SettingsUIKeyboardBinding(BindingKeyboard.R, Mod.toggleRouteToolActionName, shift: true)]
+		[SettingsUISection(keyBindingsSection, kKeybindingGroup)]
+		public ProxyBinding toggleRouteToolBinding { get; set; }
+
+		[SettingsUIKeyboardBinding(BindingKeyboard.B, Mod.toggleBuildingsActionName, shift: true)]
+		[SettingsUISection(keyBindingsSection, kKeybindingGroup)]
+		public ProxyBinding toggleBuildingsBinding { get; set; }
+
+		[SettingsUIKeyboardBinding(BindingKeyboard.V, Mod.togglePathDisplayActionName, shift: true)]
+		[SettingsUISection(keyBindingsSection, kKeybindingGroup)]
+		public ProxyBinding togglePathDisplayBinding { get; set; }
+
 		public override void SetDefaults()
 		{
 			this.highlightDestinations = true;
@@ -100,6 +130,7 @@ namespace EmploymentTracker
 			this.highlightStudentResidences = true;
 			this.highlightEmployeeCommuters = true;
 			this.highlightEmployeeResidences = true;
+			this.showToolIconsInUI = true;
 			this.pedestrianRouteWidth = 2f;
 			this.vehicleRouteWidth = 4f;
 			this.routeOpacity = .7f;
@@ -128,6 +159,7 @@ namespace EmploymentTracker
 			{
 				{ this.settings.GetSettingsLocaleID(), "CIM Route Highlighter" },
 				{ this.settings.GetOptionTabLocaleID(EmploymentTrackerSettings.kSection), "Main" },
+				{ this.settings.GetOptionTabLocaleID(EmploymentTrackerSettings.keyBindingsSection), "Key Bindings" },
 
 
 				//Feature toggles
@@ -147,7 +179,7 @@ namespace EmploymentTracker
 				
 				//Object highlight options
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.objectHighlightTypes), "Object Highlight Toggles" },
-
+				
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.highlightDestinations)), "Passenger Destinations" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.highlightDestinations)), $"Highlight the destinations of passengers in the selected vehicle (personal vehicles or transit)." },
 				
@@ -166,6 +198,8 @@ namespace EmploymentTracker
 
 				//Route highlight options
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightOptions), "Route Highlight Options" },
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.showToolIconsInUI)), "Show Tool Icons in UI" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.showToolIconsInUI)), $"Enable/disable the tool icons in the UI; All actions can still activated with hotkeys." },
 
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), "Route Opacity" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), $"Opacity of route overlay lines." },
@@ -186,6 +220,21 @@ namespace EmploymentTracker
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.infoPanelOptions), "Selected Object Info Panel Options" },
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.showCountsOnInfoPanel)), "Show Incoming Cim Count" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.showCountsOnInfoPanel)), $"Display the number of cims en-route to or passing through the selected object on the info panel." },
+			
+				//Key binding options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.kKeybindingGroup), "Key bindings" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.toggleAllBinding)), "Toggle All Highlighting" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.toggleAllBinding)), $"Turn on/off normal route and building highlighting. Does not affect the road segment highlighting tool." },
+				
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.toggleRouteToolBinding)), "Road Segment Highlight Tool" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.toggleRouteToolBinding)), $"Active/deactivate the road segment highlight tool." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.toggleBuildingsBinding)), "Toggle Building Highlighting" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.toggleBuildingsBinding)), $"Toggle highlighting of residences, workplaces, transit-rider destinations when clicking on buildings, cims, or vehicles." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.togglePathDisplayBinding)), "Toggle All Route Highlighting" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.togglePathDisplayBinding)), $"Toggle all route highlighting for clicked objects." },
 			};
 		}
 
@@ -209,6 +258,7 @@ namespace EmploymentTracker
 			{
 				{ this.settings.GetSettingsLocaleID(), "路线标记器（Route Highlighter)" },
 				{ this.settings.GetOptionTabLocaleID(EmploymentTrackerSettings.kSection), "Main" },
+				{ this.settings.GetOptionTabLocaleID(EmploymentTrackerSettings.keyBindingsSection), "Key Bindings" },
 
 
 				//Feature toggles
@@ -248,6 +298,9 @@ namespace EmploymentTracker
 				//Route highlight options 
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.routeHighlightOptions), "路线显示选项  " },
 
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.showToolIconsInUI)), "Show Tool Icons in UI" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.showToolIconsInUI)), $"Enable/disable the tool icons in the UI; All actions can still activated with hotkeys." },
+				
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), "叠加线透明度" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.routeOpacity)), $"路线叠加线的透明度。" },
 
@@ -262,6 +315,23 @@ namespace EmploymentTracker
 
 				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), "Thread Batch Size" },
 				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.threadBatchSize)), $"Advanced: the number of entities per highlight batch." },
+
+				
+				//Key binding options
+				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.kKeybindingGroup), "Key bindings" },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.toggleAllBinding)), "Toggle All Highlighting" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.toggleAllBinding)), $"Turn on/off normal route and building highlighting. Does not affect the road segment highlighting tool." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.toggleRouteToolBinding)), "Road Segment Highlight Tool" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.toggleRouteToolBinding)), $"Active/deactivate the road segment highlight tool." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.toggleBuildingsBinding)), "Toggle Building Highlighting" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.toggleBuildingsBinding)), $"Toggle highlighting of residences, workplaces, transit-rider destinations when clicking on buildings, cims, or vehicles." },
+
+				{ this.settings.GetOptionLabelLocaleID(nameof(EmploymentTrackerSettings.togglePathDisplayBinding)), "Toggle All Route Highlighting" },
+				{ this.settings.GetOptionDescLocaleID(nameof(EmploymentTrackerSettings.togglePathDisplayBinding)), $"Toggle all route highlighting for clicked objects." },
+
 				
 				//Info Panel Options
 				{ this.settings.GetOptionGroupLocaleID(EmploymentTrackerSettings.infoPanelOptions), "Selected Object Info Panel Options" },

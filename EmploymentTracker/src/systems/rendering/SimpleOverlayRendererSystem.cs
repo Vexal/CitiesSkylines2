@@ -6,9 +6,6 @@ using Game.Rendering;
 using Game.Simulation;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -59,25 +56,16 @@ namespace EmploymentTracker
 
 		public struct Buffer
 		{
-			private NativeList<CurveData> m_ProjectedCurves;
-
 			private NativeList<CurveData> m_AbsoluteCurves;
 
 			private NativeValue<BoundsData> m_Bounds;
-
-			private float m_PositionY;
-
-			private float m_ScaleY;
 
 			public Buffer(NativeList<CurveData> projectedCurves, NativeList<CurveData> absoluteCurves, NativeValue<BoundsData> bounds, float positionY, float scaleY)
 			{
 				//IL_000f: Unknown result type (might be due to invalid IL or missing references)
 				//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-				m_ProjectedCurves = projectedCurves;
 				m_AbsoluteCurves = absoluteCurves;
 				m_Bounds = bounds;
-				m_PositionY = positionY;
-				m_ScaleY = scaleY;
 			}
 
 			public void DrawCurve(Color color, Bezier4x3 curve, float width, float2 roundness)
@@ -142,12 +130,6 @@ namespace EmploymentTracker
 
 		private int m_CurveBufferID;
 
-		private int m_GradientScaleID;
-
-		private int m_ScaleRatioAID;
-
-		private int m_FaceDilateID;
-
 		private NativeList<CurveData> m_ProjectedData;
 
 		private NativeList<CurveData> m_AbsoluteData;
@@ -165,9 +147,6 @@ namespace EmploymentTracker
 			m_PrefabSystem = base.World.GetOrCreateSystemManaged<PrefabSystem>();
 			m_SettingsQuery = GetEntityQuery(ComponentType.ReadOnly<OverlayConfigurationData>());
 			m_CurveBufferID = Shader.PropertyToID("colossal_OverlayCurveBuffer");
-			m_GradientScaleID = Shader.PropertyToID("_GradientScale");
-			m_ScaleRatioAID = Shader.PropertyToID("_ScaleRatioA");
-			m_FaceDilateID = Shader.PropertyToID("_FaceDilate");
 			RenderPipelineManager.beginContextRendering += Render;
 		}
 

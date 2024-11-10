@@ -1,7 +1,6 @@
 import { ModRegistrar } from "cs2/modding";
 import HighlightOptionsMenuButton from "./HighlightOptionsMenuButton";
 import RouteVolumeButton from "./RouteVolumeButton";
-import RouteLaneInfoPanel from "./RouteLaneInfoPanel";
 import { SelectedInfoPanelTogglesComponent } from "./SelectedInfoPanelTogglesComponent";
 import { VanillaComponentResolver } from "./VanillaComponentResolver";
 

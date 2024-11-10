@@ -1,5 +1,6 @@
 ﻿using Colossal.Entities;
 using Colossal.UI.Binding;
+using Game.Input;
 using Game.Net;
 using Game.Settings;
 using Game.UI;
@@ -16,11 +17,6 @@ namespace EmploymentTracker
 {
 	partial class HighlightRoutesSystem : InfoSectionBase
 	{
-		private InputAction toggleSystemAction;
-		private InputAction togglePathDisplayAction;
-		private InputAction togglePathVolumeDisplayAction;
-		//private InputAction toggleRenderTypeAction;
-
 		private ValueBinding<bool> debugActiveBinding;
 		private ValueBinding<bool> refreshTransitingEntitiesBinding;
 
@@ -36,6 +32,7 @@ namespace EmploymentTracker
 		private ValueBinding<bool> highlightPassengerRoutes;
 		private ValueBinding<bool> routeHighlightingToggled;
 		private ValueBinding<bool> routeVolumeToolActive;
+		private ValueBinding<bool> showToolIconsInUI;
 		private ValueBinding<bool> laneSelectionActive;
 		private ValueBinding<string> laneIdListBinding;
 
@@ -44,17 +41,12 @@ namespace EmploymentTracker
 
 		private void initBindings()
 		{
-			this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
-			this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
-			this.togglePathDisplayAction = new InputAction("shiftPathing", InputActionType.Button);
-			this.togglePathDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/v").With("Modifier", "<keyboard>/shift");
-			this.togglePathVolumeDisplayAction = new InputAction("shiftPathingVolume", InputActionType.Button);
-			this.togglePathVolumeDisplayAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/r").With("Modifier", "<keyboard>/shift");
 			//this.toggleRenderTypeAction = new InputAction("renderType", InputActionType.Button);
 			//this.toggleRenderTypeAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/x").With("Modifier", "<keyboard>/shift");
 
 			//route toggles
 			this.incomingRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightEnroute", this.settings.incomingRoutes);
+			this.showToolIconsInUI = new ValueBinding<bool>("EmploymentTracker", "showToolIconsInUI", this.settings.showToolIconsInUI);
 			this.highlightSelected = new ValueBinding<bool>("EmploymentTracker", "highlightSelectedRoute", this.settings.highlightSelected);
 			this.incomingRoutesTransit = new ValueBinding<bool>("EmploymentTracker", "highlightEnrouteTransit", this.settings.incomingRoutesTransit);
 			this.highlightPassengerRoutes = new ValueBinding<bool>("EmploymentTracker", "highlightPassengerRoutes", this.settings.highlightSelectedTransitVehiclePassengerRoutes);
@@ -71,6 +63,7 @@ namespace EmploymentTracker
 			AddBinding(this.routeVolumeToolActive);
 			AddBinding(this.laneSelectionActive);
 			AddBinding(this.laneIdListBinding);
+			AddBinding(this.showToolIconsInUI);
 
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightEnroute", s => { this.incomingRoutes.Update(s); this.settings.incomingRoutes = s; this.saveSettings(); }));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleHighlightSelectedRoute", s => { this.highlightSelected.Update(s); this.settings.highlightSelected = s; this.saveSettings(); }));
@@ -108,7 +101,6 @@ namespace EmploymentTracker
 				}
 			}));
 
-
 			//options
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleAutoRefresh", this.toggleAutoRefresh));
 			AddBinding(new TriggerBinding<bool>("EmploymentTracker", "toggleDebug", this.toggleDebug));
@@ -134,17 +126,17 @@ namespace EmploymentTracker
 
 		private void enableBindings()
 		{
-			this.toggleSystemAction.Enable();
-			this.togglePathDisplayAction.Enable();
-			this.togglePathVolumeDisplayAction.Enable();
+			Mod.toggleSystemAction.shouldBeEnabled = true;
+			Mod.togglePathDisplayAction.shouldBeEnabled = true;
+			Mod.togglePathVolumeDisplayAction.shouldBeEnabled = true;
 			//this.toggleRenderTypeAction.Enable();
 		}
 
 		private void disableBindings()
 		{
-			this.toggleSystemAction.Disable();
-			this.togglePathDisplayAction.Disable();
-			this.togglePathVolumeDisplayAction.Disable();
+			Mod.toggleSystemAction.shouldBeEnabled = false;
+			Mod.togglePathDisplayAction.shouldBeEnabled = false;
+			Mod.togglePathVolumeDisplayAction.shouldBeEnabled = false;
 			//this.toggleRenderTypeAction.Disable();
 		}
 
@@ -167,12 +159,13 @@ namespace EmploymentTracker
 				this.highlightFeatures = new HighlightFeatures(settings);
 				this.routeHighlightOptions = new RouteOptions(settings);
 				this.threadBatchSize = changedSettings.threadBatchSize;
+				this.showToolIconsInUI.Update(changedSettings.showToolIconsInUI);
 			}
 		}
 
 		private bool checkFrameToggles()
 		{
-			if (this.toggleSystemAction.WasPressedThisFrame())
+			if (Mod.toggleSystemAction.WasPressedThisFrame())
 			{
 				this.toggle(!this.toggled);
 			}
@@ -182,7 +175,7 @@ namespace EmploymentTracker
 				return false;
 			}
 
-			if (this.togglePathDisplayAction.WasPressedThisFrame())
+			if (Mod.togglePathDisplayAction.WasPressedThisFrame())
 			{
 				this.togglePathing(!this.pathingToggled);
 			}

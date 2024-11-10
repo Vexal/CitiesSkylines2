@@ -26,9 +26,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CimCensus", "CimCensus\CimC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Game", "..\..\..\Documents\cs2code\Game.csproj", "{AA66C1A8-D2C3-41C5-8148-6DCB5D7C7190}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoVehicleTrailers", "NoVehicleTrailers\NoVehicleTrailers.csproj", "{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoVehicleTrailers", "NoVehicleTrailers\NoVehicleTrailers.csproj", "{0DE9F45B-E9A7-45A4-A9CF-64AC59F41743}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParkingMonitor", "ParkingMonitor\ParkingMonitor.csproj", "{B32392B7-2B9F-4D08-8E7F-FB9F3410D490}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ParkingMonitor", "ParkingMonitor\ParkingMonitor.csproj", "{B32392B7-2B9F-4D08-8E7F-FB9F3410D490}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestTemplate", "TestTemplate\TestTemplate.csproj", "{EC4926F7-07A8-4E34-9B86-7CF6532C6EC2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,6 +82,10 @@ Global
 		{B32392B7-2B9F-4D08-8E7F-FB9F3410D490}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B32392B7-2B9F-4D08-8E7F-FB9F3410D490}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B32392B7-2B9F-4D08-8E7F-FB9F3410D490}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC4926F7-07A8-4E34-9B86-7CF6532C6EC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC4926F7-07A8-4E34-9B86-7CF6532C6EC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC4926F7-07A8-4E34-9B86-7CF6532C6EC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC4926F7-07A8-4E34-9B86-7CF6532C6EC2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

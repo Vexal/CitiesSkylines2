@@ -4,6 +4,7 @@ import tadaSrc from "./Roads.svg";
 import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
 import { useLocalization } from "cs2/l10n";
+import CustomBindings from "./CostomBindings";
 
 export const routeVolumeToolActive = bindValue<boolean>("EmploymentTracker", 'routeVolumeToolActive');
 export const laneSelectionActive = bindValue<boolean>("EmploymentTracker", 'laneSelectionActive');
@@ -18,10 +19,14 @@ export default class RouteVolumeButton extends Component {
 		activeLanes: laneIdList.value.split(",").map(v => v === "1" ? true : false),
 		hovering: false,
 		hoverLane: -1,
-		laneSelectionActive: laneSelectionActive.value
+		laneSelectionActive: laneSelectionActive.value,
+		showToolIconsInUI: CustomBindings.showToolIconsInUI.value
 	}
 
 	render() {
+		if (!this.state.showToolIconsInUI) {
+			return null;
+		}
 		return <>
 			<FloatingButton
 				
@@ -96,6 +101,10 @@ export default class RouteVolumeButton extends Component {
 			console.log("lane ids", val);
 			this.setState({ laneIdList: val, activeLanes: val.split(",").map(v => v === "1" ? true : false) });
 		});
+
+		CustomBindings.showToolIconsInUI.subscribe(val => {
+			this.setState({ showToolIconsInUI: val });
+		})
 	}
 
 	/** @returns {string} */

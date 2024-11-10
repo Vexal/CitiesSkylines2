@@ -2,7 +2,6 @@
 using Colossal.Entities;
 using Colossal.Mathematics;
 using Colossal.UI.Binding;
-using Game;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
@@ -13,18 +12,13 @@ using Game.Pathfind;
 using Game.Rendering;
 using Game.Routes;
 using Game.Tools;
-using Game.UI;
 using Game.UI.InGame;
 using Game.Vehicles;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
-using UnityEngine.InputSystem;
 
 namespace EmploymentTracker
 {
@@ -142,7 +136,7 @@ namespace EmploymentTracker
 				this.highlightFeatures.dirty = false;
 			}
 
-			if (this.togglePathVolumeDisplayAction.WasPressedThisFrame())
+			if (Mod.togglePathVolumeDisplayAction.WasPressedThisFrame())
 			{
 				this.toggleRouteVolumeToolActive(!this.pathVolumeToggled);
 			}
@@ -376,9 +370,6 @@ namespace EmploymentTracker
 			return this.toolSystem.selected;
 		}
 
-		private int incomingCimCount = 0;
-		private int incomingEntityCount = 0;
-
 		private void populateRouteEntities()
 		{
 			if (this.commutingEntities.IsCreated)
@@ -435,12 +426,8 @@ namespace EmploymentTracker
 						}
 					}
 
-					this.incomingCimCount = resultCounter.Count;
-					this.incomingEntityCount = this.commutingEntities.Count;
-
 					searchCounter.Dispose();
 					resultCounter.Dispose();
-
 					searchJob.results.Dispose();
 				}
                 else
@@ -491,7 +478,6 @@ namespace EmploymentTracker
 					}
 				}
 
-				this.incomingCimCount = this.commutingEntities.Count;
 				searchJob.results.Dispose();	
 			}
 			else if (this.routeHighlightOptions.highlightSelected)
@@ -745,6 +731,8 @@ namespace EmploymentTracker
 			this.updateLaneBinding();
 		}
 
+		private uint[] laneGroups = new uint[1024];
+
 		private void resetActiveLanes()
 		{
 			this.laneCount = 0;
@@ -757,7 +745,22 @@ namespace EmploymentTracker
 
 					if (isPathable)
 					{
-						this.activeLaneIndexes[this.laneCount++] = true;
+						/*uint group = 0;
+						if (EntityManager.TryGetComponent(laneBuffer[i].m_SubLane, out MasterLane masterLane))
+						{
+							group = masterLane.m_Group;
+						}
+                        else if (EntityManager.TryGetComponent(laneBuffer[i].m_SubLane, out SlaveLane slaveLane))
+						{
+							group = slaveLane.m_Group;
+						}
+						else
+						{
+							continue;
+						}*/
+
+
+                        this.activeLaneIndexes[this.laneCount++] = true;
 					}
 				}
 			}
@@ -882,6 +885,11 @@ namespace EmploymentTracker
 			}
 
 			if (!this.toggled)
+			{
+				return false;
+			}
+
+			if (!this.pathingToggled)
 			{
 				return false;
 			}

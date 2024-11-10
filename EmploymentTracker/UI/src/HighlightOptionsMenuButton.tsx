@@ -4,6 +4,7 @@ import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
 import { useLocalization } from "cs2/l10n";
 import { ToolTip, routeVolumeToolActive } from "./RouteVolumeButton";
+import CustomBindings from "./CostomBindings";
 
 export const autoRefreshEntitiesBinding = bindValue<boolean>("EmploymentTracker", 'AutoRefreshTransitingEntitiesActive');
 export const debugStatsBinding = bindValue<boolean>("EmploymentTracker", 'DebugActive');
@@ -48,9 +49,10 @@ export default class HighlightOptionsMenuButton extends Component {
 		highlightStudentResidences: highlightStudentResidences.value,
 
 		toggleAll: toggleAll.value,
-		buildingsToggled: routeHighlightingToggled.value,
-		routeHighlightingToggled: buildingsToggled.value,
+		buildingsToggled: buildingsToggled.value,
+		routeHighlightingToggled: routeHighlightingToggled.value,
 		routeVolumeToolActive: routeVolumeToolActive.value,
+		showToolIconsInUI: CustomBindings.showToolIconsInUI.value,
 
 		/** @type {[string[]] */
 		routeTimeMs: HighlightOptionsMenuButton.parseBindings(routeTimeBinding.value),
@@ -59,6 +61,10 @@ export default class HighlightOptionsMenuButton extends Component {
 
 	render() {
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
+		if (!this.state.showToolIconsInUI) {
+			return null;
+		}
+
 		return <>
 			<FloatingButton selected={this.state.menuOpen} onSelect={() => {
 				this.setState({ menuOpen: !this.state.menuOpen }); console.log("route menu open");
@@ -229,6 +235,10 @@ export default class HighlightOptionsMenuButton extends Component {
 
 		routeVolumeToolActive.subscribe(val => {
 			this.setState({ routeVolumeToolActive: val });
+		})
+
+		CustomBindings.showToolIconsInUI.subscribe(val => {
+			this.setState({ showToolIconsInUI: val });
 		})
 	}
 

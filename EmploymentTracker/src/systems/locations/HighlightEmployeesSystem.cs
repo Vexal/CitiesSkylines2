@@ -11,7 +11,6 @@ using Game.UI;
 using Game.Vehicles;
 using System.Collections.Generic;
 using Unity.Entities;
-using UnityEngine.InputSystem;
 
 namespace EmploymentTracker
 {
@@ -19,8 +18,6 @@ namespace EmploymentTracker
     {
 		private Entity selectedEntity;
 		private HashSet<Entity> highlightedEntities = new HashSet<Entity>();
-        private InputAction toggleSystemAction;
-        private InputAction toggleBuildingsAction;
         private ToolSystem toolSystem;
 		private HighlightRoutesSystem highlightRoutesSystem = null;
 		private EmploymentTrackerSettings settings;
@@ -37,10 +34,6 @@ namespace EmploymentTracker
 		protected override void OnCreate()
         {
             base.OnCreate();
-            this.toggleSystemAction = new InputAction("shiftEmployment", InputActionType.Button);
-            this.toggleSystemAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/e").With("Modifier", "<keyboard>/shift");
-			this.toggleBuildingsAction = new InputAction("shiftBuildings", InputActionType.Button);
-			this.toggleBuildingsAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/b").With("Modifier", "<keyboard>/shift");
 
 			this.settings = Mod.INSTANCE.getSettings();
 
@@ -83,15 +76,13 @@ namespace EmploymentTracker
 				}
 			};
 
-			this.toggleSystemAction.Enable();
-			this.toggleBuildingsAction.Enable();
+			Mod.toggleBuildingsAction.shouldBeEnabled = true;
 		}
 
 		protected override void OnStopRunning()
 		{
 			base.OnStopRunning();
-            this.toggleSystemAction.Disable();
-            this.toggleBuildingsAction.Disable();
+			Mod.toggleBuildingsAction.shouldBeEnabled = false;
 			this.reset();
 		}
 
@@ -121,12 +112,12 @@ namespace EmploymentTracker
 			}
 
 			//check if hot key disable/enable highlighting was pressed
-			if (this.toggleSystemAction.WasPressedThisFrame())
+			if (Mod.toggleSystemAction.WasPressedThisFrame())
 			{
 				this.toggle(!this.toggled);
 			}
 
-			if (this.toggleBuildingsAction.WasPressedThisFrame())
+			if (Mod.toggleBuildingsAction.WasPressedThisFrame())
 			{
 				this.toggleBuildings(!this.buildingHighlightActive);
 			}

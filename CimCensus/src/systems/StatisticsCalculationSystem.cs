@@ -5,6 +5,7 @@ using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
+using Game.Creatures;
 using Game.Objects;
 using Game.Routes;
 using Game.Tools;
@@ -27,6 +28,8 @@ namespace CimCensus
 		private EntityQuery getAllVehiclesQuery;
 		private EntityQuery workerQuery;
 		private EntityQuery transitStopQuery;
+		private EntityQuery activePetQuery;
+		private EntityQuery householdPetQuery;
 
 		private EntityQuery cimsQuery;
 		private bool isActive = false;
@@ -93,6 +96,34 @@ namespace CimCensus
 				All = new ComponentType[]
 			{
 				ComponentType.ReadOnly<WaitingPassengers>()
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<Hidden>()
+				}
+			});
+
+			this.activePetQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Pet>()
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<Hidden>()
+				}
+			});
+
+			this.householdPetQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<HouseholdPet>()
 			},
 				None = new ComponentType[]
 			{
@@ -306,6 +337,7 @@ namespace CimCensus
 			this.setData("Vehicles - Active - Taxis", taxiCount);
 			this.setData("Vehicles - Parked", parkedVehicles);
 			this.setData("Ambulances - Active", dispatchedAmbulances);
+			this.setData("Dogs - (active/total)", this.activePetQuery.CalculateEntityCount(), this.householdPetQuery.CalculateEntityCount());
 
 			countWorkersJob.cleanup();
 
