@@ -1,0 +1,60 @@
+.cimCensusPanel {
+	margin-top: 50rem;
+	position: absolute;
+	min-width: 450rem;
+	//background-color: rgba(42, 55, 83, 0.4375);
+	background-color: rgba(32, 45, 73, 0.5375);
+}
+
+.cimCensusPanelHeader {
+	color: rgba(75,195,241,1);
+	text-align: center;
+	background-color: rgba(24, 33, 51, 0.599922);
+	backdrop-filter: blur(5px);
+	border-bottom-left-radius: 4rem 4rem;
+	border-bottom-right-radius: 4rem 4rem;
+	border-top-left-radius: 4rem 4rem;
+	border-top-right-radius: 4rem 4rem;
+	padding-top: 5rem;
+	padding-bottom: 5rem;
+}
+
+.parkingMonitorSectionText {
+	color: rgba(75,195,241,1);
+	font-weight:bold;
+}
+
+.cimCensusPanelBody {
+	color: white;
+}
+
+.parkingMonitorButton {
+	width: 40rem;
+	height: 40rem;
+	background-color: #5555FFCC;
+	border-radius: 5rem;
+
+	&.parkingMonitorMenuOpen {
+		background-color: #BBBBFFCC
+	}
+}
+
+.parkingMonitorLotList {
+	max-height: 400rem;
+	overflow-y: scroll;
+	background-color: rgba(32, 45, 73, 0.4375);
+	border-style: solid;
+	border-width: 2rem;
+	border-color: rgba(24, 33, 51, 0.599922);
+	padding-left:5rem;
+}
+.parkingMonitorMenuOpen {
+}
+
+.dataItem {
+	cursor: pointer;
+	&:hover {
+		color: lightblue;
+		font-weight: bold;
+	}
+}

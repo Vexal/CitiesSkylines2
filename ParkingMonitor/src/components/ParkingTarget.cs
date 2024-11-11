@@ -8,7 +8,7 @@ using Unity.Entities;
 
 namespace ParkingMonitor
 {
-	public struct ParkingTarget : IComponentData, IQueryTypeParameter, ISerializable
+	public struct ParkingTarget : IBufferElementData, IQueryTypeParameter
 	{
 		public Entity currentTarget;
 		public int attemptCount;
@@ -19,21 +19,6 @@ namespace ParkingMonitor
 			this.currentTarget = currentTarget;
 			this.attemptCount = attemptCount;
 			this.currentDestination = currentDestination;
-		}
-
-		public void Deserialize<TReader>(TReader reader) where TReader : IReader
-		{
-			reader.Read(out this.currentTarget);
-			reader.Read(out this.attemptCount);
-			//this.currentDestination = Entity.Null;
-			reader.Read(out this.currentDestination);
-		}
-
-		public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
-		{
-			writer.Write(this.currentTarget);
-			writer.Write(this.attemptCount);
-			writer.Write(this.currentDestination);
 		}
 	}
 }
