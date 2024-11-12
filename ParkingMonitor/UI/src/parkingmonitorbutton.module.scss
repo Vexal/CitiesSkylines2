@@ -1,4 +1,4 @@
-.cimCensusPanel {
+.parkingMonitorPanel {
 	margin-top: 50rem;
 	position: absolute;
 	min-width: 450rem;
@@ -6,7 +6,7 @@
 	background-color: rgba(32, 45, 73, 0.5375);
 }
 
-.cimCensusPanelHeader {
+.parkingMonitorPanelHeaderr {
 	color: rgba(75,195,241,1);
 	text-align: center;
 	background-color: rgba(24, 33, 51, 0.599922);
@@ -24,7 +24,7 @@
 	font-weight:bold;
 }
 
-.cimCensusPanelBody {
+.parkingMonitorPanelBody {
 	color: white;
 }
 
@@ -37,6 +37,10 @@
 	&.parkingMonitorMenuOpen {
 		background-color: #BBBBFFCC
 	}
+}
+
+.tbl {
+	display: inline-block;
 }
 
 .parkingMonitorLotList {
