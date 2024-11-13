@@ -11,13 +11,11 @@ namespace ParkingMonitor
 	public struct ParkingTarget : IBufferElementData, IQueryTypeParameter
 	{
 		public Entity currentTarget;
-		public int attemptCount;
 		public Entity currentDestination;
 
-		public ParkingTarget(Entity currentTarget, int attemptCount, Entity currentDestination)
+		public ParkingTarget(Entity currentTarget, Entity currentDestination)
 		{
 			this.currentTarget = currentTarget;
-			this.attemptCount = attemptCount;
 			this.currentDestination = currentDestination;
 		}
 	}

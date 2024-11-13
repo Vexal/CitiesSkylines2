@@ -23,7 +23,7 @@ namespace NoTrafficDespawn
 		protected override void OnCreate()
 		{
 			base.OnCreate();
-			this.entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationBarrier1>();
+			this.entityCommandBufferSystem = World.GetOrCreateSystemManaged<ModificationBarrier1>();
 			this.disableTrafficDespawnSystem = World.GetOrCreateSystemManaged<DisableTrafficDespawnSystem>();
 			blockedEntityQuery = GetEntityQuery(ComponentType.ReadOnly<Blocker>(), ComponentType.ReadOnly<UpdateFrame>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Temp>());
 			RequireForUpdate(blockedEntityQuery);

@@ -1,7 +1,7 @@
 .parkingMonitorPanel {
 	margin-top: 50rem;
 	position: absolute;
-	min-width: 450rem;
+	width: 450rem;
 	//background-color: rgba(42, 55, 83, 0.4375);
 	background-color: rgba(32, 45, 73, 0.5375);
 }
@@ -45,6 +45,7 @@
 
 .parkingMonitorLotList {
 	max-height: 400rem;
+	width:430rem;
 	overflow-y: scroll;
 	background-color: rgba(32, 45, 73, 0.4375);
 	border-style: solid;
@@ -55,10 +56,24 @@
 .parkingMonitorMenuOpen {
 }
 
-.dataItem {
+.lotItem {
 	cursor: pointer;
+	display: flex;
+	width: 420rem;
 	&:hover {
 		color: lightblue;
 		font-weight: bold;
+	}
+}
+
+.activeButton {
+	width: 34rem;
+	height: 34rem;
+	padding: 4rem;
+}
+
+.districtHeader {
+	&:hover {
+		background-color: rgba(132, 45, 73, 0.4375);
 	}
 }

@@ -49,7 +49,7 @@ export default class CimCensusButton extends Component {
 							backgroundColor: "rgba(24, 33, 51, 0.599922)"
 						}} />
 						<div style={{ display: "flex" }}>
-							<img src={pop} style={{verticalAlign:"center", alignSelf:"center", maxHeight:"45rem"}} />
+							
 							<div style={{ flex: "1" }} />
 							<div style={{marginRight:"10rem"} }>
 								<Button selected={false} variant="flat" onSelect={() => {
@@ -152,3 +152,7 @@ export function ToolTip(props: { text: string }) {
 	const { translate } = useLocalization();
 	return <div style={{ fontWeight: "bold", position: "absolute", marginTop: "43rem", maxWidth: "200rem", color: "white", background: "black" }}>{translate(MOD_NAME + props.text, props.text)}</div>
 }
+
+	/*
+	<img src={pop} style={{verticalAlign:"center", alignSelf:"center", maxHeight:"45rem"}} />
+	*/

@@ -31,13 +31,13 @@ This mod controls whether vehicles and pedestrians are despawned based on stuck/
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-vehicle-despawn-mod.1695356/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.4" />
+	<ModVersion Value="1.5" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Added options for which object types to allow despawn" />
+	<ChangeLog Value="Fix rare crash" />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
