@@ -21,11 +21,11 @@ namespace ParkingMonitor
 		}
 	
 
-		[SettingsUISlider(min = 1, max = 100, step = 1)]
+		[SettingsUISlider(min = 1, max = 500, step = 1)]
 		[SettingsUISection(kSection, kButtonGroup)]
 		public int parkingRowCount { get; set; }
 
-		[SettingsUISlider(min = 1, max = 100, step = 1)]
+		[SettingsUISlider(min = 1, max = 500, step = 1)]
 		[SettingsUISection(kSection, kButtonGroup)]
 		public int defaultRowsPerDistrict { get; set; }
 

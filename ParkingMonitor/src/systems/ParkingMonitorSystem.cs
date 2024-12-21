@@ -22,12 +22,13 @@ namespace ParkingMonitor
 {
 	public partial class ParkingMonitorSystem : UISystemBase
 	{
-		private EntityCommandBufferSystem entityCommandBufferSystem;
+		//private EntityCommandBufferSystem entityCommandBufferSystem;
 		private TimeSystem timeSystem;
 		private EntityQuery movingVehiclesQuery;
 		private EntityQuery parkingFinderVehicleQuery;
 		private EntityQuery obsoleteParkingQuery;
 		private EntityQuery missingBufferParkingQuery;
+		private EntityQuery missingDummyTrafficQuery;
 		private ToolSystem toolSystem;
 		private NameSystem nameSystem;
 		private ValueBinding<string> dataBindings;
@@ -70,7 +71,7 @@ namespace ParkingMonitor
 			this.defaultRowsPerDistrict = new ValueBinding<int>("ParkingMonitor", "defaultRowsPerDistrict", Mod.INSTANCE.m_Setting.defaultRowsPerDistrict);
 			AddBinding(this.defaultRowsPerDistrict);
 
-			this.entityCommandBufferSystem = World.GetOrCreateSystemManaged<ModificationBarrier1>();
+			//this.entityCommandBufferSystem = World.GetOrCreateSystemManaged<ModificationBarrier1>();
 			this.timeSystem = World.GetOrCreateSystemManaged<TimeSystem>();
 
 			AddBinding(new TriggerBinding<string>("ParkingMonitor", "selectLot", s => {
@@ -131,7 +132,7 @@ namespace ParkingMonitor
 				ComponentType.ReadOnly<PathOwner>(),
 				ComponentType.ReadOnly<PathElement>(),
 				ComponentType.ReadOnly<CarNavigationLane>(),
-
+				ComponentType.ReadOnly<CarCurrentLane>()
 			},
 				None = new ComponentType[]
 			{
@@ -203,7 +204,31 @@ namespace ParkingMonitor
 				ComponentType.ReadOnly<Building>(),
 				ComponentType.ReadOnly<ParkedCar>(),
 				ComponentType.ReadOnly<Unspawned>(),
-				ComponentType.ReadOnly<ParkingTarget>()
+				ComponentType.ReadOnly<ParkingTarget>(),
+				ComponentType.ReadOnly<DummyTraffic>()
+				}
+			});
+
+			this.missingDummyTrafficQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Vehicle>(),
+				ComponentType.ReadOnly<PersonalCar>(),
+				ComponentType.ReadOnly<Target>(),
+			},
+				Any = new ComponentType[]
+			{
+
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<ParkedCar>(),
+				ComponentType.ReadOnly<Unspawned>(),
+				ComponentType.ReadOnly<ParkingTarget>(),
+				ComponentType.ReadOnly<DummyTraffic>()
 				}
 			});
 		}
@@ -248,6 +273,15 @@ namespace ParkingMonitor
 			DateTime currentTime = this.timeSystem.GetCurrentDateTime();
 			long timeTicks = currentTime.Ticks;
 
+			foreach (Entity e in this.missingDummyTrafficQuery.ToEntityArray(Allocator.Temp))
+			{
+				if (EntityManager.GetComponentData<PersonalCar>(e).m_State.HasFlag(PersonalCarFlags.DummyTraffic))
+				{
+					EntityManager.AddComponent<DummyTraffic>(e);
+				}
+				//EntityManager.AddComponent<Updated>(e);
+			}
+
 			foreach (Entity e in this.obsoleteParkingQuery.ToEntityArray(Allocator.Temp))
 			{
 				EntityManager.RemoveComponent<ParkingTarget>(e);
@@ -259,11 +293,12 @@ namespace ParkingMonitor
 				EntityManager.AddBuffer<ParkingTarget>(e);
 				//EntityManager.AddComponent<Updated>(e);
 			}
-			
 
+			var ecb = new EntityCommandBuffer(Allocator.TempJob);// this.entityCommandBufferSystem.CreateCommandBuffer();
 			FindParkingTargetsJob job = new FindParkingTargetsJob { 
-				commandBuffer = this.entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter(),
+				commandBuffer = ecb.AsParallelWriter(),
 				targetTypeHandle = SystemAPI.GetComponentTypeHandle<Target>(true),
+				carCurrentLaneHandle = SystemAPI.GetComponentTypeHandle<CarCurrentLane>(true),
 				entityHandle = SystemAPI.GetEntityTypeHandle(),
 				pathOwnerHandle = SystemAPI.GetComponentTypeHandle<PathOwner>(true),
 				pathElementHandle = SystemAPI.GetBufferTypeHandle<PathElement>(true),
@@ -276,8 +311,10 @@ namespace ParkingMonitor
 			};
 
 			base.Dependency = JobChunkExtensions.ScheduleParallel(job, this.movingVehiclesQuery, base.Dependency);
-			this.entityCommandBufferSystem.AddJobHandleForProducer(base.Dependency);
+			//this.entityCommandBufferSystem.AddJobHandleForProducer(base.Dependency);
 			base.Dependency.Complete();
+			ecb.Playback(EntityManager);
+			ecb.Dispose();
 
 			if (++this.frameCount % 60 == 0 && this.autoRefreshActiveBinding.value)
 			{
@@ -304,7 +341,7 @@ namespace ParkingMonitor
 						++vehiclesWithMultipleAttempts;
 					}
 
-					if (attemptCount.IsCreated && !parkingTargets.IsEmpty)
+					if (!parkingTargets.IsEmpty)
 					{
 						if (countFailures && parkingTargets.Length > 1)
 						{
@@ -336,25 +373,21 @@ namespace ParkingMonitor
 				}
 			}
 
-			if (attemptCount.IsCreated)
+			List<ParkingLot> tmpParkingList = new List<ParkingLot>(attemptCount.Count);
+			foreach (var parkingLot in attemptCount)
 			{
-				List<ParkingLot> tmpParkingList = new List<ParkingLot>(attemptCount.Count);
-				foreach (var parkingLot in attemptCount)
-				{
-					tmpParkingList.Add(new ParkingLot { entity = parkingLot.Key, count = parkingLot.Value });
-
-				}
-
-				tmpParkingList.Sort((a, b) => { return b.count - a.count; });
-				int c = Math.Min(Mod.INSTANCE.m_Setting.parkingRowCount, tmpParkingList.Count);
-				List<string> parkingStrings = new List<string>(c);
-				for (int i = 0; i < c; i++)
-				{
-					parkingStrings.Add(this.parkingLotJson(tmpParkingList[i]));
-				}
-
-				this.parkingBindings.Update(string.Join("|", parkingStrings));
+				tmpParkingList.Add(new ParkingLot { entity = parkingLot.Key, count = parkingLot.Value });
 			}
+
+			tmpParkingList.Sort((a, b) => { return b.count - a.count; });
+			int c = Math.Min(Mod.INSTANCE.m_Setting.parkingRowCount, tmpParkingList.Count);
+			List<string> parkingStrings = new List<string>(c);
+			for (int i = 0; i < c; i++)
+			{
+				parkingStrings.Add(this.parkingLotJson(tmpParkingList[i]));
+			}
+
+			this.parkingBindings.Update(string.Join("|", parkingStrings));		
 
 			this.parkingCount = vehiclesWithMultipleAttempts;
 			this.totalVehicles = newTotalVehicles;
@@ -365,7 +398,6 @@ namespace ParkingMonitor
 
 		struct ParkingLot
 		{
-
 			public Entity entity;
 			public int count;
 		}
@@ -543,7 +575,7 @@ namespace ParkingMonitor
 					}
 				}
 
-				if (hasCarLanes)
+				if (hasCarLanes && !foundParking)
 				{
 					DynamicBuffer<CarNavigationLane> carNavigationLanes = carNavigationLaneAccessor[i];
 					for (int pathIndex = 0; pathIndex < carNavigationLanes.Length; pathIndex++)
@@ -565,8 +597,12 @@ namespace ParkingMonitor
 				{
 					if (this.ownerLookup.TryGetComponent(currentLanes[i].m_Lane, out Owner owner))
 					{
-						parkingTarget = owner.m_Owner;
-						foundParking = true;
+						if (this.parkingFacilityLookup.HasComponent(owner.m_Owner) || this.parkingLaneLookup.HasComponent(currentLanes[i].m_Lane))
+						{
+							parkingTarget = owner.m_Owner;
+							foundParking = true;
+							break;
+						}
 					}
 				}
 

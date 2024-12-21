@@ -2,26 +2,41 @@
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
 	<ModId Value="" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="ParkingMonitor" />
+	<DisplayName Value="Parking Monitor (Beta)" />
 	<!--Short description of the mod-->
 	<ShortDescription Value="Visualizes vehicles attempts and failures to find parking spots" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Visualizes vehicles attempts and failures to find parking spots" /-->
 	<LongDescription>
-Visualizes vehicles attempts and failures to find parking spots
+Visualizes vehicles attempts and failures to find parking spots.
+
+<b>Features:</b>
+* Display all parking volume or failed parking volume per lot, building, and road
+* Group data by district
+* Navigate to lot, building, and road with one click
+* View total number of cars circling the map looking for parking
+* View total number of cars planning to park
+
+<b>How does it work?:</b> This mod monitors the destination of each vehicle. If a vehicle has a parking spot on its
+route, and its parking spot changes without the passenger's final destination changing, it counts a failed parking attempt. A vehicle is considered "looking for parking"
+if it has at least one failed parking attempt.
+
+<b>Note: This is a beta mod, and the data may be slightly inaccurate in certain edge cases.</b>
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Thumbnail Value="Properties/ParkingMonitorThumbnail.jpg" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="ParkingMonitor1.jpg" />
+	<Screenshot Value="ParkingMonitor2.jpg" />
+	<Screenshot Value="ParkingMonitor3.jpg" />
 	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
+	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/parking-monitor-beta.1722220/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.*.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
@@ -29,5 +44,5 @@ Visualizes vehicles attempts and failures to find parking spots
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/ParkingMonitor" />
 </Publish>
