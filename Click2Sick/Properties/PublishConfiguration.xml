@@ -1,0 +1,48 @@
+﻿<Publish>
+	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
+	<ModId Value="" />
+	<!--Name of the mod to display to players-->
+	<DisplayName Value="Click2Sick" />
+	<!--Short description of the mod-->
+	<ShortDescription Value="Adds a button to make all or some citizens sick" />
+	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
+	<!--LongDescription Value="Adds a button to make all or some citizens sick" /-->
+	<LongDescription>
+<b>Adds sickness controls, including:</b>
+* "Make everyone sick" button (in the 'Click 2 Sick' options menu)
+* Hot key to make selected citizen or building occupants sick
+* "Heal everyone" button / hotkey to heal selected citizen
+* "Decrease all health" button / hotkey to decrease selected citizen's health
+
+The buttons that target all citizens are accessible in the 'Click 2 Sick' options menu.
+
+The "make everyone sick" button drastically disrupts the city -- all citizens will seek medical care, and the economy will plummet; be sure to back up your save before using it.
+
+This mod is a precursor to my upcoming "Pandemic" mod, which will add a new health disaster type, and contagious sickness.
+	</LongDescription>
+	<!--Thumbnail-->
+	<Thumbnail Value="Properties/HealthcareThumbnail.png" />
+	<!--Screenshot, can be set multiple times-->
+	<Screenshot Value="Properties/health1.jpg" />
+	<Screenshot Value="Properties/health2.png" />
+	<Screenshot Value="Properties/health3.jpg" />
+	<Screenshot Value="Properties/health4.jpg" />
+	<Screenshot Value="Properties/health5.jpg" />
+	<Screenshot Value="Properties/health6.png" />
+	<!--Tag, can be set multiple times-->
+	<Tag Value="Code Mod" />
+	<!--Link to the forum post where the mod can be discussed-->
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/click-2-sick.1722638/" />
+	<!--Version of the mod-->
+	<ModVersion Value="1.0" />
+	<!--Recommended version of the base game to use the mod-->
+	<GameVersion Value="1.*.*" />
+	<!--Dependency for the mod, can be set multiple times-->
+	<Dependency Id="" />
+	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
+	<ChangeLog Value="" />
+	<!--ChangeLog>
+	</ChangeLog-->
+	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
+	<ExternalLink Type="github" Url="" />
+</Publish>
