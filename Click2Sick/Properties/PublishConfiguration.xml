@@ -1,10 +1,10 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="97380" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="Click2Sick" />
+	<DisplayName Value="Click 2 Sick" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Adds a button to make all or some citizens sick" />
+	<ShortDescription Value="Adds a buttons to make all or some citizens sick" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Adds a button to make all or some citizens sick" /-->
 	<LongDescription>
@@ -14,7 +14,7 @@
 * "Heal everyone" button / hotkey to heal selected citizen
 * "Decrease all health" button / hotkey to decrease selected citizen's health
 
-The buttons that target all citizens are accessible in the 'Click 2 Sick' options menu.
+The buttons that target all citizens are accessible in the <b>'Click 2 Sick'</b> options menu.
 
 The "make everyone sick" button drastically disrupts the city -- all citizens will seek medical care, and the economy will plummet; be sure to back up your save before using it.
 
@@ -44,5 +44,5 @@ This mod is a precursor to my upcoming "Pandemic" mod, which will add a new heal
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="github" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/Click2Sick" />
 </Publish>
