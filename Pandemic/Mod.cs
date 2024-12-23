@@ -10,10 +10,12 @@ namespace Pandemic
 	public class Mod : IMod
 	{
 		public static ILog log = LogManager.GetLogger($"{nameof(Pandemic)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
-		private Setting m_Setting;
+		public Setting m_Setting;
+		public static Mod INSTANCE;
 
 		public void OnLoad(UpdateSystem updateSystem)
 		{
+			INSTANCE = this;
 			log.Info(nameof(OnLoad));
 
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
