@@ -1,6 +1,7 @@
 ﻿using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
+using Game.Input;
 using Game.Modding;
 using Game.SceneFlow;
 using Game.Simulation;
@@ -10,8 +11,10 @@ namespace Pandemic
 	public class Mod : IMod
 	{
 		public static ILog log = LogManager.GetLogger($"{nameof(Pandemic)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
-		public Setting m_Setting;
+		public PandemicSettings m_Setting;
 		public static Mod INSTANCE;
+		public static ProxyAction impartDiseaseAction;
+		public const string impartDiseaseActionName = "ImpartDiseaseBinding";
 
 		public void OnLoad(UpdateSystem updateSystem)
 		{
@@ -21,14 +24,18 @@ namespace Pandemic
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
 				log.Info($"Current mod asset at {asset.path}");
 
-			m_Setting = new Setting(this);
+			m_Setting = new PandemicSettings(this);
 			m_Setting.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
+			m_Setting.RegisterKeyBindings();
+			impartDiseaseAction = m_Setting.GetAction(impartDiseaseActionName);
+			impartDiseaseAction.shouldBeEnabled = true;
 
+			AssetDatabase.global.LoadSettings(nameof(Pandemic), m_Setting, new PandemicSettings(this));
 
-			AssetDatabase.global.LoadSettings(nameof(Pandemic), m_Setting, new Setting(this));
-
-			updateSystem.UpdateBefore<ForceSicknessSystem>(SystemUpdatePhase.GameSimulation);
+			//updateSystem.UpdateBefore<ForceSicknessSystem>(SystemUpdatePhase.GameSimulation);
+			updateSystem.UpdateBefore<DiseaseToolSystem>(SystemUpdatePhase.GameSimulation);
+			updateSystem.UpdateBefore<PandemicSystem>(SystemUpdatePhase.GameSimulation);
 		}
 
 		public void OnDispose()

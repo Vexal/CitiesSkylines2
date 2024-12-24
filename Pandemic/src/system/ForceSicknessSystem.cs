@@ -44,13 +44,13 @@ namespace Pandemic
 			this.simulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
 
 			this.forceSickAction = new InputAction("forceSick", InputActionType.Button);
-			this.forceSickAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/s").With("Modifier", "<keyboard>/shift");
+			//this.forceSickAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/s").With("Modifier", "<keyboard>/shift");
 
 			this.forceDangerAction = new InputAction("forceDangerAction", InputActionType.Button);
-			this.forceDangerAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/d").With("Modifier", "<keyboard>/shift");
+			//this.forceDangerAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/d").With("Modifier", "<keyboard>/shift");
 
 			this.forceAllSickAction = new InputAction("forceDangerAction", InputActionType.Button);
-			this.forceAllSickAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/a").With("Modifier", "<keyboard>/shift");
+			//this.forceAllSickAction.AddCompositeBinding("OneModifier").With("Binding", "<keyboard>/a").With("Modifier", "<keyboard>/shift");
 
 			this.resetTripArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<ResetTrip>());
 			this.sickEventQuery = GetEntityQuery(new EntityQueryDesc
@@ -174,13 +174,13 @@ namespace Pandemic
 		{
 			switch (Mod.INSTANCE.m_Setting.diseaseProgressionSpeed)
 			{
-				case Setting.DiseaseProgression.Minor:
+				case PandemicSettings.DiseaseProgression.Minor:
 					return 2;
-				case Setting.DiseaseProgression.Moderate:
+				case PandemicSettings.DiseaseProgression.Moderate:
 					return 5;
-				case Setting.DiseaseProgression.Severe:
+				case PandemicSettings.DiseaseProgression.Severe:
 					return 15;
-				case Setting.DiseaseProgression.Extreme:
+				case PandemicSettings.DiseaseProgression.Extreme:
 					return 35;
 				default:
 					return 0;
