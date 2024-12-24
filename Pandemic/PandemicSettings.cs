@@ -29,7 +29,7 @@ namespace Pandemic
 		public PandemicSettings(IMod mod) : base(mod)
 		{
 			this.suddenDeathChance = 0;
-			this.diseaseSpreadChance = 10;
+			this.diseaseSpreadChance = .02f;
 			this.diseaseSpreadRadius = 25f;
 			this.diseaseSpreadInterval = 60;
 		}
@@ -45,9 +45,9 @@ namespace Pandemic
 		[SettingsUISection(kSection, kSliderGroup)]
 		public int suddenDeathChance { get; set; }
 
-		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kPercentage)]
+		[SettingsUISlider(min = 0, max = 100, step = .01f, scalarMultiplier = 1)]
 		[SettingsUISection(kSection, kSliderGroup)]
-		public int diseaseSpreadChance { get; set; }
+		public float diseaseSpreadChance { get; set; }
 
 		[SettingsUISlider(min = 0, max = 100, step = .1f, scalarMultiplier = 1)]
 		[SettingsUISection(kSection, kSliderGroup)]
@@ -56,6 +56,10 @@ namespace Pandemic
 		[SettingsUISlider(min = 1, max = 600, step = 1, scalarMultiplier = 1)]
 		[SettingsUISection(kSection, kSliderGroup)]
 		public float diseaseSpreadInterval { get; set; }
+
+		[SettingsUISlider(min = 1, max = 600, step = 1, scalarMultiplier = 1)]
+		[SettingsUISection(kSection, kSliderGroup)]
+		public float diseaseFleeRadius { get; set; }
 
 
 		[SettingsUISection(kSection, kDropdownGroup)]
@@ -68,7 +72,7 @@ namespace Pandemic
 		public override void SetDefaults()
 		{
 			this.suddenDeathChance = 0;
-			this.diseaseSpreadChance = 10;
+			this.diseaseSpreadChance = .02f;
 			this.diseaseSpreadRadius = 25f;
 			this.diseaseSpreadInterval = 60;
 		}
@@ -113,6 +117,9 @@ namespace Pandemic
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), "Disease Spread Radius" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
+
+			    { m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseFleeRadius)), "Disease Flee Radius" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseFleeRadius)), $"The distance at which nearby citizens will flee contagious citizens." },
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadInterval)), "Disease Spread Frequency" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadInterval)), $"The interval at which disease spread is checked; lower is faster." },

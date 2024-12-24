@@ -22,14 +22,18 @@ namespace Pandemic
 		[ReadOnly]
 		public NativeArray<float3> diseasePositions;
 		[ReadOnly]
-		public float radius;
+		public float spreadRadius;
+		[ReadOnly]
+		public float fleeRadius;
 		[ReadOnly]
 		public int spreadChance;
 		[ReadOnly]
 		public NativeArray<float3> citizenPositions;
 
 		[NativeDisableParallelForRestriction]
-		public NativeArray<bool> results;
+		public NativeArray<bool> spread;
+		[NativeDisableParallelForRestriction]
+		public NativeArray<bool> flee;
 
 		public void Execute(int start, int count)
 		{
@@ -39,14 +43,18 @@ namespace Pandemic
 				for (int j = 0; j < this.diseasePositions.Length; ++j)
 				{
 					float distance = math.distance(this.diseasePositions[j], this.citizenPositions[i]);
-					if (distance < radius)
+					if (distance < spreadRadius)
 					{
-						int norm = (int)(((radius - distance) / radius) * this.spreadChance);
-						bool shouldSpread = random.NextFloat(10000) < norm;
+						int norm = (int)((spreadRadius - distance) / spreadRadius * this.spreadChance);
+						bool shouldSpread = random.NextInt(10000) < norm;
 						if (shouldSpread)
 						{
-							this.results[i] = true;
+							this.spread[i] = true;
 						}
+					}
+					else if (distance < fleeRadius)
+					{
+						this.flee[i] = true;
 					}
 				}
 			}

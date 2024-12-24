@@ -2,6 +2,7 @@
 using Game;
 using Game.Citizens;
 using Game.Common;
+using Game.Creatures;
 using Game.Objects;
 using Game.Rendering;
 using Game.Simulation;
@@ -18,17 +19,19 @@ using Unity.Mathematics;
 
 namespace Pandemic
 {
-	internal partial class PandemicSystem : GameSystemBase
+	internal partial class PandemicSpreadSystem : GameSystemBase
 	{
 		private SimulationSystem simulationSystem;
 		private EntityQuery diseaseCitizenHumanEntityQuery;
 		private EntityQuery healthyCitizenQuery;
+		private EntityArchetype resetTripArchetype;
 
 		protected override void OnCreate()
 		{
 			base.OnCreate();
 
 			this.simulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
+			this.resetTripArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<ResetTrip>());
 
 			this.diseaseCitizenHumanEntityQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -53,6 +56,7 @@ namespace Pandemic
 			{
 				ComponentType.ReadOnly<Citizen>(),
 				ComponentType.ReadOnly<CurrentTransport>(),
+				ComponentType.ReadOnly<TravelPurpose>(),
 			},
 				None = new ComponentType[]
 			{
@@ -90,6 +94,7 @@ namespace Pandemic
 			if (diseasePositions.Length > 0)
 			{
 				NativeArray<CurrentTransport> citizenTransports = this.healthyCitizenQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
+				NativeArray<TravelPurpose> travelPurpose = this.healthyCitizenQuery.ToComponentDataArray<TravelPurpose>(Allocator.Temp);
 				NativeArray<Entity> citizens = this.healthyCitizenQuery.ToEntityArray(Allocator.Temp);
 
 				NativeList<float3> citizenPositions = new NativeList<float3>(Allocator.TempJob);
@@ -107,24 +112,37 @@ namespace Pandemic
 					SpreadDiseaseJob job = new SpreadDiseaseJob();
 					job.diseasePositions = diseasePositions.AsArray();
 					job.citizenPositions = citizenPositions.AsArray();
-					job.radius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
-					job.spreadChance = Mod.INSTANCE.m_Setting.diseaseSpreadChance;
-					job.results = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
+					job.spreadRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
+					job.fleeRadius = job.spreadRadius + Mod.INSTANCE.m_Setting.diseaseFleeRadius;
+					job.spreadChance = (int)(Mod.INSTANCE.m_Setting.diseaseSpreadChance * 100);
+					job.spread = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
+					job.flee = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
 					var jobHandle = job.ScheduleBatch(citizenPositions.Length, 100);
 
 					diseasePositions.Dispose(jobHandle);
 					citizenPositions.Dispose(jobHandle);
 					jobHandle.Complete();
 
-					for (int i = 0; i < job.results.Length; ++i)
+					for (int i = 0; i < job.spread.Length; ++i)
 					{
-						if (job.results[i])
+						if (job.spread[i])
 						{
 							EntityManager.AddComponent<Disease>(citizens[i]);
 						}
+						else if (job.flee[i] && (travelPurpose[i].m_Purpose & Purpose.GoingHome) == 0)
+						{
+							Entity e = EntityManager.CreateEntity(this.resetTripArchetype);
+							EntityManager.AddComponentData(e, new ResetTrip
+							{
+								m_Creature = citizenTransports[i].m_CurrentTransport,
+								m_Target = Entity.Null,
+								//m_DivertPurpose = Purpose.Hospital
+							});
+						}
 					}
 
-					job.results.Dispose();
+					job.spread.Dispose();
+					job.flee.Dispose();
 				}
 				else
 				{
