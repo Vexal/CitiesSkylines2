@@ -29,6 +29,9 @@ namespace Pandemic
 		public PandemicSettings(IMod mod) : base(mod)
 		{
 			this.suddenDeathChance = 0;
+			this.diseaseSpreadChance = 10;
+			this.diseaseSpreadRadius = 25f;
+			this.diseaseSpreadInterval = 60;
 		}
 
 		[SettingsUISection(kSection, kButtonGroup)]
@@ -42,6 +45,19 @@ namespace Pandemic
 		[SettingsUISection(kSection, kSliderGroup)]
 		public int suddenDeathChance { get; set; }
 
+		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kPercentage)]
+		[SettingsUISection(kSection, kSliderGroup)]
+		public int diseaseSpreadChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .1f, scalarMultiplier = 1)]
+		[SettingsUISection(kSection, kSliderGroup)]
+		public float diseaseSpreadRadius { get; set; }
+
+		[SettingsUISlider(min = 1, max = 600, step = 1, scalarMultiplier = 1)]
+		[SettingsUISection(kSection, kSliderGroup)]
+		public float diseaseSpreadInterval { get; set; }
+
+
 		[SettingsUISection(kSection, kDropdownGroup)]
 		public DiseaseProgression diseaseProgressionSpeed { get; set; } = DiseaseProgression.Minor;
 
@@ -52,6 +68,9 @@ namespace Pandemic
 		public override void SetDefaults()
 		{
 			this.suddenDeathChance = 0;
+			this.diseaseSpreadChance = 10;
+			this.diseaseSpreadRadius = 25f;
+			this.diseaseSpreadInterval = 60;
 		}
 
 		public enum DiseaseProgression
@@ -88,6 +107,15 @@ namespace Pandemic
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.suddenDeathChance)), "Late-stage Death Chance" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.suddenDeathChance)), $"The % chance for a citizen at 0 health to die" },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadChance)), "Disease Spread Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadChance)), $"The % chance for a contagious citizen to spread disease to a nearby citizen. The chance of spreading falls off with distance." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), "Disease Spread Radius" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadInterval)), "Disease Spread Frequency" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadInterval)), $"The interval at which disease spread is checked; lower is faster." },
 
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseProgressionSpeed)), "Disease Progress Speed" },

@@ -36,6 +36,7 @@ namespace Pandemic
 			//updateSystem.UpdateBefore<ForceSicknessSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<DiseaseToolSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<PandemicSystem>(SystemUpdatePhase.GameSimulation);
+			updateSystem.UpdateBefore<RenderDiseaseSystem>(SystemUpdatePhase.Rendering);
 		}
 
 		public void OnDispose()
