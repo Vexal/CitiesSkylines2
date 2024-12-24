@@ -32,6 +32,8 @@ namespace Pandemic
 			this.diseaseSpreadChance = .02f;
 			this.diseaseSpreadRadius = 25f;
 			this.diseaseSpreadInterval = 60;
+			this.maxDiseaseSpreadPerFrame = 1;
+			this.diseaseFleeRadius = 10f;
 		}
 
 		[SettingsUISection(kSection, kButtonGroup)]
@@ -45,7 +47,7 @@ namespace Pandemic
 		[SettingsUISection(kSection, kSliderGroup)]
 		public int suddenDeathChance { get; set; }
 
-		[SettingsUISlider(min = 0, max = 100, step = .01f, scalarMultiplier = 1)]
+		[SettingsUISlider(min = 0, max = 100, step = .01f, scalarMultiplier = 1f, unit = Unit.kFloatTwoFractions)]
 		[SettingsUISection(kSection, kSliderGroup)]
 		public float diseaseSpreadChance { get; set; }
 
@@ -61,6 +63,10 @@ namespace Pandemic
 		[SettingsUISection(kSection, kSliderGroup)]
 		public float diseaseFleeRadius { get; set; }
 
+		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1)]
+		[SettingsUISection(kSection, kSliderGroup)]
+		public float maxDiseaseSpreadPerFrame { get; set; }
+
 
 		[SettingsUISection(kSection, kDropdownGroup)]
 		public DiseaseProgression diseaseProgressionSpeed { get; set; } = DiseaseProgression.Minor;
@@ -74,7 +80,9 @@ namespace Pandemic
 			this.suddenDeathChance = 0;
 			this.diseaseSpreadChance = .02f;
 			this.diseaseSpreadRadius = 25f;
+			this.diseaseFleeRadius = 10f;
 			this.diseaseSpreadInterval = 60;
+			this.maxDiseaseSpreadPerFrame = 1;
 		}
 
 		public enum DiseaseProgression
@@ -123,6 +131,9 @@ namespace Pandemic
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadInterval)), "Disease Spread Frequency" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadInterval)), $"The interval at which disease spread is checked; lower is faster." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.maxDiseaseSpreadPerFrame)), "Max Disease Spread per Tick" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.maxDiseaseSpreadPerFrame)), $"The maximum number of additional citizens who can become sick each update." },
 
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseProgressionSpeed)), "Disease Progress Speed" },

@@ -18,7 +18,7 @@ namespace Pandemic
 
 		public void Execute()
 		{
-			UnityEngine.Color color = new UnityEngine.Color(.15f, .72f, .24f, .42f);
+			UnityEngine.Color color = new UnityEngine.Color(.15f, .72f, .24f, .28f);
 			for (int i = 0; i < this.positions.Length; ++i)
 			{
 				overlayBuffer.DrawCircle(color, this.positions[i], this.radius);

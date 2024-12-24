@@ -69,11 +69,11 @@ namespace Pandemic
 		}
 		protected override void OnUpdate()
 		{
-			this.renderDiseaseEffect();
+			this.handleDiseaseSpread();
 			
 		}
 
-		private void renderDiseaseEffect()
+		private void handleDiseaseSpread()
 		{
 			if (this.simulationSystem.frameIndex % Mod.INSTANCE.m_Setting.diseaseSpreadInterval != 0)
 			{
@@ -123,9 +123,10 @@ namespace Pandemic
 					citizenPositions.Dispose(jobHandle);
 					jobHandle.Complete();
 
+					int spreadCount = 0;
 					for (int i = 0; i < job.spread.Length; ++i)
 					{
-						if (job.spread[i])
+						if (job.spread[i] && spreadCount++ < Mod.INSTANCE.m_Setting.maxDiseaseSpreadPerFrame)
 						{
 							EntityManager.AddComponent<Disease>(citizens[i]);
 						}

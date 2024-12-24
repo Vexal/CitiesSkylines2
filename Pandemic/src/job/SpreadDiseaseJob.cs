@@ -22,6 +22,8 @@ namespace Pandemic
 		[ReadOnly]
 		public NativeArray<float3> diseasePositions;
 		[ReadOnly]
+		public NativeArray<float> diseaseRadiuses;
+		[ReadOnly]
 		public float spreadRadius;
 		[ReadOnly]
 		public float fleeRadius;
