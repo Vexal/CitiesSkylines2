@@ -101,7 +101,8 @@ namespace Pandemic
 				for (int i = 0; i < citizens.Length; ++i)
 				{
 					CurrentTransport t = citizenTransports[i];
-					if ((!EntityManager.TryGetComponent<TravelPurpose>(citizens[i]) || !EntityManager.HasComponent<CurrentVehicle>(t.m_CurrentTransport) &&
+					if (
+						!EntityManager.HasComponent<CurrentVehicle>(t.m_CurrentTransport) &&
 						EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
 					{
 						citizenPositions.Add(transform.m_Position);
@@ -131,7 +132,8 @@ namespace Pandemic
 						{
 							EntityManager.AddComponent<Disease>(citizens[i]);
 						}
-						else if (job.flee[i] && (travelPurpose[i].m_Purpose & Purpose.GoingHome) == 0)
+						else if (job.flee[i] && (!EntityManager.TryGetComponent<TravelPurpose>(citizens[i], out var travelPurpose) || 
+							(travelPurpose.m_Purpose & Purpose.GoingHome) == 0))
 						{
 							Entity e = EntityManager.CreateEntity(this.resetTripArchetype);
 							EntityManager.AddComponentData(e, new ResetTrip
