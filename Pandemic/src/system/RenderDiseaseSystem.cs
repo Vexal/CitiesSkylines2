@@ -2,6 +2,7 @@
 using Game;
 using Game.Citizens;
 using Game.Common;
+using Game.Creatures;
 using Game.Objects;
 using Game.Rendering;
 using Game.Tools;
@@ -34,20 +35,20 @@ namespace Pandemic
 			{
 				ComponentType.ReadOnly<Disease>(),
 				ComponentType.ReadOnly<Citizen>(),
+				ComponentType.ReadOnly<HealthProblem>(),
 				ComponentType.ReadOnly<CurrentTransport>(),
 			},
 				None = new ComponentType[]
 			{
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
-				ComponentType.ReadOnly<Unspawned>(),
+				ComponentType.ReadOnly<Unspawned>()
 				}
 			});
 		}
 		protected override void OnUpdate()
 		{
 			this.renderDiseaseEffect();
-			
 		}
 
 		private void renderDiseaseEffect()
@@ -57,7 +58,8 @@ namespace Pandemic
 
 			foreach (CurrentTransport t in diseasedTransports)
 			{
-				if (EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
+				if (!EntityManager.HasComponent<CurrentVehicle>(t.m_CurrentTransport) &&
+					EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
 				{
 					positions.Add(transform.m_Position);
 				}

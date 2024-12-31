@@ -28,7 +28,7 @@ namespace Pandemic
 		[ReadOnly]
 		public float fleeRadius;
 		[ReadOnly]
-		public int spreadChance;
+		public float spreadChance;
 		[ReadOnly]
 		public NativeArray<float3> citizenPositions;
 
@@ -47,8 +47,8 @@ namespace Pandemic
 					float distance = math.distance(this.diseasePositions[j], this.citizenPositions[i]);
 					if (distance < spreadRadius)
 					{
-						int norm = (int)((spreadRadius - distance) / spreadRadius * this.spreadChance);
-						bool shouldSpread = random.NextInt(10000) < norm;
+						float norm = ((spreadRadius - distance) / spreadRadius * this.spreadChance);
+						bool shouldSpread = random.NextFloat(100) < norm;
 						if (shouldSpread)
 						{
 							this.spread[i] = true;

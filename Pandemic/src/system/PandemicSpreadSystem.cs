@@ -55,8 +55,7 @@ namespace Pandemic
 				All = new ComponentType[]
 			{
 				ComponentType.ReadOnly<Citizen>(),
-				ComponentType.ReadOnly<CurrentTransport>(),
-				ComponentType.ReadOnly<TravelPurpose>(),
+				ComponentType.ReadOnly<CurrentTransport>()
 			},
 				None = new ComponentType[]
 			{
@@ -85,7 +84,8 @@ namespace Pandemic
 
 			foreach (CurrentTransport t in diseasedTransports)
 			{
-				if (EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
+				if (!EntityManager.HasComponent<CurrentVehicle>(t.m_CurrentTransport) &&
+					EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
 				{
 					diseasePositions.Add(transform.m_Position);
 				}
@@ -94,14 +94,15 @@ namespace Pandemic
 			if (diseasePositions.Length > 0)
 			{
 				NativeArray<CurrentTransport> citizenTransports = this.healthyCitizenQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
-				NativeArray<TravelPurpose> travelPurpose = this.healthyCitizenQuery.ToComponentDataArray<TravelPurpose>(Allocator.Temp);
 				NativeArray<Entity> citizens = this.healthyCitizenQuery.ToEntityArray(Allocator.Temp);
 
 				NativeList<float3> citizenPositions = new NativeList<float3>(Allocator.TempJob);
 
-				foreach (CurrentTransport t in citizenTransports)
+				for (int i = 0; i < citizens.Length; ++i)
 				{
-					if (EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
+					CurrentTransport t = citizenTransports[i];
+					if ((!EntityManager.TryGetComponent<TravelPurpose>(citizens[i]) || !EntityManager.HasComponent<CurrentVehicle>(t.m_CurrentTransport) &&
+						EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
 					{
 						citizenPositions.Add(transform.m_Position);
 					}
@@ -114,7 +115,7 @@ namespace Pandemic
 					job.citizenPositions = citizenPositions.AsArray();
 					job.spreadRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
 					job.fleeRadius = job.spreadRadius + Mod.INSTANCE.m_Setting.diseaseFleeRadius;
-					job.spreadChance = (int)(Mod.INSTANCE.m_Setting.diseaseSpreadChance * 100);
+					job.spreadChance = Mod.INSTANCE.m_Setting.diseaseSpreadChance;
 					job.spread = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
 					job.flee = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
 					var jobHandle = job.ScheduleBatch(citizenPositions.Length, 100);
