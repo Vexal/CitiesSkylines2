@@ -46,7 +46,7 @@ namespace Pandemic
 					if (this.tryGetCitizenEntity(entity, out var citizen))
 					{
 						Mod.log.Info("applying disease to " + citizen.ToString());
-						EntityManager.AddComponent<Disease>(citizen);
+						EntityManager.AddComponent<Contagious>(citizen);
 					}
 				}
 

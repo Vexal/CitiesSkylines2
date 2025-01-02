@@ -33,9 +33,8 @@ namespace Pandemic
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<Disease>(),
+				ComponentType.ReadOnly<Contagious>(),
 				ComponentType.ReadOnly<Citizen>(),
-				ComponentType.ReadOnly<HealthProblem>(),
 				ComponentType.ReadOnly<CurrentTransport>(),
 			},
 				None = new ComponentType[]

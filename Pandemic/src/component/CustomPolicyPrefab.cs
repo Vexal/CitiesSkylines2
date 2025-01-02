@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Game.Prefabs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Unity.Entities;
 
 namespace Pandemic
 {
-	public struct Disease : IComponentData, IQueryTypeParameter
+	[ComponentMenu("Policies/", new Type[] { })]
+	public class CustomPolicyPrefab :  PolicyPrefab
 	{
-		public uint minFrame;
 	}
 }

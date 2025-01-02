@@ -47,9 +47,13 @@ namespace Pandemic
 		[SettingsUISection(kSection, kSliderGroup)]
 		public int suddenDeathChance { get; set; }
 
-		[SettingsUISlider(min = 0, max = 100, step = .01f, scalarMultiplier = 1f, unit = Unit.kFloatTwoFractions)]
+		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
 		[SettingsUISection(kSection, kSliderGroup)]
 		public float diseaseSpreadChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = 1, unit = Unit.kPercentage)]
+		[SettingsUISection(kSection, kSliderGroup)]
+		public float maskEffectiveness { get; set; }
 
 		[SettingsUISlider(min = 0, max = 100, step = .1f, scalarMultiplier = 1)]
 		[SettingsUISection(kSection, kSliderGroup)]
@@ -123,6 +127,9 @@ namespace Pandemic
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadChance)), "Disease Spread Chance" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadChance)), $"The % chance for a contagious citizen to spread disease to a nearby citizen. The chance of spreading falls off with distance." },
 
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.maskEffectiveness)), "Mask Effectiveness" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.maskEffectiveness)), $"The % reduction in chance to spread or contract contagious sickness for citizens wearing masks." },
+
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), "Disease Spread Radius" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
 
@@ -147,6 +154,9 @@ namespace Pandemic
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Extreme), "Extreme" },
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.impartDiseaseKeyBinding)), "Apply Contagious Disease Key" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.impartDiseaseKeyBinding)), $"Key binding to apply contagious disease to citizen." },
+				{"Policy.TITLE[Mask Mandate]", "Mask Mandate" },
+				{"Policy.DESCRIPTION[Mask Mandate]", $"Require all citizens to wear masks, drastically decreasing the chance of spreading or catching " +
+				$"contagious sickness.\n\nDecreases citizen happiness.\nLower education citizens have a higher chance of defying the mask mandate." },
 
 			};
 		}

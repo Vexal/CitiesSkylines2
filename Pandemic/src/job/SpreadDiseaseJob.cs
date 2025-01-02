@@ -1,16 +1,5 @@
-﻿using Colossal;
-using Colossal.Mathematics;
-using Game.Citizens;
-using Game.Common;
-using Game.Creatures;
-using Game.Net;
-using Game.Objects;
-using Game.Pathfind;
-using Game.Routes;
-using Game.Vehicles;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Collections;
-using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -33,31 +22,42 @@ namespace Pandemic
 		public NativeArray<float3> citizenPositions;
 
 		[NativeDisableParallelForRestriction]
-		public NativeArray<bool> spread;
+		public NativeArray<int> spread;
 		[NativeDisableParallelForRestriction]
 		public NativeArray<bool> flee;
 
 		public void Execute(int start, int count)
 		{
-			Random random = new Random();
 			for (int i = start; i < start + count; ++i)
 			{
+				if (math.lengthsq(this.citizenPositions[i]) < 1)
+				{
+					continue;
+				}
+
 				for (int j = 0; j < this.diseasePositions.Length; ++j)
 				{
-					float distance = math.distance(this.diseasePositions[j], this.citizenPositions[i]);
+					float distance = math.distancesq(this.diseasePositions[j], this.citizenPositions[i]);
+					if (float.IsNaN(distance) || float.IsInfinity(distance))
+					{
+						continue;
+					}
+
 					if (distance < spreadRadius)
 					{
 						float norm = ((spreadRadius - distance) / spreadRadius * this.spreadChance);
-						bool shouldSpread = random.NextFloat(100) < norm;
+						float r = UnityEngine.Random.Range(0f, 100f);
+
+						bool shouldSpread = r < norm;
 						if (shouldSpread)
 						{
-							this.spread[i] = true;
+							this.spread[i] = j + 1;
 						}
 					}
-					else if (distance < fleeRadius)
+					/*else if (distance < fleeRadius)
 					{
 						this.flee[i] = true;
-					}
+					}*/
 				}
 			}
 		}
