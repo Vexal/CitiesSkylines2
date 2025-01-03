@@ -44,8 +44,6 @@ namespace Pandemic
 		private EntityArchetype deathEventArchetype;
 		private EntityArchetype resetTripArchetype;
 
-		private bool addedPrefabs = true;
-
 		protected override void OnCreate()
 		{
 			base.OnCreate();
@@ -56,8 +54,35 @@ namespace Pandemic
 
 			if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
 			{
-				this.prefabSystem.TryGetEntity(prefabBase, out this.sicknessEventPrefabEntity);
-				this.sickEventArchetype = EntityManager.GetComponentData<EventData>(this.sicknessEventPrefabEntity).m_Archetype;
+				//this.prefabSystem.TryGetEntity(prefabBase, out this.sicknessEventPrefabEntity);
+				//this.sickEventArchetype = EntityManager.GetComponentData<EventData>(this.sicknessEventPrefabEntity).m_Archetype;
+
+				PrefabBase pandemicPrefab = prefabBase.Clone("Pandemic Sickness");
+				Game.Prefabs.HealthEvent healthEvent = pandemicPrefab.GetComponent<Game.Prefabs.HealthEvent>();
+				healthEvent.m_RequireTracking = true;
+				/*pandemicPrefab.Remove(typeof(Game.Prefabs.HealthEvent));
+				pandemicPrefab.AddComponent<Game.Prefabs.HealthEvent>();
+				pandemicPrefab.AddComponentFrom<Game.Prefabs.HealthEvent>();*/
+				prefabBase.AddComponentFrom(healthEvent);
+				if (this.prefabSystem.AddPrefab(pandemicPrefab))
+				{
+					if (this.prefabSystem.TryGetEntity(pandemicPrefab, out this.sicknessEventPrefabEntity))
+					{
+						if (this.prefabSystem.TryGetEntity(prefabBase, out var e))
+						{
+							EventData eventData = EntityManager.GetComponentData<EventData>(e);
+							this.sickEventArchetype = eventData.m_Archetype;
+						}
+					}
+					else
+					{
+						Mod.log.Info("Failed got sick archetype 2");
+					}
+				}
+				else
+				{
+					Mod.log.Info("Failed to get sick archetype");
+				}
 			}
 
 			if (this.prefabSystem.TryGetPrefab(this.suddenDeathPrefabId, out PrefabBase prefabBase2))
@@ -132,13 +157,17 @@ namespace Pandemic
 			pr.Remove(typeof(CityModifiers));
 			pr.Remove(typeof(Unlockable));
 			pr.AddComponent<CityModifiers>();
-			pr.GetComponent<CityModifiers>().m_Modifiers = new CityModifierInfo[1];
+			pr.GetComponent<CityModifiers>().m_Modifiers = new CityModifierInfo[2];
 			pr.GetComponent<CityModifiers>().m_Modifiers[0] = new CityModifierInfo();
 			pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Type = CityModifierType.Entertainment;
 			pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Mode = ModifierValueMode.Relative;
 			pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Range = new Colossal.Mathematics.Bounds1(new float2() {x = 15.5f, y = 15.5f });
+
+			pr.GetComponent<CityModifiers>().m_Modifiers[1] = new CityModifierInfo();
+			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Type = CityModifierType.DiseaseProbability;
+			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Mode = ModifierValueMode.Relative;
+			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Range = new Colossal.Mathematics.Bounds1(new float2() {x = 100f, y = 100f });
 			this.prefabSystem.AddPrefab(pr);
-			this.addedPrefabs = true;
 			Mod.log.Info("asset: " + pr.ToString() + " ; " + pr.asset?.name + " ; " + pr.asset?.ToString() + " ; " + pr.asset?.uniqueName);
 			Mod.log.Info("original asset: " + this.policyPrefabEntity.asset?.name + " ; " + this.policyPrefabEntity.asset?.ToString() + " ; " + this.policyPrefabEntity.asset?.uniqueName);
 			this.prefabSystem.AddComponentData(pr, new CityOptionData() { m_OptionMask = PandemicSpreadSystem.MASK_MANDATE_MASK });
@@ -156,27 +185,6 @@ namespace Pandemic
 
 		protected override void OnUpdate()
 		{
-			if (!this.addedPrefabs)
-			{
-				/*CustomPolicyPrefab pr = new CustomPolicyPrefab();
-				pr.m_Visibility = PolicyVisibility.Default;
-				pr.m_Category = PolicyCategory.CityPlanning;
-				pr.AddComponent<PolicyPrefab>();
-				pr.prefab
-				pr.name = "Mask Mandate";
-				pr.active = true;
-				this.prefabSystem.AddPrefab(pr);*/
-
-				PrefabBase pr = this.policyPrefabEntity.Clone("Mask Mandate");
-				
-				this.prefabSystem.AddPrefab(pr);
-				this.addedPrefabs = true;
-				Mod.log.Info("asset: " + pr.ToString() + " ; " + pr.asset?.name + " ; " + pr.asset?.ToString() + " ; " + pr.asset?.uniqueName);
-				Mod.log.Info("original asset: " + this.policyPrefabEntity.asset?.name + " ; " + this.policyPrefabEntity.asset?.ToString() + " ; " + this.policyPrefabEntity.asset?.uniqueName);
-				this.prefabSystem.AddComponentData(pr, new CityOptionData() { m_OptionMask = 5001 });
-				//this.prefabSystem.RemoveComponent<CityModifierData>(pr);
-			}
-
 			this.removeDiseaseFromHealthy();
 			this.addDiseaseToSick();
 			if (this.shouldProgressDisease())
@@ -212,13 +220,13 @@ namespace Pandemic
 					if (EntityManager.TryGetComponent<CurrentTransport>(citizens[i], out var transport))
 					{
 
-						EntityManager.AddComponentData(EntityManager.CreateEntity(this.resetTripArchetype), new ResetTrip
+						/*EntityManager.AddComponentData(EntityManager.CreateEntity(this.resetTripArchetype), new ResetTrip
 						{
 							m_Creature = transport.m_CurrentTransport,
 							m_Target = Entity.Null,
 							m_DivertPurpose = Purpose.Hospital
 							//m_DivertPurpose = Purpose.Hospital
-						});
+						});*/
 					}
 				}
 			}
@@ -272,12 +280,16 @@ namespace Pandemic
 
 		public void makeCitizenSick(Entity targetCitizen)
 		{
+			//Mod.log.Info("sick archetype " + this.sickEventArchetype.ToString());
 			Entity eventEntity = EntityManager.CreateEntity(this.sickEventArchetype);
 
 			EntityManager.AddComponent<PrefabRef>(eventEntity);
 			EntityManager.SetComponentData(eventEntity, new PrefabRef(this.sicknessEventPrefabEntity));
 			EntityManager.AddBuffer<TargetElement>(eventEntity);
 			EntityManager.GetBuffer<TargetElement>(eventEntity).Add(new TargetElement() { m_Entity = targetCitizen });
+			EntityManager.AddComponent<DiseaseId>(eventEntity);
+			EntityManager.SetComponentData(eventEntity, new DiseaseId() { diseaseId = 1 });
+
 		}
 
 		public byte getHealthDecreaseAmount()

@@ -1,4 +1,5 @@
-﻿using Colossal.Entities;
+﻿using Colossal;
+using Colossal.Entities;
 using Game;
 using Game.Citizens;
 using Game.Common;
@@ -22,12 +23,14 @@ namespace Pandemic
 	{
 		private EntityQuery diseaseCitizenHumanEntityQuery;
 		private OverlayRenderSystem overlayRenderSystem;
+		private PandemicSpreadSystem pandemicSpreadSystem;
 
 		protected override void OnCreate()
 		{
 			base.OnCreate();
 
 			this.overlayRenderSystem = World.GetOrCreateSystemManaged<OverlayRenderSystem>();
+			this.pandemicSpreadSystem = World.GetOrCreateSystemManaged<PandemicSpreadSystem>();
 
 			this.diseaseCitizenHumanEntityQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -52,7 +55,7 @@ namespace Pandemic
 
 		private void renderDiseaseEffect()
 		{
-			NativeArray<CurrentTransport> diseasedTransports = this.diseaseCitizenHumanEntityQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
+			/*NativeArray<CurrentTransport> diseasedTransports = this.diseaseCitizenHumanEntityQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
 			NativeList<float3> positions = new NativeList<float3>(Allocator.TempJob);
 
 			foreach (CurrentTransport t in diseasedTransports)
@@ -62,22 +65,21 @@ namespace Pandemic
 				{
 					positions.Add(transform.m_Position);
 				}
-			}
+			}*/
 
-			if (positions.Length > 0)
-			{
-				RenderDiseaseJob job = new RenderDiseaseJob();
-				job.positions = positions.AsArray();
-				job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
-				job.radius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
-				var renderJobHandle = job.Schedule(dependencies);
-				this.overlayRenderSystem.AddBufferWriter(renderJobHandle);
-				positions.Dispose(renderJobHandle);
-			}
-			else
-			{
-				positions.Dispose();
-			}
+			ComputeDiseaseSpreadParametersJob spreadParametersJob = this.pandemicSpreadSystem.initDiseaseSpreadParamsJob(this.diseaseCitizenHumanEntityQuery);
+
+			JobHandle spreadJobHandle = spreadParametersJob.ScheduleParallel(this.diseaseCitizenHumanEntityQuery, default);
+			RenderDiseaseJob job = new RenderDiseaseJob();
+			job.positions = spreadParametersJob.diseasePositions;
+			job.radius = spreadParametersJob.diseaseRadiusSq;
+			job.overlayBuffer = this.overlayRenderSystem.GetBuffer(out JobHandle dependencies);
+			job.count = spreadParametersJob.rc;
+			JobHandle dependentHandles = JobHandle.CombineDependencies(spreadJobHandle, dependencies);
+			var renderJobHandle = job.Schedule(dependentHandles);
+			this.overlayRenderSystem.AddBufferWriter(renderJobHandle);
+			spreadParametersJob.diseasePositions.Dispose(renderJobHandle);
+			spreadParametersJob.diseaseRadiusSq.Dispose(renderJobHandle);
 		}
 	}
 }

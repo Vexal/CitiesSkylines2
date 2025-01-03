@@ -34,6 +34,7 @@ namespace Pandemic
 			this.diseaseSpreadInterval = 60;
 			this.maxDiseaseSpreadPerFrame = 1;
 			this.diseaseFleeRadius = 10f;
+			this.maskEffectiveness = 65;
 		}
 
 		[SettingsUISection(kSection, kButtonGroup)]
@@ -70,6 +71,8 @@ namespace Pandemic
 		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1)]
 		[SettingsUISection(kSection, kSliderGroup)]
 		public float maxDiseaseSpreadPerFrame { get; set; }
+		[SettingsUISection(kSection, kDropdownGroup)]
+		public UnderEducatedPolicyAdherenceModifier underEducatedModifier { get; set; } = UnderEducatedPolicyAdherenceModifier.Moderate;
 
 
 		[SettingsUISection(kSection, kDropdownGroup)]
@@ -87,11 +90,21 @@ namespace Pandemic
 			this.diseaseFleeRadius = 10f;
 			this.diseaseSpreadInterval = 60;
 			this.maxDiseaseSpreadPerFrame = 1;
+			this.maskEffectiveness = 65;
 		}
 
 		public enum DiseaseProgression
 		{
 			Vanilla,
+			Minor,
+			Moderate,
+			Severe,
+			Extreme
+		}
+
+		public enum UnderEducatedPolicyAdherenceModifier
+		{
+			None,
 			Minor,
 			Moderate,
 			Severe,
@@ -129,6 +142,14 @@ namespace Pandemic
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.maskEffectiveness)), "Mask Effectiveness" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.maskEffectiveness)), $"The % reduction in chance to spread or contract contagious sickness for citizens wearing masks." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.underEducatedModifier)), "Education Policy Adherence Impact" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.underEducatedModifier)), $"The impact of under-education on citizens' adherence to health policies such as Mask Mandates." },
+
+				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.None), "None" },
+				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.Minor), "Minor" },
+				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.Moderate), "Moderate" },
+				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.Severe), "Severe" },
+				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.Extreme), "Extreme" },
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), "Disease Spread Radius" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },

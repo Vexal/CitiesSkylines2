@@ -1,4 +1,5 @@
-﻿using Game.Rendering;
+﻿using Colossal;
+using Game.Rendering;
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -14,15 +15,20 @@ namespace Pandemic
 		[ReadOnly]
 		public NativeArray<float3> positions;
 		[ReadOnly]
-		public float radius;
+		public NativeArray<float> radius;
+		[ReadOnly]
+		public NativeCounter count;
 
 		public void Execute()
 		{
 			UnityEngine.Color color = new UnityEngine.Color(.15f, .72f, .24f, .28f);
-			for (int i = 0; i < this.positions.Length; ++i)
+			int c = this.count.Count;
+			for (int i = 0; i < c; ++i)
 			{
-				overlayBuffer.DrawCircle(color, this.positions[i], this.radius);
+				overlayBuffer.DrawCircle(color, this.positions[i], math.sqrt(this.radius[i]) * 2);
 			}
+
+			this.count.Dispose();
 		}
 	}
 }

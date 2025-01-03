@@ -1,4 +1,5 @@
-﻿using Colossal.Entities;
+﻿using Colossal;
+using Colossal.Entities;
 using Game;
 using Game.Citizens;
 using Game.City;
@@ -30,6 +31,9 @@ namespace Pandemic
 		private EntityArchetype resetTripArchetype;
 
 		public float maskModifier;
+		public bool masksRequired;
+		public int missingEducationModifier;
+
 		public const uint MASK_MANDATE_MASK = 1024;
 
 		protected override void OnCreate()
@@ -86,7 +90,12 @@ namespace Pandemic
 				}
 			});
 
+			this.refreshSettings();
 			this.refreshMaskModifier();
+			Mod.INSTANCE.m_Setting.onSettingsApplied += setting =>
+			{
+				this.refreshSettings();
+			};
 		}
 
 		protected override void OnUpdate()
@@ -104,9 +113,14 @@ namespace Pandemic
 
 			this.refreshMaskModifier();
 
-			NativeArray<CurrentTransport> diseasedTransports = this.diseaseCitizenHumanEntityQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
+			ComputeDiseaseSpreadParametersJob spreadParametersJob = this.initDiseaseSpreadParamsJob(this.diseaseCitizenHumanEntityQuery);
+
+			JobHandle spreadJobHandle = spreadParametersJob.ScheduleParallel(this.diseaseCitizenHumanEntityQuery, default);
+			spreadJobHandle.Complete();
+
+			/*NativeArray<CurrentTransport> diseasedTransports = this.diseaseCitizenHumanEntityQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
 			NativeList<float3> diseasePositions = new NativeList<float3>(Allocator.TempJob);
-			NativeList<float> diseaseRadius = new NativeList<float>(Allocator.TempJob);
+			NativeList<float> diseaseRadiusModifiers = new NativeList<float>(Allocator.TempJob);
 
 			float baseRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
 			for (int i = 0; i < diseasedTransports.Length; ++i)
@@ -116,11 +130,10 @@ namespace Pandemic
 					EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
 				{
 					diseasePositions.Add(transform.m_Position);
-					//diseaseRadius.Add(this.diseaseProgressionSystem.)
 				}
-			}
+			}*/
 
-			if (diseasePositions.Length > 0)
+			if (spreadParametersJob.rc.Count > 0)
 			{
 				NativeArray<CurrentTransport> citizenTransports = this.healthyCitizenQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
 				NativeArray<Entity> citizens = this.healthyCitizenQuery.ToEntityArray(Allocator.Temp);
@@ -143,10 +156,10 @@ namespace Pandemic
 				if (citizenPositions.Length > 0)
 				{
 					SpreadDiseaseJob job = new SpreadDiseaseJob();
-					job.diseasePositions = diseasePositions.AsArray();
+					job.diseasePositions = spreadParametersJob.diseasePositions;
+					job.diseaseRadiusSq = spreadParametersJob.diseaseRadiusSq;
 					job.citizenPositions = citizenPositions.AsArray();
-					job.spreadRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius * 2;
-					job.fleeRadius = job.spreadRadius + Mod.INSTANCE.m_Setting.diseaseFleeRadius;
+					job.fleeRadius = 0;// job.spreadRadius + Mod.INSTANCE.m_Setting.diseaseFleeRadius;
 					job.spreadChance = Mod.INSTANCE.m_Setting.diseaseSpreadChance;
 					job.spread = new NativeArray<int>(citizenPositions.Length, Allocator.TempJob);
 					job.flee = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
@@ -185,33 +198,33 @@ namespace Pandemic
 						}
 					}
 
-					diseasePositions.Dispose();
-					citizenPositions.Dispose();
 					citizenIndexes.Dispose();
 
 					job.spread.Dispose();
 					job.flee.Dispose();
 				}
-				else
-				{
-					citizenPositions.Dispose();
-				}
+
+				citizenPositions.Dispose();
 			}
-			else
-			{
-				diseasePositions.Dispose();
-			}
+
+			spreadParametersJob.diseasePositions.Dispose();
+			spreadParametersJob.diseaseRadiusSq.Dispose();
+			spreadParametersJob.rc.Dispose();
 		}
 
-		private void refreshMaskModifier()
+		private bool refreshMaskModifier()
 		{
 			if (this.areMasksRequired())
 			{
 				this.maskModifier = (100 - Mod.INSTANCE.m_Setting.maskEffectiveness) / 100f;
+				this.masksRequired = true;			
+				return true;
 			}
 			else
 			{
 				this.maskModifier = 1;
+				this.masksRequired = false;
+				return false;
 			}
 		}
 
@@ -224,6 +237,81 @@ namespace Pandemic
 			}
 
 			return true;
+		}
+
+		public static bool citizenWearsMask(Citizen citizen, int missingEducationModifier, bool isStudent)
+		{
+			int undereducated = isCitizenUnderEducated(citizen, isStudent);
+			if (undereducated <= 0)
+			{
+				return true;
+			}
+
+			undereducated = undereducated + missingEducationModifier;
+
+			return undereducated == 0 || citizen.m_PseudoRandom % undereducated == 0;
+		}
+
+		public static int isCitizenUnderEducated(Citizen citizen, bool isStudent)
+		{
+			CitizenAge citizenAge = citizen.GetAge();
+			switch (citizenAge)
+			{
+				case CitizenAge.Adult:
+				case CitizenAge.Elderly:
+					int educationLevel = citizen.GetEducationLevel();
+					if (educationLevel == 4)
+					{
+						return 0;
+					}
+					
+					return (4 - educationLevel) - (isStudent ? 1 : 0);
+				default:
+					return 0;
+			}
+		}
+
+		public ComputeDiseaseSpreadParametersJob initDiseaseSpreadParamsJob(EntityQuery diseaseQuery)
+		{
+			int maxResultSize = diseaseQuery.CalculateEntityCountWithoutFiltering();
+
+			ComputeDiseaseSpreadParametersJob spreadParametersJob = new ComputeDiseaseSpreadParametersJob();
+			spreadParametersJob.diseasePositions = new NativeArray<float3>(maxResultSize, Allocator.TempJob);
+			spreadParametersJob.diseaseRadiusSq = new NativeArray<float>(maxResultSize, Allocator.TempJob);
+			spreadParametersJob.citizenHandle = SystemAPI.GetComponentTypeHandle<Citizen>();
+			spreadParametersJob.currentTransportHandle = SystemAPI.GetComponentTypeHandle<CurrentTransport>();
+			spreadParametersJob.currentVehicleLookup = SystemAPI.GetComponentLookup<CurrentVehicle>();
+			spreadParametersJob.transformLookup = SystemAPI.GetComponentLookup<Transform>();
+			spreadParametersJob.rc = new NativeCounter(Allocator.TempJob);
+			spreadParametersJob.resultCounter = spreadParametersJob.rc.ToConcurrent();
+			spreadParametersJob.masksRequired = this.masksRequired;
+			spreadParametersJob.maskSpreadModifier = this.maskModifier;
+			spreadParametersJob.maskAversionModifier = this.missingEducationModifier;
+			spreadParametersJob.baseSpreadRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
+
+			return spreadParametersJob;
+		}
+
+		private void refreshSettings()
+		{
+			switch (Mod.INSTANCE.m_Setting.underEducatedModifier)
+			{
+				case PandemicSettings.UnderEducatedPolicyAdherenceModifier.None:
+					this.missingEducationModifier = -4;
+					break;
+				case PandemicSettings.UnderEducatedPolicyAdherenceModifier.Minor:
+					this.missingEducationModifier = -3;
+					break;
+				case PandemicSettings.UnderEducatedPolicyAdherenceModifier.Moderate:
+					this.missingEducationModifier = 0;
+					break;
+				case PandemicSettings.UnderEducatedPolicyAdherenceModifier.Severe:
+					this.missingEducationModifier = 2;
+					break;
+				case PandemicSettings.UnderEducatedPolicyAdherenceModifier.Extreme:
+					this.missingEducationModifier = 4;
+					break;
+			}
 		}
 	}
 }

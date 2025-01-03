@@ -5,15 +5,13 @@ using Unity.Mathematics;
 
 namespace Pandemic
 {
-	[BurstCompile]
+	//[BurstCompile]
 	public struct SpreadDiseaseJob : IJobParallelForBatch
 	{
 		[ReadOnly]
 		public NativeArray<float3> diseasePositions;
 		[ReadOnly]
-		public NativeArray<float> diseaseRadiuses;
-		[ReadOnly]
-		public float spreadRadius;
+		public NativeArray<float> diseaseRadiusSq;
 		[ReadOnly]
 		public float fleeRadius;
 		[ReadOnly]
@@ -43,9 +41,9 @@ namespace Pandemic
 						continue;
 					}
 
-					if (distance < spreadRadius)
+					if (distance < diseaseRadiusSq[j])
 					{
-						float norm = ((spreadRadius - distance) / spreadRadius * this.spreadChance);
+						float norm = ((diseaseRadiusSq[j] - distance) / diseaseRadiusSq[j] * this.spreadChance);
 						float r = UnityEngine.Random.Range(0f, 100f);
 
 						bool shouldSpread = r < norm;
