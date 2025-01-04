@@ -99,7 +99,7 @@ namespace Pandemic
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<Contagious>()
+				ComponentType.ReadOnly<CurrentDisease>()
 			},
 				None = new ComponentType[]
 			{
@@ -113,7 +113,7 @@ namespace Pandemic
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<Contagious>(),
+				ComponentType.ReadOnly<CurrentDisease>(),
 				ComponentType.ReadOnly<HealthProblem>(),
 				ComponentType.ReadWrite<Citizen>()
 			},
@@ -201,12 +201,12 @@ namespace Pandemic
 			}
 
 			NativeArray<Entity> curedEntities = this.removeDiseaseQuery.ToEntityArray(Allocator.Temp);
-			NativeArray<Contagious> curedComponents = this.removeDiseaseQuery.ToComponentDataArray<Contagious>(Allocator.Temp);
+			NativeArray<CurrentDisease> curedComponents = this.removeDiseaseQuery.ToComponentDataArray<CurrentDisease>(Allocator.Temp);
 			for (int i = 0; i <  curedEntities.Length; i++)
 			{
 				//if (curedComponents[i].minFrame <  this.simulationSystem.frameIndex)
 				{
-					EntityManager.RemoveComponent<Contagious>(curedEntities[i]);
+					EntityManager.RemoveComponent<CurrentDisease>(curedEntities[i]);
 				}
 			}
 
@@ -339,7 +339,7 @@ namespace Pandemic
 				{
 					if ((healthData[i].m_Flags & HealthProblemFlags.Dead) > 0)
 					{
-						EntityManager.RemoveComponent<Contagious>(citizens[i]);
+						EntityManager.RemoveComponent<CurrentDisease>(citizens[i]);
 						continue;
 					}
 					if (EntityManager.TryGetComponent<TravelPurpose>(citizens[i], out var travelPurpose) && travelPurpose.m_Purpose == Purpose.Hospital &&
@@ -370,7 +370,7 @@ namespace Pandemic
 						}
 						else if (EntityManager.HasComponent<Game.Buildings.Hospital>(building.m_CurrentBuilding))
 						{
-							EntityManager.RemoveComponent<Contagious>(citizens[i]);
+							EntityManager.RemoveComponent<CurrentDisease>(citizens[i]);
 						}
 					}
 
@@ -388,7 +388,7 @@ namespace Pandemic
 					if (deathChance > 0 && citizen.m_Health < 5 && random.Next(0, 100) < deathChance)
 					{
 						this.killCitizen(citizens[i]);
-						EntityManager.RemoveComponent<Contagious>(citizens[i]);
+						EntityManager.RemoveComponent<CurrentDisease>(citizens[i]);
 					}
 				}
 			}
@@ -430,7 +430,7 @@ namespace Pandemic
 			EntityManager.AddBuffer<TargetElement>(eventEntity);
 			EntityManager.GetBuffer<TargetElement>(eventEntity).Add(new TargetElement() { m_Entity = target });
 
-			EntityManager.AddComponent<Contagious>(target);
+			EntityManager.AddComponent<CurrentDisease>(target);
 			//EntityManager.SetComponentData(target, new Contagious() { minFrame = this.simulationSystem.frameIndex + 1000 });
 		}
 

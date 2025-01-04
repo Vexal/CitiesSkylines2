@@ -5,7 +5,7 @@ using Unity.Mathematics;
 
 namespace Pandemic
 {
-	//[BurstCompile]
+	[BurstCompile]
 	public struct SpreadDiseaseJob : IJobParallelForBatch
 	{
 		[ReadOnly]

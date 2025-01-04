@@ -39,19 +39,19 @@ namespace Pandemic
 		protected override void OnUpdate()
 		{
 			base.OnUpdate();
-			if (this.nextDiseaseTargets.Count > 0)
+			/*if (this.nextDiseaseTargets.Count > 0)
 			{
 				foreach (Entity entity in this.nextDiseaseTargets)
 				{
 					if (this.tryGetCitizenEntity(entity, out var citizen))
 					{
 						Mod.log.Info("applying disease to " + citizen.ToString());
-						EntityManager.AddComponent<Contagious>(citizen);
+						EntityManager.AddComponent<Cu>(citizen);
 					}
 				}
 
 				this.reset();
-			}
+			}*/
 		}
 
 		private void reset()

@@ -49,5 +49,7 @@ namespace Pandemic
 				m_Setting = null;
 			}
 		}
+
+		public static PandemicSettings settings { get => Mod.INSTANCE.m_Setting; }
 	}
 }

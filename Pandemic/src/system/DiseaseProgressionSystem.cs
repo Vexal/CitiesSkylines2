@@ -25,13 +25,13 @@ namespace Pandemic
 {
 	internal partial class DiseaseProgressionSystem : GameSystemBase
 	{
-		private EntityQuery healthyDiseaseEntityQuery;
+		private EntityQuery healthyDiseaseQuery;
 		private EntityQuery unhealthyDiseaseEntityQuery;
 		private EntityQuery healthProblemEntityQuery;
-		private EntityQuery diseaseEntityQuery;
 
 		private PrefabSystem prefabSystem;
 		private SimulationSystem simulationSystem;
+		private TimeSystem timeSystem;
 
 		private PrefabID sicknessEventPrefabId = new PrefabID("EventPrefab", "Generic Sickness");
 		private PrefabID policyPrefabId = new PrefabID("PolicyTogglePrefab", "PreRelease Programs");
@@ -43,6 +43,7 @@ namespace Pandemic
 		private Entity suddenDeathPrefabEntity;
 		private EntityArchetype deathEventArchetype;
 		private EntityArchetype resetTripArchetype;
+		private EntityArchetype diseaseArchetype;
 
 		protected override void OnCreate()
 		{
@@ -50,7 +51,9 @@ namespace Pandemic
 
 			this.prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
 			this.simulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
+			this.timeSystem = World.GetOrCreateSystemManaged<TimeSystem>();
 			this.resetTripArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<ResetTrip>());
+			this.diseaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Disease>());
 
 			if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
 			{
@@ -93,11 +96,12 @@ namespace Pandemic
 
 			this.prefabSystem.TryGetPrefab(this.policyPrefabId, out this.policyPrefabEntity);
 
-			this.healthyDiseaseEntityQuery = GetEntityQuery(new EntityQueryDesc
+
+			this.healthyDiseaseQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<Contagious>(),
+				ComponentType.ReadOnly<CurrentDisease>(),
 				ComponentType.ReadOnly<Citizen>()
 			},
 				None = new ComponentType[]
@@ -105,21 +109,6 @@ namespace Pandemic
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
 				ComponentType.ReadOnly<HealthProblem>()
-				}
-			});
-
-			this.unhealthyDiseaseEntityQuery = GetEntityQuery(new EntityQueryDesc
-			{
-				All = new ComponentType[]
-			{
-				ComponentType.ReadOnly<Contagious>(),
-				ComponentType.ReadOnly<Citizen>(),
-				ComponentType.ReadOnly<HealthProblem>()
-			},
-				None = new ComponentType[]
-			{
-				ComponentType.ReadOnly<Deleted>(),
-				ComponentType.ReadOnly<Temp>()
 				}
 			});
 
@@ -134,22 +123,22 @@ namespace Pandemic
 			{
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
-				ComponentType.ReadOnly<Contagious>(),
+				ComponentType.ReadOnly<CurrentDisease>(),
 				}
 			});
 
-			this.diseaseEntityQuery = GetEntityQuery(new EntityQueryDesc
+			this.unhealthyDiseaseEntityQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<Contagious>(),
-				ComponentType.ReadOnly<Citizen>(),
 				ComponentType.ReadOnly<HealthProblem>(),
+				ComponentType.ReadOnly<CurrentDisease>(),
+				ComponentType.ReadOnly<Citizen>()
 			},
 				None = new ComponentType[]
 			{
 				ComponentType.ReadOnly<Deleted>(),
-				ComponentType.ReadOnly<Temp>(),
+				ComponentType.ReadOnly<Temp>()
 				}
 			});
 
@@ -157,16 +146,16 @@ namespace Pandemic
 			pr.Remove(typeof(CityModifiers));
 			pr.Remove(typeof(Unlockable));
 			pr.AddComponent<CityModifiers>();
-			pr.GetComponent<CityModifiers>().m_Modifiers = new CityModifierInfo[2];
+			pr.GetComponent<CityModifiers>().m_Modifiers = new CityModifierInfo[1];
 			pr.GetComponent<CityModifiers>().m_Modifiers[0] = new CityModifierInfo();
 			pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Type = CityModifierType.Entertainment;
 			pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Mode = ModifierValueMode.Relative;
 			pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Range = new Colossal.Mathematics.Bounds1(new float2() {x = 15.5f, y = 15.5f });
 
-			pr.GetComponent<CityModifiers>().m_Modifiers[1] = new CityModifierInfo();
+			/*pr.GetComponent<CityModifiers>().m_Modifiers[1] = new CityModifierInfo();
 			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Type = CityModifierType.DiseaseProbability;
 			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Mode = ModifierValueMode.Relative;
-			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Range = new Colossal.Mathematics.Bounds1(new float2() {x = 100f, y = 100f });
+			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Range = new Colossal.Mathematics.Bounds1(new float2() {x = 100f, y = 100f });*/
 			this.prefabSystem.AddPrefab(pr);
 			Mod.log.Info("asset: " + pr.ToString() + " ; " + pr.asset?.name + " ; " + pr.asset?.ToString() + " ; " + pr.asset?.uniqueName);
 			Mod.log.Info("original asset: " + this.policyPrefabEntity.asset?.name + " ; " + this.policyPrefabEntity.asset?.ToString() + " ; " + this.policyPrefabEntity.asset?.uniqueName);
@@ -195,14 +184,14 @@ namespace Pandemic
 
 		private void removeDiseaseFromHealthy()
 		{
-			EntityManager.RemoveComponent<Contagious>(this.healthyDiseaseEntityQuery.ToEntityArray(Allocator.Temp));
+			EntityManager.RemoveComponent<CurrentDisease>(this.healthyDiseaseQuery.ToEntityArray(Allocator.Temp));
 			NativeArray<Entity> citizens = this.unhealthyDiseaseEntityQuery.ToEntityArray(Allocator.Temp);
 			NativeArray<HealthProblem> healthProblems = this.unhealthyDiseaseEntityQuery.ToComponentDataArray<HealthProblem>(Allocator.Temp);
 			for (int i = 0; i < citizens.Length; ++i)
 			{
-				if (!isSick(healthProblems[i].m_Flags) || this.isInHospital(citizens[i]))
+				if (!isSick(healthProblems[i].m_Flags))
 				{
-					EntityManager.RemoveComponent<Contagious>(citizens[i]);
+					EntityManager.RemoveComponent<CurrentDisease>(citizens[i]);
 				}
 			}
 		}
@@ -213,29 +202,49 @@ namespace Pandemic
 			NativeArray<HealthProblem> healthProblems = this.healthProblemEntityQuery.ToComponentDataArray<HealthProblem>(Allocator.Temp);
 			for (int i = 0; i < citizens.Length; ++i)
 			{
-				//this.makeCitizenSick(citizen);
-				if (isSick(healthProblems[i].m_Flags) && !this.isInHospital(citizens[i]))
+				if (!isSick(healthProblems[i].m_Flags))
 				{
-					EntityManager.AddComponent<Contagious>(citizens[i]);
-					if (EntityManager.TryGetComponent<CurrentTransport>(citizens[i], out var transport))
-					{
-
-						/*EntityManager.AddComponentData(EntityManager.CreateEntity(this.resetTripArchetype), new ResetTrip
-						{
-							m_Creature = transport.m_CurrentTransport,
-							m_Target = Entity.Null,
-							m_DivertPurpose = Purpose.Hospital
-							//m_DivertPurpose = Purpose.Hospital
-						});*/
-					}
+					continue;
 				}
+
+				Entity disease = Entity.Null;
+				Entity healthEvent = healthProblems[i].m_Event;
+
+				if (EntityManager.Exists(healthEvent) && EntityManager.TryGetComponent<DiseaseRef>(healthEvent, out var diseaseRef))
+				{
+					disease = diseaseRef.disease;
+				}
+
+				disease = this.createOrMutateDisease(disease, out var diseaseDefinition);
+
+				if (!EntityManager.TryGetComponent<LastDisease>(citizens[i], out var lastDisease))
+				{
+					lastDisease = new LastDisease();
+					EntityManager.AddComponent<LastDisease>(citizens[i]);
+				}
+
+				switch (diseaseDefinition.type)
+				{
+					case 1:
+						lastDisease.lastCold = disease;
+						break;
+					case 2:
+						lastDisease.lastFlu = disease;
+						break;
+				}
+
+				EntityManager.SetComponentData(citizens[i], lastDisease);
+
+				EntityManager.AddComponent<CurrentDisease>(citizens[i]);
+				EntityManager.SetComponentData(citizens[i], new CurrentDisease() { disease = disease, progression = 0f });
+				
 			}
 		}
 
 		private void progressHealthProblems()
 		{
-			NativeArray<Entity> citizens = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
-			NativeArray<Citizen> citizenData = this.diseaseEntityQuery.ToComponentDataArray<Citizen>(Allocator.Temp);
+			NativeArray<Entity> citizens = this.unhealthyDiseaseEntityQuery.ToEntityArray(Allocator.Temp);
+			NativeArray<Citizen> citizenData = this.unhealthyDiseaseEntityQuery.ToComponentDataArray<Citizen>(Allocator.Temp);
 
 			if (citizens.Length > 0) {
 				byte healthPenalty = this.getHealthDecreaseAmount();
@@ -243,6 +252,11 @@ namespace Pandemic
 				for (int i = 0; i < citizens.Length; ++i)
 				{
 					Citizen c = citizenData[i];
+					if (this.isInHospital(citizens[i]))
+					{
+						continue;
+					}
+
 					if (healthPenalty > 0)
 					{
 						if (c.m_Health <= healthPenalty)
@@ -265,31 +279,52 @@ namespace Pandemic
 			}
 		}
 
-		private void decreaseCitizenHealth(Entity citizenEntity, Citizen citizenData, byte amount)
+		public void makeCitizenSick(Entity targetCitizen, Entity disease)
 		{
-			if (citizenData.m_Health <= amount)
-			{
-				citizenData.m_Health = 0;
-			}
-			else
-			{
-				citizenData.m_Health -= amount;
-				EntityManager.SetComponentData(citizenEntity, citizenData);
-			}
-		}
-
-		public void makeCitizenSick(Entity targetCitizen)
-		{
-			//Mod.log.Info("sick archetype " + this.sickEventArchetype.ToString());
 			Entity eventEntity = EntityManager.CreateEntity(this.sickEventArchetype);
 
 			EntityManager.AddComponent<PrefabRef>(eventEntity);
 			EntityManager.SetComponentData(eventEntity, new PrefabRef(this.sicknessEventPrefabEntity));
 			EntityManager.AddBuffer<TargetElement>(eventEntity);
 			EntityManager.GetBuffer<TargetElement>(eventEntity).Add(new TargetElement() { m_Entity = targetCitizen });
-			EntityManager.AddComponent<DiseaseId>(eventEntity);
-			EntityManager.SetComponentData(eventEntity, new DiseaseId() { diseaseId = 1 });
+			EntityManager.AddComponent<DiseaseRef>(eventEntity);
+			EntityManager.SetComponentData(eventEntity, new DiseaseRef() { disease = disease });
 
+		}
+
+		private static DateTime EPOCH = new DateTime(1970, 1, 1);
+
+		public Entity createOrMutateDisease(Entity prev, out Disease disease)
+		{
+			if (prev == Entity.Null)
+			{
+				Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
+				DateTime date = this.timeSystem.GetCurrentDateTime();
+				long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
+				disease = new Disease()
+				{
+					type = 1,
+					baseDeathChance = (Mod.settings.suddenDeathChance / 100f),
+					baseHealthPenalty = this.getHealthDecreaseAmount(),
+					baseSpreadChance = Mod.settings.diseaseSpreadChance,
+					baseSpreadRadius = Mod.settings.diseaseSpreadRadius,
+					maxDeathHealth = MAX_DEATH_HEALTH,
+					createYear = date.Year,
+					createMonth = date.Month,
+					createHour = date.Hour,
+					createMinute = date.Minute,
+					ts = unixTs
+				};
+
+				EntityManager.SetComponentData(newDisease, disease);
+
+				return newDisease;
+			}
+			else
+			{
+				disease = EntityManager.GetComponentData<Disease>(prev);
+				return prev;
+			}
 		}
 
 		public byte getHealthDecreaseAmount()
@@ -317,6 +352,20 @@ namespace Pandemic
 			EntityManager.SetComponentData(eventEntity, new PrefabRef(this.suddenDeathPrefabEntity));
 			EntityManager.AddBuffer<TargetElement>(eventEntity);
 			EntityManager.GetBuffer<TargetElement>(eventEntity).Add(new TargetElement() { m_Entity = target });
+		}
+
+		private void resetTrip(Entity citizen)
+		{
+			if (EntityManager.TryGetComponent<CurrentTransport>(citizen, out var transport))
+			{
+				EntityManager.AddComponentData(EntityManager.CreateEntity(this.resetTripArchetype), new ResetTrip
+				{
+					m_Creature = transport.m_CurrentTransport,
+					m_Target = Entity.Null,
+					//m_DivertPurpose = Purpose.Hospital
+					//m_DivertPurpose = Purpose.Hospital
+				});
+			}
 		}
 
 		private bool shouldProgressDisease()

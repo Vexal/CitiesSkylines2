@@ -1,6 +1,7 @@
 ﻿using Colossal;
 using Colossal.Entities;
 using Game;
+using Game.Buildings;
 using Game.Citizens;
 using Game.City;
 using Game.Common;
@@ -47,10 +48,10 @@ namespace Pandemic
 			{
 				All = new ComponentType[]
 			{
-				ComponentType.ReadOnly<Contagious>(),
 				ComponentType.ReadOnly<HealthProblem>(),
 				ComponentType.ReadOnly<Citizen>(),
 				ComponentType.ReadOnly<CurrentTransport>(),
+				ComponentType.ReadOnly<CurrentDisease>(),
 			},
 				None = new ComponentType[]
 			{
@@ -72,7 +73,7 @@ namespace Pandemic
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
 				ComponentType.ReadOnly<Unspawned>(),
-				ComponentType.ReadOnly<Contagious>(),
+				ComponentType.ReadOnly<CurrentDisease>(),
 				ComponentType.ReadOnly<HealthProblem>()
 				}
 			});
@@ -118,21 +119,6 @@ namespace Pandemic
 			JobHandle spreadJobHandle = spreadParametersJob.ScheduleParallel(this.diseaseCitizenHumanEntityQuery, default);
 			spreadJobHandle.Complete();
 
-			/*NativeArray<CurrentTransport> diseasedTransports = this.diseaseCitizenHumanEntityQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
-			NativeList<float3> diseasePositions = new NativeList<float3>(Allocator.TempJob);
-			NativeList<float> diseaseRadiusModifiers = new NativeList<float>(Allocator.TempJob);
-
-			float baseRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
-			for (int i = 0; i < diseasedTransports.Length; ++i)
-			{
-				CurrentTransport t = diseasedTransports[i];
-				if (!EntityManager.HasComponent<CurrentVehicle>(t.m_CurrentTransport) &&
-					EntityManager.TryGetComponent<Transform>(t.m_CurrentTransport, out var transform))
-				{
-					diseasePositions.Add(transform.m_Position);
-				}
-			}*/
-
 			if (spreadParametersJob.rc.Count > 0)
 			{
 				NativeArray<CurrentTransport> citizenTransports = this.healthyCitizenQuery.ToComponentDataArray<CurrentTransport>(Allocator.Temp);
@@ -171,21 +157,15 @@ namespace Pandemic
 					for (int i = 0; i < job.spread.Length; ++i)
 					{
 						int citizenIndex = citizenIndexes[i];
-						if (job.spread[i] > 0 && spreadCount++ < Mod.INSTANCE.m_Setting.maxDiseaseSpreadPerFrame)
+						if (job.spread[i] > 0 && !this.isImmuneToDisease(citizens[i], spreadParametersJob.diseases[job.spread[i] - 1]) && spreadCount++ < Mod.INSTANCE.m_Setting.maxDiseaseSpreadPerFrame)
 						{
+							
 							//Mod.log.Info("Spread to " + job.diseasePositions[i].ToString() + " entity " + citizens[citizenIndex].ToString() + " from position " + diseasePositions[job.spread[i] - 1].ToString() + " r: " + job.diseaseRandom[i].ToString());
 							//EntityManager.AddComponent<Disease>(citizens[citizenIndexes[i]]);
-							this.diseaseProgressionSystem.makeCitizenSick(citizens[citizenIndex]);
-							/*Entity e = EntityManager.CreateEntity(this.resetTripArchetype);
-							EntityManager.AddComponentData(e, new ResetTrip
-							{
-								m_Creature = citizenTransports[citizenIndex].m_CurrentTransport,
-								m_Target = Entity.Null,
-								m_NextPurpose = Purpose.Hospital
-								//m_DivertPurpose = Purpose.Hospital
-							});*/
+							this.diseaseProgressionSystem.makeCitizenSick(citizens[citizenIndex], spreadParametersJob.diseases[job.spread[i] - 1]);
+							
 						}
-						else if (job.flee[i] && (!EntityManager.TryGetComponent<TravelPurpose>(citizens[citizenIndex], out var travelPurpose) || 
+						/*else if (job.flee[i] && (!EntityManager.TryGetComponent<TravelPurpose>(citizens[citizenIndex], out var travelPurpose) || 
 							(travelPurpose.m_Purpose & Purpose.GoingHome) == 0))
 						{
 							Entity e = EntityManager.CreateEntity(this.resetTripArchetype);
@@ -195,7 +175,7 @@ namespace Pandemic
 								m_Target = Entity.Null,
 								//m_DivertPurpose = Purpose.Hospital
 							});
-						}
+						}*/
 					}
 
 					citizenIndexes.Dispose();
@@ -207,9 +187,7 @@ namespace Pandemic
 				citizenPositions.Dispose();
 			}
 
-			spreadParametersJob.diseasePositions.Dispose();
-			spreadParametersJob.diseaseRadiusSq.Dispose();
-			spreadParametersJob.rc.Dispose();
+			spreadParametersJob.cleanup();
 		}
 
 		private bool refreshMaskModifier()
@@ -226,6 +204,32 @@ namespace Pandemic
 				this.masksRequired = false;
 				return false;
 			}
+		}
+
+		private bool isImmuneToDisease(Entity citizen, Entity diseaseEntity)
+		{
+			if (!EntityManager.TryGetComponent<LastDisease>(citizen, out var lastDisease))
+			{
+				return false;
+			}
+
+			if (!EntityManager.TryGetComponent<Disease>(diseaseEntity, out var disease))
+			{
+				return false;
+			}
+
+			Entity lastRelevantDisease = lastDisease.getLastOfType(disease.type);
+			if (lastRelevantDisease == Entity.Null)
+			{
+				return false;
+			}
+
+			if (!EntityManager.TryGetComponent<Disease>(lastRelevantDisease, out var mostRecentDiseaseDefinition))
+			{
+				return false;
+			}
+
+			return mostRecentDiseaseDefinition.ts >= disease.ts;
 		}
 
 		private bool areMasksRequired()
@@ -278,16 +282,20 @@ namespace Pandemic
 			ComputeDiseaseSpreadParametersJob spreadParametersJob = new ComputeDiseaseSpreadParametersJob();
 			spreadParametersJob.diseasePositions = new NativeArray<float3>(maxResultSize, Allocator.TempJob);
 			spreadParametersJob.diseaseRadiusSq = new NativeArray<float>(maxResultSize, Allocator.TempJob);
+			spreadParametersJob.diseases = new NativeArray<Entity>(maxResultSize, Allocator.TempJob);
 			spreadParametersJob.citizenHandle = SystemAPI.GetComponentTypeHandle<Citizen>();
 			spreadParametersJob.currentTransportHandle = SystemAPI.GetComponentTypeHandle<CurrentTransport>();
+			spreadParametersJob.currentDiseaseHandle = SystemAPI.GetComponentTypeHandle<CurrentDisease>();
+			spreadParametersJob.currentBuildingHandle = SystemAPI.GetComponentTypeHandle<CurrentBuilding>();
 			spreadParametersJob.currentVehicleLookup = SystemAPI.GetComponentLookup<CurrentVehicle>();
 			spreadParametersJob.transformLookup = SystemAPI.GetComponentLookup<Transform>();
+			spreadParametersJob.diseaseLookup = SystemAPI.GetComponentLookup<Disease>();
+			spreadParametersJob.hospitalLookup = SystemAPI.GetComponentLookup<Hospital>();
 			spreadParametersJob.rc = new NativeCounter(Allocator.TempJob);
 			spreadParametersJob.resultCounter = spreadParametersJob.rc.ToConcurrent();
 			spreadParametersJob.masksRequired = this.masksRequired;
 			spreadParametersJob.maskSpreadModifier = this.maskModifier;
 			spreadParametersJob.maskAversionModifier = this.missingEducationModifier;
-			spreadParametersJob.baseSpreadRadius = Mod.INSTANCE.m_Setting.diseaseSpreadRadius;
 
 			return spreadParametersJob;
 		}
