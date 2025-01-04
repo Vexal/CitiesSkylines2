@@ -17,5 +17,7 @@ namespace Pandemic
 		public int createDay;
 		public int createHour;
 		public int createMinute;
+		public uint infectionCount;
+		public uint victimCount;
 	}
 }

@@ -15,6 +15,7 @@ using Game.Tools;
 using Game.UI;
 using Game.Vehicles;
 using System;
+using System.Runtime.Remoting.Lifetime;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.UniversalDelegates;
@@ -28,6 +29,7 @@ namespace Pandemic
 		private EntityQuery healthyDiseaseQuery;
 		private EntityQuery unhealthyDiseaseEntityQuery;
 		private EntityQuery healthProblemEntityQuery;
+		private EntityQuery diseaseEntityQuery;
 
 		private PrefabSystem prefabSystem;
 		private SimulationSystem simulationSystem;
@@ -109,6 +111,19 @@ namespace Pandemic
 				ComponentType.ReadOnly<Deleted>(),
 				ComponentType.ReadOnly<Temp>(),
 				ComponentType.ReadOnly<HealthProblem>()
+				}
+			});
+
+			this.diseaseEntityQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Disease>(),
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>()
 				}
 			});
 
@@ -233,6 +248,10 @@ namespace Pandemic
 						break;
 				}
 
+				diseaseDefinition.infectionCount++;
+
+				EntityManager.SetComponentData(disease, diseaseDefinition);
+
 				EntityManager.SetComponentData(citizens[i], lastDisease);
 
 				EntityManager.AddComponent<CurrentDisease>(citizens[i]);
@@ -298,6 +317,25 @@ namespace Pandemic
 		{
 			if (prev == Entity.Null)
 			{
+				return this.getOrCreateRandomDisease(out disease);
+			}
+			else
+			{
+				disease = EntityManager.GetComponentData<Disease>(prev);
+				return prev;
+			}
+		}
+
+		private Entity getOrCreateRandomDisease(out Disease disease)
+		{
+			NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
+			if (diseases.Length > 0)
+			{
+				disease = EntityManager.GetComponentData<Disease>(diseases[0]);
+				return diseases[0];
+			}
+			else
+			{
 				Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
 				DateTime date = this.timeSystem.GetCurrentDateTime();
 				long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
@@ -317,13 +355,7 @@ namespace Pandemic
 				};
 
 				EntityManager.SetComponentData(newDisease, disease);
-
 				return newDisease;
-			}
-			else
-			{
-				disease = EntityManager.GetComponentData<Disease>(prev);
-				return prev;
 			}
 		}
 
@@ -381,6 +413,12 @@ namespace Pandemic
 		private bool isInHospital(Entity citizen)
 		{
 			return EntityManager.TryGetComponent<CurrentBuilding>(citizen, out var building) && EntityManager.HasComponent<Game.Buildings.Hospital>(building.m_CurrentBuilding);
+		}
+
+		protected override void OnGamePreload(Colossal.Serialization.Entities.Purpose purpose, GameMode mode)
+		{
+			base.OnGamePreload(purpose, mode);
+			EntityManager.AddComponent<Deleted>(this.diseaseEntityQuery);
 		}
 	}
 }

@@ -157,7 +157,7 @@ namespace Pandemic
 					for (int i = 0; i < job.spread.Length; ++i)
 					{
 						int citizenIndex = citizenIndexes[i];
-						if (job.spread[i] > 0 && !this.isImmuneToDisease(citizens[i], spreadParametersJob.diseases[job.spread[i] - 1]) && spreadCount++ < Mod.INSTANCE.m_Setting.maxDiseaseSpreadPerFrame)
+						if (job.spread[i] > 0 && !this.isImmuneToDisease(citizens[citizenIndex], spreadParametersJob.diseases[job.spread[i] - 1]) && spreadCount++ < Mod.INSTANCE.m_Setting.maxDiseaseSpreadPerFrame)
 						{
 							
 							//Mod.log.Info("Spread to " + job.diseasePositions[i].ToString() + " entity " + citizens[citizenIndex].ToString() + " from position " + diseasePositions[job.spread[i] - 1].ToString() + " r: " + job.diseaseRandom[i].ToString());
