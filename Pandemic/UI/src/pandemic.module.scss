@@ -1,0 +1,16 @@
+.diseaseDetailsButton {
+	color: lightgreen;
+
+	&:hover {
+		color:lightblue;
+		cursor: help;
+	}
+
+	&.expanded {
+		color: lightblue;
+
+		&:hover {
+			color: lightgreen;
+		}
+	}
+}

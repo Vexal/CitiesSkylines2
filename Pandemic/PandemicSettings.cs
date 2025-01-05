@@ -10,13 +10,14 @@ using System.Collections.Generic;
 namespace Pandemic
 {
 	[FileLocation(nameof(Pandemic))]
-	[SettingsUIGroupOrder(diseaseSpreadSettings, diseaseImpactSettings, citizenBehaviorGroup, appearanceSettings, kKeybindingGroup)]
+	[SettingsUIGroupOrder(diseaseSpreadSettings, ccDiseaseGrp, diseaseImpactSettings, citizenBehaviorGroup, appearanceSettings, kKeybindingGroup)]
 	[SettingsUITabOrder(mainSection, actionsSection)]
-	[SettingsUIShowGroupName(citizenBehaviorGroup, diseaseImpactSettings, diseaseSpreadSettings, kKeybindingGroup, appearanceSettings)]
+	[SettingsUIShowGroupName(citizenBehaviorGroup, ccDiseaseGrp, diseaseImpactSettings, diseaseSpreadSettings, kKeybindingGroup, appearanceSettings)]
 	[SettingsUIKeyboardAction(Mod.impartDiseaseActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "PTestUsage" })]
 	public class PandemicSettings : ModSetting
 	{
 		public const string mainSection = "Main";
+		public const string diseaseSection = "Diseases";
 		public const string actionsSection = "ActionsSection";
 
 		public const string appearanceSettings = "Appearance";
@@ -25,6 +26,7 @@ namespace Pandemic
 		public const string diseaseSpreadSettings = "DiseaseSpreadSettings";
 		public const string diseaseImpactSettings = "DiseaseImpactSettings";
 		public const string kButtonGroup = "Actions";
+		public const string ccDiseaseGrp = "CommonCold";
 
 		internal DiseaseToolSystem diseaseToolSystem;
 		internal ForceSicknessSystem forceSicknessSystem;
@@ -40,7 +42,19 @@ namespace Pandemic
 			this.maskEffectiveness = 65;
 			this.showContagiousCircle = true;
 			this.contagiousGraphicOpacity = .15f;
+			this.ccMutationChance = .005f;
+			this.ccMutationMagnitude = .15f;
 		}
+
+		//Disease Spread Settings
+		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public float ccMutationChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 1.99f, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public float ccMutationMagnitude { get; set; }
+
 
 		[SettingsUISection(actionsSection, kButtonGroup)]
 		public bool MakeEveryoneSickButton { set { this.forceSicknessSystem.makeAllCitizensSick(); } }
@@ -116,6 +130,8 @@ namespace Pandemic
 			this.contagiousGraphicOpacity = .15f;
 			this.underEducatedModifier = UnderEducatedPolicyAdherenceModifier.Minor;
 			this.diseaseProgressionSpeed = DiseaseProgression.Minor;
+			this.ccMutationChance = .005f;
+			this.ccMutationMagnitude = 5f;
 		}
 
 		public enum DiseaseProgression
@@ -151,14 +167,22 @@ namespace Pandemic
 				{ m_Setting.GetSettingsLocaleID(), "Pandemic" },
 				{ m_Setting.GetOptionTabLocaleID(PandemicSettings.mainSection), "Main" },
 				{ m_Setting.GetOptionTabLocaleID(PandemicSettings.actionsSection), "Actions" },
+				{ m_Setting.GetOptionTabLocaleID(PandemicSettings.diseaseSection), "Diseases Config" },
 
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.appearanceSettings), "Appearance Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.diseaseSpreadSettings), "Disease Spread Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.citizenBehaviorGroup), "Citizen Behavior Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.diseaseImpactSettings), "Disease Progression Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.kKeybindingGroup), "Key Bindings" },
+				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.ccDiseaseGrp), "Common Cold" },
 
-
+				/**
+				 * Common Cold
+				 */
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccMutationChance)), "Common Cold Mutation Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccMutationChance)), $"The % chance for a common cold strain to mutate upon spread." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccMutationMagnitude)), "Common Cold Mutation Variability" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccMutationMagnitude)), $"The upper bound in disease parameter variability upon mutation." },
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.MakeEveryoneSickButton)), "Make All Citizens Sick" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.MakeEveryoneSickButton)), $"Make all citizens sick." },

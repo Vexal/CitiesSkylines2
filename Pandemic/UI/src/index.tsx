@@ -5,22 +5,32 @@ import { VanillaComponentResolver } from "./VanillaComponentResolver";
 import { bindValue } from "cs2/api";
 import { Component } from "react";
 import { InfoRow } from "cs2/ui";
+import styles from "./pandemic.module.scss"
 
 export const diseaseList = bindValue<any[]>("Pandemic", 'diseases');
 export const currentInfectionCount = bindValue<string[]>("Pandemic", 'currentInfectionCount');
+
+function DiseaseDetailsPanel(props: { disease: any }) {
+	return <>
+	</>
+}
+
 class DiseaseInfoPanel extends Component {
 	state = {
 		diseaseList: diseaseList.value,
-		currentInfectionCount: patientCountMap(currentInfectionCount.value)
+		currentInfectionCount: patientCountMap(currentInfectionCount.value),
+		activeOnly: true   
 	}
+
 	render() {
 		console.log("the disease list", InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
 		return <div>
 			<InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
 				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"}></InfoviewPanelLabel>
-				{this.state.diseaseList?.map(disease => <><InfoviewPanelLabel
+				{this.state.diseaseList?.filter(disease => !this.state.activeOnly || this.state.currentInfectionCount[disease.uniqueKey] > 0).map(disease => <><InfoviewPanelLabel
 					small={1}
 					text={DiseaseInfoPanel.strainHeader(disease)}
+					rightText={<div className={ styles.diseaseDetailsButton }>Show Details</div> }
 				/>
 					<InfoviewPanelLabel
 						text={"Current Sick"}

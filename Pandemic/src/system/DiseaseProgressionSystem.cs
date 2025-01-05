@@ -264,10 +264,9 @@ namespace Pandemic
 		{
 			NativeArray<Entity> citizens = this.unhealthyDiseaseEntityQuery.ToEntityArray(Allocator.Temp);
 			NativeArray<Citizen> citizenData = this.unhealthyDiseaseEntityQuery.ToComponentDataArray<Citizen>(Allocator.Temp);
+			NativeArray<CurrentDisease> currentDiseases = this.unhealthyDiseaseEntityQuery.ToComponentDataArray<CurrentDisease>(Allocator.Temp);
 
 			if (citizens.Length > 0) {
-				byte healthPenalty = this.getHealthDecreaseAmount();
-				int suddenDeathChance = Mod.INSTANCE.m_Setting.suddenDeathChance;
 				for (int i = 0; i < citizens.Length; ++i)
 				{
 					Citizen c = citizenData[i];
@@ -276,21 +275,22 @@ namespace Pandemic
 						continue;
 					}
 
-					if (healthPenalty > 0)
+					Disease disease = EntityManager.GetComponentData<Disease>(currentDiseases[i].disease);
+					if (disease.baseHealthPenalty > 0)
 					{
-						if (c.m_Health <= healthPenalty)
+						if (c.m_Health <= disease.baseHealthPenalty)
 						{
 							c.m_Health = 0;
 						}
 						else
 						{
-							c.m_Health -= healthPenalty;
+							c.m_Health -= disease.baseHealthPenalty;
 							EntityManager.SetComponentData(citizens[i], c);
 						}
 					}
 
-					if (suddenDeathChance > 0 && c.m_Health <= MAX_DEATH_HEALTH &&
-						UnityEngine.Random.Range(0, 100) <= suddenDeathChance)
+					if (disease.baseDeathChance > 0 && c.m_Health <= disease.maxDeathHealth &&
+						UnityEngine.Random.Range(0, 100) <= disease.baseDeathChance)
 					{
 						this.killCitizen(citizens[i]);
 					}
@@ -322,7 +322,28 @@ namespace Pandemic
 			else
 			{
 				disease = EntityManager.GetComponentData<Disease>(prev);
-				return prev;
+				if (disease.shouldMutate())
+				{
+					Disease mutation = disease.mutate();
+					Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
+					DateTime date = this.timeSystem.GetCurrentDateTime();
+					long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
+
+					mutation.id = UnityEngine.Random.Range(1, int.MaxValue);
+					mutation.ts = unixTs;
+					mutation.entity = newDisease;
+					mutation.createYear = date.Year;
+					mutation.createMonth = date.Month;
+					mutation.createHour = date.Hour;
+					mutation.createMinute = date.Minute;
+					mutation.createDay = date.Day;
+					disease = mutation;
+					return newDisease;
+				}
+				else
+				{
+					return prev;
+				}
 			}
 		}
 
@@ -331,8 +352,8 @@ namespace Pandemic
 			NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
 			if (diseases.Length > 0)
 			{
-				disease = EntityManager.GetComponentData<Disease>(diseases[0]);
-				return diseases[0];
+				disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
+				return disease.entity;
 			}
 			else
 			{
@@ -341,17 +362,22 @@ namespace Pandemic
 				long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
 				disease = new Disease()
 				{
-					id = 0,
+					id = UnityEngine.Random.Range(1, int.MaxValue),
 					type = 1,
 					baseDeathChance = (Mod.settings.suddenDeathChance / 100f),
 					baseHealthPenalty = this.getHealthDecreaseAmount(),
 					baseSpreadChance = Mod.settings.diseaseSpreadChance,
 					baseSpreadRadius = Mod.settings.diseaseSpreadRadius,
 					maxDeathHealth = MAX_DEATH_HEALTH,
+					mutationChance = Mod.settings.ccMutationChance,
+					mutationMagnitude = Mod.settings.ccMutationMagnitude,
 					createYear = date.Year,
 					createMonth = date.Month,
 					createHour = date.Hour,
 					createMinute = date.Minute,
+					createSecond = date.Second,
+					createWeek = date.DayOfYear,
+					createDay = date.Day,
 					ts = unixTs,
 					entity = newDisease
 				};
