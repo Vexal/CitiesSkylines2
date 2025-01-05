@@ -341,6 +341,7 @@ namespace Pandemic
 				long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
 				disease = new Disease()
 				{
+					id = 0,
 					type = 1,
 					baseDeathChance = (Mod.settings.suddenDeathChance / 100f),
 					baseHealthPenalty = this.getHealthDecreaseAmount(),
@@ -351,7 +352,8 @@ namespace Pandemic
 					createMonth = date.Month,
 					createHour = date.Hour,
 					createMinute = date.Minute,
-					ts = unixTs
+					ts = unixTs,
+					entity = newDisease
 				};
 
 				EntityManager.SetComponentData(newDisease, disease);
