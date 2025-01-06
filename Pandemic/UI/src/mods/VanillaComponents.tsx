@@ -1,15 +1,5 @@
+import { Theme } from "cs2/bindings";
 import { getModule } from "cs2/modding";
-import { Theme, FocusKey, UniqueFocusKey } from "cs2/bindings";
-import { bindValue, trigger, useValue } from "cs2/api";
-import { useLocalization } from "cs2/l10n";
-import { VanillaComponentResolver } from "./VanillaComponentResolver";
-
-
-interface InfoSectionComponent {
-	group: string;
-	tooltipKeys: Array<string>;
-	tooltipTags: Array<string>;
-}
 
 export const InfoSectionTheme: Theme | any = getModule(
 	"game-ui/game/components/selected-info-panel/shared-components/info-section/info-section.module.scss",
@@ -82,50 +72,3 @@ export const InfoviewPanelSection: any = getModule(
 	"game-ui/game/components/infoviews/active-infoview-panel/components/sections/infoview-panel-section.tsx",
 	"InfoviewPanelSection"
 )
-
-function handleClick(eventName: string) {
-	// This triggers an event on C# side and C# designates the method to implement.
-}
-
-export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
-	console.log("component list", componentList);
-	//return <div>"test again here</div>
-	componentList["Pandemic.HealthInfoUISystem"] = (e: any) => {
-		//return <div>"test</div>
-		console.log("the e", e);
-		//return <InfoviewPanelSection>test</InfoviewPanelSection>
-		console.log("the e2", e);
-		const parts = [e.group, e.group]; //  e.group.split(",");
-		return <InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
-			<InfomodeItem
-				left={parts[0]}
-				right=
-				{
-					parts[1]
-				}
-				uppercase={true}
-				disableFocus={true}
-				subRow={false}
-				className={InfomodeItemTheme.infomodeItem}
-			></InfomodeItem>
-		</InfoviewPanelSection>
-		// These get the value of the bindings.
-		/*return <InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
-			<InfomodeItem
-				left={parts[0]}
-				right=
-				{
-					parts[1]
-				}
-				uppercase={true}
-				disableFocus={true}
-				subRow={false}
-				className={InfomodeItemTheme.infomodeItem}
-			></InfomodeItem>
-		</InfoviewPanelSection>
-			;*/
-			return <div>test test test?</div>
-	}
-
-	return componentList as any;
-}

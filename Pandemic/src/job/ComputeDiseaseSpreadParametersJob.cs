@@ -28,6 +28,8 @@ namespace Pandemic
 		[ReadOnly]
 		public ComponentLookup<Transform> transformLookup;
 		[ReadOnly]
+		public ComponentLookup<TripSource> tripSourceLookup;
+		[ReadOnly]
 		public ComponentLookup<Disease> diseaseLookup;
 		[ReadOnly]
 		public ComponentLookup<Hospital> hospitalLookup;
@@ -40,6 +42,7 @@ namespace Pandemic
 
 		public NativeArray<float3> diseasePositions;
 		public NativeArray<float> diseaseRadiusSq;
+		public NativeArray<float> spreadChance;
 		public NativeArray<Entity> diseases;
 		public NativeCounter.Concurrent resultCounter;
 		[ReadOnly]
@@ -78,9 +81,15 @@ namespace Pandemic
 					continue;
 				}
 
+				if (this.tripSourceLookup.HasComponent(currentTransports[i].m_CurrentTransport))
+				{
+					continue;
+				}
+
 				int index = this.resultCounter.Increment(1);
 				this.diseasePositions[index] = t.m_Position;
 				this.diseases[index] = currentDiseases[i].disease;
+				this.spreadChance[index] = disease.baseSpreadChance;
 
 				float radius = disease.baseSpreadRadius;
 
@@ -101,6 +110,7 @@ namespace Pandemic
 			this.diseasePositions.Dispose(j);
 			this.diseaseRadiusSq.Dispose(j);
 			this.diseases.Dispose(j);
+			this.spreadChance.Dispose(j);
 		}
 
 		public void cleanup()
@@ -109,6 +119,7 @@ namespace Pandemic
 			this.diseaseRadiusSq.Dispose();
 			this.diseases.Dispose();
 			this.rc.Dispose();
+			this.spreadChance.Dispose();
 		}
 	}
 }

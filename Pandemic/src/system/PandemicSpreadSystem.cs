@@ -74,7 +74,8 @@ namespace Pandemic
 				ComponentType.ReadOnly<Temp>(),
 				ComponentType.ReadOnly<Unspawned>(),
 				ComponentType.ReadOnly<CurrentDisease>(),
-				ComponentType.ReadOnly<HealthProblem>()
+				ComponentType.ReadOnly<HealthProblem>(),
+				ComponentType.ReadOnly<TripSource>()
 				}
 			});
 
@@ -146,7 +147,7 @@ namespace Pandemic
 					job.diseaseRadiusSq = spreadParametersJob.diseaseRadiusSq;
 					job.citizenPositions = citizenPositions.AsArray();
 					job.fleeRadius = 0;// job.spreadRadius + Mod.INSTANCE.m_Setting.diseaseFleeRadius;
-					job.spreadChance = Mod.INSTANCE.m_Setting.diseaseSpreadChance;
+					job.spreadChance = spreadParametersJob.spreadChance;
 					job.spread = new NativeArray<int>(citizenPositions.Length, Allocator.TempJob);
 					job.flee = new NativeArray<bool>(citizenPositions.Length, Allocator.TempJob);
 					var jobHandle = job.ScheduleBatch(citizenPositions.Length, 100);
@@ -282,6 +283,7 @@ namespace Pandemic
 			ComputeDiseaseSpreadParametersJob spreadParametersJob = new ComputeDiseaseSpreadParametersJob();
 			spreadParametersJob.diseasePositions = new NativeArray<float3>(maxResultSize, Allocator.TempJob);
 			spreadParametersJob.diseaseRadiusSq = new NativeArray<float>(maxResultSize, Allocator.TempJob);
+			spreadParametersJob.spreadChance = new NativeArray<float>(maxResultSize, Allocator.TempJob);
 			spreadParametersJob.diseases = new NativeArray<Entity>(maxResultSize, Allocator.TempJob);
 			spreadParametersJob.citizenHandle = SystemAPI.GetComponentTypeHandle<Citizen>();
 			spreadParametersJob.currentTransportHandle = SystemAPI.GetComponentTypeHandle<CurrentTransport>();
@@ -291,6 +293,7 @@ namespace Pandemic
 			spreadParametersJob.transformLookup = SystemAPI.GetComponentLookup<Transform>();
 			spreadParametersJob.diseaseLookup = SystemAPI.GetComponentLookup<Disease>();
 			spreadParametersJob.hospitalLookup = SystemAPI.GetComponentLookup<Hospital>();
+			spreadParametersJob.tripSourceLookup = SystemAPI.GetComponentLookup<TripSource>();
 			spreadParametersJob.rc = new NativeCounter(Allocator.TempJob);
 			spreadParametersJob.resultCounter = spreadParametersJob.rc.ToConcurrent();
 			spreadParametersJob.masksRequired = this.masksRequired;

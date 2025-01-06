@@ -15,7 +15,7 @@ namespace Pandemic
 		[ReadOnly]
 		public float fleeRadius;
 		[ReadOnly]
-		public float spreadChance;
+		public NativeArray<float> spreadChance;
 		[ReadOnly]
 		public NativeArray<float3> citizenPositions;
 
@@ -43,8 +43,8 @@ namespace Pandemic
 
 					if (distance < diseaseRadiusSq[j])
 					{
-						float norm = ((diseaseRadiusSq[j] - distance) / diseaseRadiusSq[j] * this.spreadChance);
-						float r = UnityEngine.Random.Range(0f, 100f);
+						float norm = ((diseaseRadiusSq[j] - distance) / diseaseRadiusSq[j]) * this.spreadChance[j];
+						float r = UnityEngine.Random.Range(0.001f, 100f);
 
 						bool shouldSpread = r < norm;
 						if (shouldSpread)

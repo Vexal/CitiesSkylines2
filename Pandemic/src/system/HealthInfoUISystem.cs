@@ -1,6 +1,8 @@
-﻿using Colossal.Serialization.Entities;
+﻿using Colossal.Entities;
+using Colossal.Serialization.Entities;
 using Colossal.UI.Binding;
 using Game;
+using Game.Citizens;
 using Game.Common;
 using Game.Tools;
 using Game.UI;
@@ -15,17 +17,19 @@ using Unity.Entities;
 
 namespace Pandemic
 {
-	public partial class HealthInfoUISystem : UISystemBase // InfoSectionBase
+	public partial class HealthInfoUISystem : InfoSectionBase
 	{
 		private EntityQuery diseaseQuery;
 		private EntityQuery currentDiseaseQuery;
 		private ValueBinding<Disease[]> diseaseBinding;
 		private ValueBinding<string[]> currentInfectionCountBinding;
 		private UIUpdateState uf;
+		private ToolSystem toolSystem;
 
 		protected override void OnCreate()
 		{
 			base.OnCreate();
+			m_InfoUISystem.AddTopSection(this);
 			this.uf = UIUpdateState.Create(base.World, 60);
 
 			this.diseaseBinding = new ValueBinding<Disease[]>("Pandemic", "diseases", new Disease[] { }, new ArrayWriter<Disease>(new ValueWriter<Disease>()));
@@ -59,6 +63,8 @@ namespace Pandemic
 				ComponentType.ReadOnly<Temp>()
 				}
 			});
+
+			this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
 		}
 
 		protected override void OnUpdate()
@@ -102,12 +108,68 @@ namespace Pandemic
 			this.currentInfectionCountBinding.Update(r);
 		}
 
+		protected override void Reset()
+		{
+
+		}
+
+		protected override void OnProcess()
+		{
+
+		}
+
+		public override void OnWriteProperties(IJsonWriter writer)
+		{
+			if (!EntityManager.Exists(this.toolSystem.selected))
+			{
+				return;
+			}
+
+			Entity citizen = this.toolSystem.selected;
+			if (EntityManager.HasComponent<Citizen>(citizen) || this.tryGetCitizenEntity(this.toolSystem.selected, out citizen) &&
+				EntityManager.TryGetComponent(citizen, out CurrentDisease currentDisease) && EntityManager.TryGetComponent(currentDisease.disease, out Disease disease))
+			{
+				writer.PropertyName("diseaseStrain");
+				writer.Write(patientCount);
+				writer.PropertyName("patientCapacity");
+				writer.Write(patientCapacity);
+			}
+		}
+
 		/*protected override void OnGamePreload(Purpose purpose, GameMode mode)
 		{
 			
 		}*/
 
 		public override GameMode gameMode => GameMode.Game;
+
+		protected override string group => "test";
+		private bool tryGetCitizenEntity(Entity target, out Entity citizen)
+		{
+			if (EntityManager.TryGetComponent<Game.Creatures.Resident>(target, out var resident) && EntityManager.Exists(resident.m_Citizen))
+			{
+				citizen = resident.m_Citizen;
+				return true;
+			}
+			else
+			{
+				citizen = Entity.Null;
+				return false;
+			}
+		}
+		
+		private bool tryGetCitizen(Entity target, out Citizen citizen)
+		{
+			if (EntityManager.TryGetComponent<Game.Creatures.Resident>(target, out var resident) && EntityManager.Exists(resident.m_Citizen) && EntityManager.TryGetComponent(resident.m_Citizen, out citizen))
+			{
+				return true;
+			}
+			else
+			{
+				citizen = default;
+				return false;
+			}
+		}
 
 		/*protected override void OnCreate()
 		{

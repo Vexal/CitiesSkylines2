@@ -91,6 +91,8 @@ namespace Pandemic
 			writer.Write(this.baseDeathChance);
 			writer.PropertyName(nameof(this.baseHealthPenalty));
 			writer.Write(this.baseHealthPenalty);
+			writer.PropertyName(nameof(this.baseSpreadChance));
+			writer.Write(this.baseSpreadChance);
 			writer.PropertyName(nameof(this.ts));
 			writer.Write(this.ts.ToString());
 			writer.PropertyName("uniqueKey");
@@ -118,6 +120,18 @@ namespace Pandemic
 			writer.PropertyName(nameof(this.parent));
 			writer.Write(this.parent.keyString());
 			writer.TypeEnd();
+		}
+
+		public string getStrainAbbr()
+		{
+			switch (this.type)
+			{
+
+			}
+		}
+		public string getStrainName()
+		{
+			return this.createYear.ToString() + "." + (this.createMonth.ToString()) + "." + (this.createHour.ToString()) + "." + (this.createMinute.ToString());
 		}
 	}
 }
