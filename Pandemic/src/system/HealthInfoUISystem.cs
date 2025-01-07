@@ -23,8 +23,10 @@ namespace Pandemic
 		private EntityQuery currentDiseaseQuery;
 		private ValueBinding<Disease[]> diseaseBinding;
 		private ValueBinding<string[]> currentInfectionCountBinding;
+		private ValueBinding<uint> mutationCooldown;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
+		private DiseaseProgressionSystem diseaseProgressionSystem;
 
 		protected override void OnCreate()
 		{
@@ -37,6 +39,9 @@ namespace Pandemic
 
 			this.currentInfectionCountBinding = new ValueBinding<string[]>("Pandemic", "currentInfectionCount", new string[] { }, new ArrayWriter<string>());
 			AddBinding(this.currentInfectionCountBinding);
+
+			this.mutationCooldown = new ValueBinding<uint>("Pandemic", "mutationCooldown", 0);
+			AddBinding(this.mutationCooldown);
 
 			this.diseaseQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -65,6 +70,7 @@ namespace Pandemic
 			});
 
 			this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+			this.diseaseProgressionSystem = World.GetOrCreateSystemManaged<DiseaseProgressionSystem>();
 		}
 
 		protected override void OnUpdate()
@@ -79,6 +85,13 @@ namespace Pandemic
 			{
 				return;
 			}
+
+			if (!Mod.settings.modEnabled)
+			{
+				return;
+			}
+
+			this.mutationCooldown.Update(this.diseaseProgressionSystem.isMutationCooldownActive());
 
 			NativeArray<Disease> diseases = this.diseaseQuery.ToComponentDataArray<Disease>(Allocator.Temp);
 			this.diseaseBinding.Update(diseases.ToArray());
@@ -106,6 +119,7 @@ namespace Pandemic
 			}
 
 			this.currentInfectionCountBinding.Update(r);
+			visible = true;
 		}
 
 		protected override void Reset()
@@ -120,19 +134,24 @@ namespace Pandemic
 
 		public override void OnWriteProperties(IJsonWriter writer)
 		{
+			return;
+
 			if (!EntityManager.Exists(this.toolSystem.selected))
 			{
 				return;
 			}
 
 			Entity citizen = this.toolSystem.selected;
-			if (EntityManager.HasComponent<Citizen>(citizen) || this.tryGetCitizenEntity(this.toolSystem.selected, out citizen) &&
+			if ((EntityManager.HasComponent<Citizen>(citizen) || this.tryGetCitizenEntity(this.toolSystem.selected, out citizen)) &&
 				EntityManager.TryGetComponent(citizen, out CurrentDisease currentDisease) && EntityManager.TryGetComponent(currentDisease.disease, out Disease disease))
 			{
-				writer.PropertyName("diseaseStrain");
-				writer.Write(patientCount);
-				writer.PropertyName("patientCapacity");
-				writer.Write(patientCapacity);
+				writer.PropertyName("strainName");
+				//writer.Write(disease.getStrainName());
+				writer.Write(12);
+				writer.PropertyName("diseaseName");
+				//writer.Write(disease.getDiseaseTypeName());
+				writer.Write(13);
+				//writer.to
 			}
 		}
 
@@ -143,7 +162,29 @@ namespace Pandemic
 
 		public override GameMode gameMode => GameMode.Game;
 
-		protected override string group => "test";
+		private string getCitizenInfoString()
+		{
+			if (!EntityManager.Exists(this.toolSystem.selected))
+			{
+				return "{}";
+			}
+
+			Entity citizen = this.toolSystem.selected;
+			if ((EntityManager.HasComponent<Citizen>(citizen) || this.tryGetCitizenEntity(this.toolSystem.selected, out citizen)) &&
+				EntityManager.TryGetComponent(citizen, out Citizen citizenData) &&
+				EntityManager.TryGetComponent(citizen, out CurrentDisease currentDisease) && EntityManager.TryGetComponent(currentDisease.disease, out Disease disease))
+			{
+				string result = "{\"strainName\":\"" + disease.getStrainName() + "\",";
+				result += "\"diseaseName\":\"" + disease.getDiseaseTypeName() + "\",";
+				result += "\"diseaseProgression\":" + currentDisease.progression + ",";
+				result += "\"health\":" + citizenData.m_Health + "}";
+				return result;
+			}
+
+			return "{}";
+		}
+		protected override string group => this.getCitizenInfoString();
+
 		private bool tryGetCitizenEntity(Entity target, out Entity citizen)
 		{
 			if (EntityManager.TryGetComponent<Game.Creatures.Resident>(target, out var resident) && EntityManager.Exists(resident.m_Citizen))

@@ -89,9 +89,9 @@ namespace Pandemic
 				int index = this.resultCounter.Increment(1);
 				this.diseasePositions[index] = t.m_Position;
 				this.diseases[index] = currentDiseases[i].disease;
-				this.spreadChance[index] = disease.baseSpreadChance;
+				this.spreadChance[index] = disease.baseSpreadChance * currentDiseases[i].progression;
 
-				float radius = disease.baseSpreadRadius;
+				float radius = disease.baseSpreadRadius * currentDiseases[i].progression;
 
 				if (this.masksRequired)
 				{

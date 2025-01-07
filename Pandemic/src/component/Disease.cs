@@ -1,8 +1,6 @@
 ﻿using Colossal.UI.Binding;
 using System;
-using System.Runtime.Remoting.Lifetime;
 using Unity.Entities;
-using Unity.Mathematics;
 
 namespace Pandemic
 {
@@ -16,6 +14,7 @@ namespace Pandemic
 		public byte baseHealthPenalty;
 		public byte maxDeathHealth;
 		public long ts;
+		public float progressionSpeed;
 		public int createYear;
 		public int createMonth;
 		public int createDay;
@@ -35,18 +34,20 @@ namespace Pandemic
 			return this.entity.keyString();
 		}
 
-		public Disease mutate()
+		public Disease mutate(bool noParent = false)
 		{
 			float m = this.mutationMagnitude;
 			Disease mutation = new Disease() {
-				parent = this.entity,
+				parent = !noParent ? this.entity : Entity.Null,
 				type = this.type,
-				baseSpreadRadius = mutated(this.baseSpreadRadius, m),
-				baseSpreadChance = mutated(this.baseSpreadChance, m),
-				baseHealthPenalty = mutated(this.baseHealthPenalty, m),
-				maxDeathHealth = mutated(this.maxDeathHealth, m),
-				mutationChance = mutated(this.mutationChance, m),
-				mutationMagnitude = mutated(this.mutationMagnitude, m),
+				baseSpreadRadius = Utils.mutated(this.baseSpreadRadius, m),
+				baseSpreadChance = Utils.mutated(this.baseSpreadChance, m),
+				baseHealthPenalty = Utils.mutated(this.baseHealthPenalty, m),
+				baseDeathChance = Utils.mutated(this.baseDeathChance, m),
+				maxDeathHealth = Utils.mutated(this.maxDeathHealth, m),
+				mutationChance = Utils.mutated(this.mutationChance, m),
+				mutationMagnitude = Utils.mutated(this.mutationMagnitude, m),
+				progressionSpeed = Utils.mutated(this.progressionSpeed, m),
 			};
 
 			return mutation;
@@ -62,20 +63,6 @@ namespace Pandemic
 			{
 				return false;
 			}
-		}
-
-		public static float mutated(float original, float maxMagnitude)
-		{
-			float h = maxMagnitude * .5f;
-			float amp = UnityEngine.Random.Range(1 - math.max(h, .01f), 1 + h);
-			return original * amp;
-		}
-
-		public static byte mutated(byte original, float maxMagnitude)
-		{
-			float h = maxMagnitude * .5f;
-			float amp = UnityEngine.Random.Range(1 - math.max(h, .01f), 1 + h);
-			return (byte)(original * amp);
 		}
 
 		public void Write(IJsonWriter writer)
@@ -111,6 +98,8 @@ namespace Pandemic
 			writer.Write(victimCount);
 			writer.PropertyName(nameof(this.mutationChance));
 			writer.Write(this.mutationChance);
+			writer.PropertyName(nameof(this.progressionSpeed));
+			writer.Write(this.progressionSpeed);
 			writer.PropertyName(nameof(this.mutationMagnitude));
 			writer.Write(this.mutationMagnitude);
 			writer.PropertyName(nameof(this.createWeek));
@@ -126,12 +115,52 @@ namespace Pandemic
 		{
 			switch (this.type)
 			{
-
+				case 1:
+					return "CC";
+				case 2:
+					return "FL";
+				case 3:
+					return "EX";
+				default:
+					return "UNK";
 			}
 		}
+
 		public string getStrainName()
 		{
-			return this.createYear.ToString() + "." + (this.createMonth.ToString()) + "." + (this.createHour.ToString()) + "." + (this.createMinute.ToString());
+			return this.getStrainAbbr() + this.createYear.ToString() + "." + (this.createMonth.ToString()) + "." + (this.createHour.ToString()) + "." + (this.createMinute.ToString());
+		}
+
+		public string getDiseaseTypeName()
+		{
+			switch (this.type)
+			{
+				case 1:
+					return "Common Cold";
+				case 2:
+					return "Influenza";
+				case 3:
+					return "Novel Virus";
+				default:
+					return "Unknown";
+			}
+		}
+
+
+		private static DateTime EPOCH = new DateTime(1970, 1, 1);
+
+		public void initMetadata(DateTime date, Entity diseaseEntity)
+		{
+			long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
+
+			this.id = UnityEngine.Random.Range(1, int.MaxValue);
+			this.ts = unixTs;
+			this.entity = diseaseEntity;
+			this.createYear = date.Year;
+			this.createMonth = date.Month;
+			this.createHour = date.Hour;
+			this.createMinute = date.Minute;
+			this.createDay = date.Day;
 		}
 	}
 }

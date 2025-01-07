@@ -45,7 +45,6 @@ namespace Pandemic
 		private Entity suddenDeathPrefabEntity;
 		private EntityArchetype deathEventArchetype;
 		private EntityArchetype resetTripArchetype;
-		private EntityArchetype diseaseArchetype;
 
 		protected override void OnCreate()
 		{
@@ -147,7 +146,7 @@ namespace Pandemic
 				All = new ComponentType[]
 			{
 				ComponentType.ReadOnly<HealthProblem>(),
-				ComponentType.ReadOnly<CurrentDisease>(),
+				ComponentType.ReadWrite<CurrentDisease>(),
 				ComponentType.ReadOnly<Citizen>()
 			},
 				None = new ComponentType[]
@@ -189,6 +188,11 @@ namespace Pandemic
 
 		protected override void OnUpdate()
 		{
+			if (!Mod.settings.modEnabled)
+			{
+				return;
+			}
+
 			this.removeDiseaseFromHealthy();
 			this.addDiseaseToSick();
 			if (this.shouldProgressDisease())
@@ -255,7 +259,7 @@ namespace Pandemic
 				EntityManager.SetComponentData(citizens[i], lastDisease);
 
 				EntityManager.AddComponent<CurrentDisease>(citizens[i]);
-				EntityManager.SetComponentData(citizens[i], new CurrentDisease() { disease = disease, progression = 0f });
+				EntityManager.SetComponentData(citizens[i], new CurrentDisease() { disease = disease, progression = .001f });
 				
 			}
 		}
@@ -276,25 +280,37 @@ namespace Pandemic
 					}
 
 					Disease disease = EntityManager.GetComponentData<Disease>(currentDiseases[i].disease);
+
+					CurrentDisease currentDisease = currentDiseases[i];
+					currentDisease.progression += disease.progressionSpeed;
+					currentDisease.progression = math.min(1f, currentDisease.progression);
+					currentDiseases[i] = currentDisease;
+
 					if (disease.baseHealthPenalty > 0)
 					{
-						if (c.m_Health <= disease.baseHealthPenalty)
+						byte healthPenalty = (byte)(currentDisease.progression * disease.baseHealthPenalty);
+						if (c.m_Health <= healthPenalty)
 						{
 							c.m_Health = 0;
 						}
 						else
 						{
-							c.m_Health -= disease.baseHealthPenalty;
+							c.m_Health -= healthPenalty;
 							EntityManager.SetComponentData(citizens[i], c);
 						}
 					}
 
-					if (disease.baseDeathChance > 0 && c.m_Health <= disease.maxDeathHealth &&
-						UnityEngine.Random.Range(0, 100) <= disease.baseDeathChance)
+					if (disease.baseDeathChance > 0 && c.m_Health <= disease.maxDeathHealth)
 					{
-						this.killCitizen(citizens[i]);
+						float deathChance = disease.baseDeathChance * currentDisease.progression;
+						if (UnityEngine.Random.Range(0, 100) <= deathChance)
+						{
+							this.killCitizen(citizens[i]);
+						}
 					}
 				}
+
+				this.unhealthyDiseaseEntityQuery.CopyFromComponentDataArray(currentDiseases);
 			}
 		}
 
@@ -311,81 +327,6 @@ namespace Pandemic
 
 		}
 
-		private static DateTime EPOCH = new DateTime(1970, 1, 1);
-
-		public Entity createOrMutateDisease(Entity prev, out Disease disease)
-		{
-			if (prev == Entity.Null)
-			{
-				return this.getOrCreateRandomDisease(out disease);
-			}
-			else
-			{
-				disease = EntityManager.GetComponentData<Disease>(prev);
-				if (disease.shouldMutate())
-				{
-					Disease mutation = disease.mutate();
-					Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
-					DateTime date = this.timeSystem.GetCurrentDateTime();
-					long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
-
-					mutation.id = UnityEngine.Random.Range(1, int.MaxValue);
-					mutation.ts = unixTs;
-					mutation.entity = newDisease;
-					mutation.createYear = date.Year;
-					mutation.createMonth = date.Month;
-					mutation.createHour = date.Hour;
-					mutation.createMinute = date.Minute;
-					mutation.createDay = date.Day;
-					disease = mutation;
-					return newDisease;
-				}
-				else
-				{
-					return prev;
-				}
-			}
-		}
-
-		private Entity getOrCreateRandomDisease(out Disease disease)
-		{
-			NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
-			if (diseases.Length > 0)
-			{
-				disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
-				return disease.entity;
-			}
-			else
-			{
-				Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
-				DateTime date = this.timeSystem.GetCurrentDateTime();
-				long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
-				disease = new Disease()
-				{
-					id = UnityEngine.Random.Range(1, int.MaxValue),
-					type = 1,
-					baseDeathChance = (Mod.settings.suddenDeathChance / 100f),
-					baseHealthPenalty = this.getHealthDecreaseAmount(),
-					baseSpreadChance = Mod.settings.diseaseSpreadChance,
-					baseSpreadRadius = Mod.settings.diseaseSpreadRadius,
-					maxDeathHealth = MAX_DEATH_HEALTH,
-					mutationChance = Mod.settings.ccMutationChance,
-					mutationMagnitude = Mod.settings.ccMutationMagnitude,
-					createYear = date.Year,
-					createMonth = date.Month,
-					createHour = date.Hour,
-					createMinute = date.Minute,
-					createSecond = date.Second,
-					createWeek = date.DayOfYear,
-					createDay = date.Day,
-					ts = unixTs,
-					entity = newDisease
-				};
-
-				EntityManager.SetComponentData(newDisease, disease);
-				return newDisease;
-			}
-		}
 
 		public byte getHealthDecreaseAmount()
 		{

@@ -7,6 +7,7 @@ import { InfoviewPanelLabel, InfoviewPanelSection, InfoviewPanelSectionTheme } f
 
 export const diseaseList = bindValue<any[]>("Pandemic", 'diseases');
 export const currentInfectionCount = bindValue<string[]>("Pandemic", 'currentInfectionCount');
+export const mutationCooldown = bindValue<number>("Pandemic", 'mutationCooldown');
 
 
 
@@ -44,14 +45,19 @@ function DiseaseDetailsPanel(props: { disease: Disease, expanded: boolean, curre
 				rightText={props.disease.baseDeathChance + "% / s"}
 			/>
 			<InfoviewPanelLabel
+				text={"Progression Speed"}
+				tiny={1}
+				rightText={props.disease.progressionSpeed + "% / s"}
+			/>
+			<InfoviewPanelLabel
 				text={"Mutation Chance"}
 				tiny={1}
-				rightText={props.disease.mutationChance + "% "}
+				rightText={props.disease.mutationChance + "%"}
 			/>
 			<InfoviewPanelLabel
 				text={"Mutation Variance"}
 				tiny={1}
-				rightText={props.disease.mutationMagnitude + "% "}
+				rightText={props.disease.mutationMagnitude + "%"}
 			/>
 		</>}
 	</>
@@ -63,6 +69,7 @@ export class DiseaseInfoPanel extends Component {
 		diseaseList: null,// DiseaseInfoPanel.buildDiseaseList(diseaseList.value, patientCountMap(currentInfectionCount.value)),
 		diseaseMap: null,
 		currentInfectionCount: null,// patientCountMap(currentInfectionCount.value),
+		mutationCooldown: 0,
 		activeOnly: true,
 		expandedDisease: {}
 	}
@@ -71,7 +78,7 @@ export class DiseaseInfoPanel extends Component {
 		//console.log("the disease list", InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
 		return <div>
 			<InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
-				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"}></InfoviewPanelLabel>
+				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"} rightText={this.state.mutationCooldown}></InfoviewPanelLabel>
 				{this.state.diseaseList?.filter((disease: Disease) => !this.state.activeOnly || this.state.currentInfectionCount[disease.uniqueKey] > 0).map((disease: Disease) => <><InfoviewPanelLabel
 					small={1}
 					text={disease.strainHeader}
@@ -97,6 +104,10 @@ export class DiseaseInfoPanel extends Component {
 				const npcm = DiseaseInfoPanel.patientCountMap(val);
 				this.setState({ currentInfectionCount: npcm });
 			});
+		});
+
+		mutationCooldown.subscribe(val => {
+			this.setState({ mutationCooldown: val });
 		});
 	}
 

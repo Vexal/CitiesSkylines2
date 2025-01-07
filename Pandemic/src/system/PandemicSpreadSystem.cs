@@ -102,8 +102,12 @@ namespace Pandemic
 
 		protected override void OnUpdate()
 		{
-			this.handleDiseaseSpread();
-			
+			if (!Mod.settings.modEnabled)
+			{
+				return;
+			}
+
+			this.handleDiseaseSpread();			
 		}
 
 		private void handleDiseaseSpread()

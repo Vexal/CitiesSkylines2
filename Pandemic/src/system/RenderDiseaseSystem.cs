@@ -40,6 +40,11 @@ namespace Pandemic
 		}
 		protected override void OnUpdate()
 		{
+			if (!Mod.settings.modEnabled)
+			{
+				return;
+			}
+
 			if (Mod.settings.showContagiousCircle)
 			{
 				this.renderDiseaseEffect();

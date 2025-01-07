@@ -10,9 +10,9 @@ using System.Collections.Generic;
 namespace Pandemic
 {
 	[FileLocation(nameof(Pandemic))]
-	[SettingsUIGroupOrder(diseaseSpreadSettings, ccDiseaseGrp, diseaseImpactSettings, citizenBehaviorGroup, appearanceSettings, kKeybindingGroup)]
-	[SettingsUITabOrder(mainSection, actionsSection)]
-	[SettingsUIShowGroupName(citizenBehaviorGroup, ccDiseaseGrp, diseaseImpactSettings, diseaseSpreadSettings, kKeybindingGroup, appearanceSettings)]
+	[SettingsUIGroupOrder(diseaseRaritySettings, diseaseSpreadSettings, ccDiseaseGrp, flDiseaseGrp, diseaseImpactSettings, citizenBehaviorGroup, appearanceSettings, kKeybindingGroup)]
+	[SettingsUITabOrder(mainSection, actionsSection, actionsSection)]
+	[SettingsUIShowGroupName(diseaseRaritySettings, citizenBehaviorGroup, ccDiseaseGrp, flDiseaseGrp, diseaseImpactSettings, diseaseSpreadSettings, kKeybindingGroup, appearanceSettings)]
 	[SettingsUIKeyboardAction(Mod.impartDiseaseActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "PTestUsage" })]
 	public class PandemicSettings : ModSetting
 	{
@@ -25,28 +25,55 @@ namespace Pandemic
 		public const string citizenBehaviorGroup = "CitizenBehavior";
 		public const string diseaseSpreadSettings = "DiseaseSpreadSettings";
 		public const string diseaseImpactSettings = "DiseaseImpactSettings";
+		public const string diseaseRaritySettings = "DiseaseRaritySettings";
 		public const string kButtonGroup = "Actions";
 		public const string ccDiseaseGrp = "CommonCold";
+		public const string flDiseaseGrp = "Flu";
 
 		internal DiseaseToolSystem diseaseToolSystem;
 		internal ForceSicknessSystem forceSicknessSystem;
 
 		public PandemicSettings(IMod mod) : base(mod)
 		{
-			this.suddenDeathChance = 0;
-			this.diseaseSpreadChance = .02f;
-			this.diseaseSpreadRadius = 25f;
 			this.diseaseSpreadInterval = 60;
-			this.maxDiseaseSpreadPerFrame = 1;
+			this.maxDiseaseSpreadPerFrame = 100;
 			//this.diseaseFleeRadius = 10f;
 			this.maskEffectiveness = 65;
 			this.showContagiousCircle = true;
 			this.contagiousGraphicOpacity = .15f;
-			this.ccMutationChance = .005f;
-			this.ccMutationMagnitude = .15f;
+
+			this.setDiseaseDefaults();
+
+			this.newDiseaseChance = 5;
+			this.ccChance = 100;
+			this.flChance = 30;
+			this.exChance = 1;
+			this.modEnabled = true;
 		}
 
-		//Disease Spread Settings
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISection(mainSection, diseaseRaritySettings)]
+		public float newDiseaseChance { get; set; }
+
+		//Disease Chances
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISection(mainSection, diseaseRaritySettings)]
+		public float ccChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISection(mainSection, diseaseRaritySettings)]
+		public float flChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISection(mainSection, diseaseRaritySettings)]
+		public float exChance { get; set; }
+
+		[SettingsUISection(diseaseSection, kButtonGroup)]
+		public bool resetDefaulDiseasesButton { set { this.setDiseaseDefaults(); this.ApplyAndSave(); } }
+
+		/*
+		 * Common Cold
+		 */
 		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
 		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
 		public float ccMutationChance { get; set; }
@@ -54,6 +81,57 @@ namespace Pandemic
 		[SettingsUISlider(min = 0, max = 1.99f, step = .001f, unit = Unit.kFloatThreeFractions)]
 		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
 		public float ccMutationMagnitude { get; set; }
+
+		[SettingsUISlider(min = 0, max = 1, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public float ccProgressionSpeed { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .1f, scalarMultiplier = 1)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public float ccSpreadRadius { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public float ccSpreadChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kPercentage)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public int ccDeathChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kInteger)]
+		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
+		public int ccHealthImpact { get; set; }
+
+		/*
+		 * Flu
+		 */
+		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public float flMutationChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 1.99f, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public float flMutationMagnitude { get; set; }
+
+		[SettingsUISlider(min = 0, max = 1, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public float flProgressionSpeed { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .1f, scalarMultiplier = 1)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public float flSpreadRadius { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public float flSpreadChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kPercentage)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public int flDeathChance { get; set; }
+
+		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kInteger)]
+		[SettingsUISection(diseaseSection, flDiseaseGrp)]
+		public int flHealthImpact { get; set; }
 
 
 		[SettingsUISection(actionsSection, kButtonGroup)]
@@ -64,22 +142,11 @@ namespace Pandemic
 
 		//Disease Impact Settings
 
-		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1, unit = Unit.kPercentage)]
-		[SettingsUISection(mainSection, diseaseImpactSettings)]
-		public int suddenDeathChance { get; set; }
-
 		//Disease Spread Settings
-		[SettingsUISlider(min = 0, max = 100, step = .001f, unit = Unit.kFloatThreeFractions)]
-		[SettingsUISection(mainSection, diseaseSpreadSettings)]
-		public float diseaseSpreadChance { get; set; }
 
 		[SettingsUISlider(min = 0, max = 100, step = 1, unit = Unit.kPercentage)]
 		[SettingsUISection(mainSection, diseaseSpreadSettings)]
 		public float maskEffectiveness { get; set; }
-
-		[SettingsUISlider(min = 0, max = 100, step = .1f, scalarMultiplier = 1)]
-		[SettingsUISection(mainSection, diseaseSpreadSettings)]
-		public float diseaseSpreadRadius { get; set; }
 
 		[SettingsUISlider(min = 1, max = 600, step = 1, scalarMultiplier = 1)]
 		[SettingsUISection(mainSection, diseaseSpreadSettings)]
@@ -111,6 +178,9 @@ namespace Pandemic
 		//Citizen behavior
 		[SettingsUISection(mainSection, citizenBehaviorGroup)]
 		public UnderEducatedPolicyAdherenceModifier underEducatedModifier { get; set; } = UnderEducatedPolicyAdherenceModifier.Minor;
+		//Appearance
+		[SettingsUISection(mainSection, appearanceSettings)]
+		public bool modEnabled { get; set; }
 
 		//Key bindings
 		[SettingsUIKeyboardBinding(BindingKeyboard.X, Mod.impartDiseaseActionName, shift: true)]
@@ -119,9 +189,6 @@ namespace Pandemic
 
 		public override void SetDefaults()
 		{
-			this.suddenDeathChance = 0;
-			this.diseaseSpreadChance = .02f;
-			this.diseaseSpreadRadius = 5f;
 			//this.diseaseFleeRadius = 10f;
 			this.diseaseSpreadInterval = 60;
 			this.maxDiseaseSpreadPerFrame = 100;
@@ -129,9 +196,33 @@ namespace Pandemic
 			this.showContagiousCircle = true;
 			this.contagiousGraphicOpacity = .15f;
 			this.underEducatedModifier = UnderEducatedPolicyAdherenceModifier.Minor;
-			this.diseaseProgressionSpeed = DiseaseProgression.Minor;
+
+			this.setDiseaseDefaults();
+
+			this.newDiseaseChance = 5;
+			this.ccChance = 100;
+			this.flChance = 30;
+			this.exChance = 1;
+			this.modEnabled = true;
+		}
+
+		public void setDiseaseDefaults()
+		{
 			this.ccMutationChance = .005f;
-			this.ccMutationMagnitude = 5f;
+			this.ccMutationMagnitude = .15f;
+			this.ccProgressionSpeed = .015f;
+			this.ccHealthImpact = 2;
+			this.ccDeathChance = 0;
+			this.ccSpreadChance = .02f;
+			this.ccSpreadRadius = 10f;
+
+			this.flMutationChance = .05f;
+			this.flMutationMagnitude = .35f;
+			this.flProgressionSpeed = .1f;
+			this.flHealthImpact = 5;
+			this.flDeathChance = 2;
+			this.flSpreadChance = .1f;
+			this.flSpreadRadius = 7;
 		}
 
 		public enum DiseaseProgression
@@ -175,14 +266,56 @@ namespace Pandemic
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.diseaseImpactSettings), "Disease Progression Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.kKeybindingGroup), "Key Bindings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.ccDiseaseGrp), "Common Cold" },
+				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.flDiseaseGrp), "Influenza" },
 
+				/**
+				 * Disease chance
+				 */
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.newDiseaseChance)), "New Disease Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.newDiseaseChance)), $"The % chance for a citizen who becomes spontanously sick via the normal base sick mechanic, to contract a disease that does not yet exist." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccChance)), "Common Cold Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccChance)), $"The weighted chance for a new disease to be a Common Cold" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flChance)), "Flu Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flChance)), $"The weighted chance for a new disease to be a Flu" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.exChance)), "Novel Disease Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.exChance)), $"The weighted chance for a new disease to be a unique strain with highly variable parameters." },
+				
 				/**
 				 * Common Cold
 				 */
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccMutationChance)), "Common Cold Mutation Chance" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccMutationChance)), "Mutation Chance" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccMutationChance)), $"The % chance for a common cold strain to mutate upon spread." },
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccMutationMagnitude)), "Common Cold Mutation Variability" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccMutationMagnitude)), "Mutation Variability" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccMutationMagnitude)), $"The upper bound in disease parameter variability upon mutation." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccProgressionSpeed)), "Progression Speed" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccProgressionSpeed)), $"The rate at which the common cold sickness advances for a sick citizen." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccDeathChance)), "Late-stage Death Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccDeathChance)), $"The % chance for a citizen at 0 health to die" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccSpreadChance)), "Disease Spread Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccSpreadChance)), $"The % chance for a contagious citizen to spread disease to a nearby citizen. The chance of spreading falls off with distance." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccHealthImpact)), "Health Impact" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccHealthImpact)), $"The amount of health to drain per tick." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccSpreadRadius)), "Disease Spread Radius" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
+
+				/**
+				 * Flu
+				 */
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flMutationChance)), "Mutation Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flMutationChance)), $"The % chance for a common cold strain to mutate upon spread." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flMutationMagnitude)), "Mutation Variability" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flMutationMagnitude)), $"The upper bound in disease parameter variability upon mutation." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flProgressionSpeed)), "Progression Speed" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flProgressionSpeed)), $"The rate at which the common cold sickness advances for a sick citizen." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flDeathChance)), "Late-stage Death Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flDeathChance)), $"The % chance for a citizen at 0 health to die" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flSpreadChance)), "Disease Spread Chance" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flSpreadChance)), $"The % chance for a contagious citizen to spread disease to a nearby citizen. The chance of spreading falls off with distance." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flHealthImpact)), "Health Impact" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flHealthImpact)), $"The amount of health to drain per tick." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flSpreadRadius)), "Disease Spread Radius" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
+
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.MakeEveryoneSickButton)), "Make All Citizens Sick" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.MakeEveryoneSickButton)), $"Make all citizens sick." },
@@ -190,12 +323,12 @@ namespace Pandemic
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.DecreaseHealthButton)), "Decrease Health" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.DecreaseHealthButton)), $"Decrease all health." },
 
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.suddenDeathChance)), "Late-stage Death Chance" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.suddenDeathChance)), $"The % chance for a citizen at 0 health to die" },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.resetDefaulDiseasesButton)), "Reset Disease Config" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.resetDefaulDiseasesButton)), $"Reset diseases config to defaults." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.modEnabled)), "Mod Enabled" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.modEnabled)), $"Enable / disable the pandemic mod." },
 
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadChance)), "Disease Spread Chance" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadChance)), $"The % chance for a contagious citizen to spread disease to a nearby citizen. The chance of spreading falls off with distance." },
-
+				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.maskEffectiveness)), "Mask Effectiveness" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.maskEffectiveness)), $"The % reduction in chance to spread or contract contagious sickness for citizens wearing masks." },
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.underEducatedModifier)), "Education Policy Adherence Impact" },
@@ -207,9 +340,7 @@ namespace Pandemic
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.Severe), "Severe" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.UnderEducatedPolicyAdherenceModifier.Extreme), "Extreme" },
 
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), "Disease Spread Radius" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
-
+				
 			    //{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseFleeRadius)), "Disease Flee Radius" },
 				//{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseFleeRadius)), $"The distance at which nearby citizens will flee contagious citizens." },
 

@@ -1,11 +1,13 @@
 const TYPE_ABBRV = {
 	1: "CC",
-	2: "FL"
+	2: "FL",
+	3: "EX"
 }
 
 const TYPE_NAME = {
 	1: "Common Cold",
-	2: "Flu"
+	2: "Influenza",
+	3: "Novel Virus"
 }
 
 
@@ -57,6 +59,11 @@ export default class Disease {
 	}
 
 	/** @returns {number}*/
+	get progressionSpeed() {
+		return (Math.round(this._diseaseJson.progressionSpeed * 1000 * 100) / 1000).toFixed(3);
+	}
+
+	/** @returns {number}*/
 	get type() {
 		return this._diseaseJson.type;
 	}
@@ -93,5 +100,15 @@ export default class Disease {
 
 	set parentStrain(p) {
 		this._parentStrain = p;
+	}
+
+	static diseaseStage(progression) {
+		if (progression < .33) {
+			return "Early";
+		} else if (progression < .66) {
+			return "Moderate";
+		} else {
+			return "Late";
+		}
 	}
 }

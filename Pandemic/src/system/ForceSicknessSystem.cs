@@ -333,7 +333,7 @@ namespace Pandemic
 				NativeArray<Citizen> citizenData = this.diseaseQuery.ToComponentDataArray<Citizen>(Allocator.Temp);
 				NativeArray<HealthProblem> healthData = this.diseaseQuery.ToComponentDataArray<HealthProblem>(Allocator.Temp);
 				NativeArray<Entity> citizens = this.diseaseQuery.ToEntityArray(Allocator.Temp);
-				int deathChance = Mod.INSTANCE.m_Setting.suddenDeathChance;
+				int deathChance = Mod.INSTANCE.m_Setting.ccDeathChance;
 				Random random = new Random();
 				for (int i = 0; i < citizenData.Length; ++i)
 				{
