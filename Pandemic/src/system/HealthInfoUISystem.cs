@@ -24,6 +24,8 @@ namespace Pandemic
 		private ValueBinding<Disease[]> diseaseBinding;
 		private ValueBinding<string[]> currentInfectionCountBinding;
 		private ValueBinding<uint> mutationCooldown;
+		private ValueBinding<Dictionary<string, string>> diseaseNameBinding;
+		private TriggerBinding<DiseaseCreateInput> createDiseaseTrigger;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
 		private DiseaseProgressionSystem diseaseProgressionSystem;
@@ -42,6 +44,12 @@ namespace Pandemic
 
 			this.mutationCooldown = new ValueBinding<uint>("Pandemic", "mutationCooldown", 0);
 			AddBinding(this.mutationCooldown);
+
+
+			this.diseaseNameBinding = new ValueBinding<Dictionary<string, string>>("Pandemic", "diseaseNames", new Dictionary<string, string> (), 
+				new DictionaryWriter<string, string>());
+			AddBinding(this.diseaseNameBinding);
+
 
 			this.diseaseQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -95,6 +103,16 @@ namespace Pandemic
 
 			NativeArray<Disease> diseases = this.diseaseQuery.ToComponentDataArray<Disease>(Allocator.Temp);
 			this.diseaseBinding.Update(diseases.ToArray());
+
+			Dictionary<string, string> diseaseNames = new Dictionary<string, string>();
+			foreach (Disease d in diseases)
+			{
+				if (this.m_NameSystem.TryGetCustomName(d.entity, out string name)) {
+					diseaseNames[d.getUniqueKey()] = name;
+				}
+			}
+
+			this.diseaseNameBinding.Update(diseaseNames);
 
 			NativeArray<CurrentDisease> currentSick = this.currentDiseaseQuery.ToComponentDataArray<CurrentDisease>(Allocator.Temp);
 

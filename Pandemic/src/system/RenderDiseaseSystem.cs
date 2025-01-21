@@ -3,6 +3,7 @@ using Game.Citizens;
 using Game.Common;
 using Game.Objects;
 using Game.Rendering;
+using Game.SceneFlow;
 using Game.Tools;
 using Unity.Entities;
 using Unity.Jobs;
@@ -40,7 +41,7 @@ namespace Pandemic
 		}
 		protected override void OnUpdate()
 		{
-			if (!Mod.settings.modEnabled)
+			if (GameManager.instance.gameMode != GameMode.Game || !Mod.settings.modEnabled)
 			{
 				return;
 			}

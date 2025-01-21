@@ -1,4 +1,5 @@
 ﻿using Game;
+using Game.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace Pandemic
 	internal partial class DiseaseProgressionSystem : GameSystemBase
 	{
 		private EntityArchetype diseaseArchetype;
+		private NameSystem nameSystem;
 
 		public Entity createOrMutateDisease(Entity prev, out Disease disease)
 		{
@@ -165,6 +167,29 @@ namespace Pandemic
 			};
 
 			return disease.mutate(true);
+		}
+
+		public Disease createCustomDisease(DiseaseCreateInput inp)
+		{
+			Disease disease = new()
+			{
+				type = inp.type,
+				baseSpreadChance = inp.baseSpreadChance,
+				baseDeathChance = inp.baseDeathChance,
+				baseHealthPenalty = inp.baseHealthPenalty,
+				baseSpreadRadius = inp.baseSpreadRadius,
+				maxDeathHealth = MAX_DEATH_HEALTH,
+				mutationChance = inp.mutationChance,
+				mutationMagnitude = inp.mutationMagnitude,
+				progressionSpeed = inp.progressionSpeed,
+			};
+
+			Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
+			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
+
+			EntityManager.SetComponentData(newDisease, disease);
+			this.nameSystem.SetCustomName(newDisease, inp.name);
+			return disease;
 		}
 	}
 }

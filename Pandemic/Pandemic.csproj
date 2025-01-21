@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
+		<LangVersion>9.0</LangVersion>
 		<TargetFramework>net472</TargetFramework>
 		<Configurations>Debug;Release</Configurations>
 		
@@ -75,6 +76,17 @@
 		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="System.Text.Json" Version="9.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Properties\Settings.settings">
+	    <Generator>SettingsSingleFileGenerator</Generator>
+	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+	  </None>
+	</ItemGroup>
+	
 	<Target Name="InstallUI" AfterTargets="AfterBuild">
 		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/UI" />
 	</Target>

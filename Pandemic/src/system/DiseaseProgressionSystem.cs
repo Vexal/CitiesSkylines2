@@ -53,6 +53,7 @@ namespace Pandemic
 			this.prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
 			this.simulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
 			this.timeSystem = World.GetOrCreateSystemManaged<TimeSystem>();
+			this.nameSystem = World.GetOrCreateSystemManaged<NameSystem>();
 			this.resetTripArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<ResetTrip>());
 			this.diseaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Disease>());
 
@@ -171,16 +172,16 @@ namespace Pandemic
 			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Mode = ModifierValueMode.Relative;
 			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Range = new Colossal.Mathematics.Bounds1(new float2() {x = 100f, y = 100f });*/
 			this.prefabSystem.AddPrefab(pr);
-			Mod.log.Info("asset: " + pr.ToString() + " ; " + pr.asset?.name + " ; " + pr.asset?.ToString() + " ; " + pr.asset?.uniqueName);
-			Mod.log.Info("original asset: " + this.policyPrefabEntity.asset?.name + " ; " + this.policyPrefabEntity.asset?.ToString() + " ; " + this.policyPrefabEntity.asset?.uniqueName);
+			//Mod.log.Info("asset: " + pr.ToString() + " ; " + pr.asset?.name + " ; " + pr.asset?.ToString() + " ; " + pr.asset?.uniqueName);
+			//Mod.log.Info("original asset: " + this.policyPrefabEntity.asset?.name + " ; " + this.policyPrefabEntity.asset?.ToString() + " ; " + this.policyPrefabEntity.asset?.uniqueName);
 			this.prefabSystem.AddComponentData(pr, new CityOptionData() { m_OptionMask = PandemicSpreadSystem.MASK_MANDATE_MASK });
-			foreach (string s in GameManager.instance.localizationManager.activeDictionary.entryIDs)
+			/*foreach (string s in GameManager.instance.localizationManager.activeDictionary.entryIDs)
 			{
 				if (s.Contains("Policy."))
 				{
 					Mod.log.Info("policy: " + s);
 				}
-			}
+			}*/
 		}
 
 		private const uint PROGRESSION_FRAME_COUNT = 300;
@@ -188,7 +189,7 @@ namespace Pandemic
 
 		protected override void OnUpdate()
 		{
-			if (!Mod.settings.modEnabled)
+			if (GameManager.instance.gameMode != GameMode.Game || !Mod.settings.modEnabled)
 			{
 				return;
 			}

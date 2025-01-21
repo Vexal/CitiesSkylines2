@@ -1,3 +1,5 @@
+import CustomBindings from "./CustomBindings";
+
 const TYPE_ABBRV = {
 	1: "CC",
 	2: "FL",
@@ -85,7 +87,13 @@ export default class Disease {
 
 	/** @returns {string} */
 	get strainHeader() {
-		return this.typeString + " " + this.strainName;
+		const n = this.customName;
+		return (n !== undefined && n !== null ? n : this.typeString) + " " + this.strainName;
+	}
+
+	/** @returns {string|undefined}*/
+	get customName() {
+		return CustomBindings.diseaseNames.value[this.uniqueKey];
 	}
 
 	/** @returns {string|undefined} */
@@ -110,5 +118,25 @@ export default class Disease {
 		} else {
 			return "Late";
 		}
+	}
+
+	/**
+	 * @param diseaseList {*[]}
+	 * @return {{diseaseList: Disease[], diseaseMap: object.<string, Disease>}}
+	 */
+	static buildDiseaseList(diseaseList) {
+		/** @type {Disease[]} */
+		const l = diseaseList.map(d => new Disease(d._diseaseJson ? d._diseaseJson : d));
+		const m = {};
+		for (let i = 0; i < l.length; ++i) {
+			m[l[i].uniqueKey] = l[i];
+		}
+		for (let i = 0; i < l.length; ++i) {
+			if (l[i].parent) {
+				l[i].parentStrain = m[l[i].parent]?.strainName;
+			}
+		}
+
+		return { diseaseList: l, diseaseMap: m };
 	}
 }

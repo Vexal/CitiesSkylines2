@@ -54,6 +54,11 @@ namespace Pandemic
 			}*/
 		}
 
+		public void createDisease()
+		{ 
+
+		}
+
 		private void reset()
 		{
 			this.nextDiseaseTargets.Clear();

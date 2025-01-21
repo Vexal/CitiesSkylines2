@@ -1,5 +1,6 @@
 ﻿using Colossal.UI.Binding;
 using System;
+using Unity.Burst;
 using Unity.Entities;
 
 namespace Pandemic
@@ -162,5 +163,18 @@ namespace Pandemic
 			this.createMinute = date.Minute;
 			this.createDay = date.Day;
 		}
+	}
+
+	public struct DiseaseCreateInput
+	{
+		public string name { get; set; }
+		public uint type { get; set; }
+		public float baseSpreadChance { get; set; }
+		public float baseDeathChance { get; set; }
+		public byte baseHealthPenalty { get; set; }
+		public float baseSpreadRadius { get; set; }
+		public float mutationChance { get; set; }
+		public float mutationMagnitude { get; set; }
+		public float progressionSpeed { get; set; }
 	}
 }

@@ -3,10 +3,12 @@ import { VanillaComponentResolver } from "./mods/VanillaComponentResolver";
 import { DiseaseInfoPanel } from "./infoview/HealthcareInfoview";
 import { extendPanel } from "./mods/PanelExtension";
 import { SelectedCitizenHealthView } from "./infoview/SelectedCitizenHealthView";
+import CreateDiseasePanel from "./controlpanel/CreateDiseasePanel";
 
 
 const register: ModRegistrar = (moduleRegistry) => {
 	VanillaComponentResolver.setRegistry(moduleRegistry);
+	moduleRegistry.append('GameTopLeft', CreateDiseasePanel);
 	//moduleRegistry.extend("game-ui/game/components/infoviews/active-infoview-panel/panels/healthcare-infoview-panel.tsx", 'selectedInfoSectionComponents', SelectedInfoPanelTogglesComponent);
 	//moduleRegistry.extend("game-ui/game/components/infoviews/active-infoview-panel/active-infoview-panel.tsx", 'activeInfoviewPanel', SelectedInfoPanelTogglesComponent);
 	//moduleRegistry.extend("game-ui/game/components/infoviews/active-infoview-panel/components/sections/infoview-panel-section.tsx", 'selectedInfoSectionComponents', SelectedInfoPanelTogglesComponent);

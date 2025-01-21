@@ -4,9 +4,9 @@ import { Component } from "react";
 import { VanillaComponentResolver } from "../mods/VanillaComponentResolver";
 import styles from "../pandemic.module.scss"
 import { InfoviewPanelLabel, InfoviewPanelSection, InfoviewPanelSectionTheme } from "../mods/VanillaComponents";
+import CustomBindings from "../model/CustomBindings";
 
 export const diseaseList = bindValue<any[]>("Pandemic", 'diseases');
-export const currentInfectionCount = bindValue<string[]>("Pandemic", 'currentInfectionCount');
 export const mutationCooldown = bindValue<number>("Pandemic", 'mutationCooldown');
 
 
@@ -75,7 +75,7 @@ export class DiseaseInfoPanel extends Component {
 	}
 
 	render() {
-		//console.log("the disease list", InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
+		console.log("the disease list", InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
 		return <div>
 			<InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
 				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"} rightText={this.state.mutationCooldown}></InfoviewPanelLabel>
@@ -91,16 +91,16 @@ export class DiseaseInfoPanel extends Component {
 	}
 
 	componentDidMount() {
-		const pcm = DiseaseInfoPanel.patientCountMap(currentInfectionCount.value);
-		const diseaseData = DiseaseInfoPanel.buildDiseaseList(diseaseList.value);
+		const pcm = DiseaseInfoPanel.patientCountMap(CustomBindings.currentInfectionCount.value);
+		const diseaseData = Disease.buildDiseaseList(diseaseList.value);
 		this.setState({ diseaseList: diseaseData.diseaseList, currentInfectionCount: pcm, diseaseMap: diseaseData.diseaseMap }, () => {
 
 			diseaseList.subscribe(val => {
-				const newDiseaseData = DiseaseInfoPanel.buildDiseaseList(val);
+				const newDiseaseData = Disease.buildDiseaseList(val);
 				//console.log("new disease list", newDiseaseData);
 				this.setState({ diseaseList: newDiseaseData.diseaseList, diseaseMap: newDiseaseData.diseaseMap });
 			});
-			currentInfectionCount.subscribe(val => {
+			CustomBindings.currentInfectionCount.subscribe(val => {
 				const npcm = DiseaseInfoPanel.patientCountMap(val);
 				this.setState({ currentInfectionCount: npcm });
 			});
@@ -128,26 +128,5 @@ export class DiseaseInfoPanel extends Component {
 		}
 
 		return results;
-	}
-
-	/**
-	 * @param diseaseList {[*]}
-	 * @param currentInfectionCount
-	 * @returns {diseaseList: Disease[], diseaseMap: object<string, Disease>}
-	 */
-	static buildDiseaseList(diseaseList) {
-		/** @type {Disease[]} */
-		const l = diseaseList.map(d => new Disease(d._diseaseJson ? d._diseaseJson : d));
-		const m = {};
-		for (let i = 0; i < l.length; ++i) {
-			m[l[i].uniqueKey] = l[i];
-		}
-		for (let i = 0; i < l.length; ++i) {
-			if (l[i].parent) {
-				l[i].parentStrain = m[l[i].parent]?.strainName;
-			}
-		}
-
-		return { diseaseList: l, diseaseMap: m };
 	}
 }

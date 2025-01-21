@@ -8,6 +8,7 @@ using Game.Common;
 using Game.Creatures;
 using Game.Objects;
 using Game.Rendering;
+using Game.SceneFlow;
 using Game.Simulation;
 using Game.Tools;
 using System;
@@ -102,7 +103,7 @@ namespace Pandemic
 
 		protected override void OnUpdate()
 		{
-			if (!Mod.settings.modEnabled)
+			if (GameManager.instance.gameMode != GameMode.Game || !Mod.settings.modEnabled)
 			{
 				return;
 			}

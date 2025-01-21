@@ -38,6 +38,7 @@ namespace Pandemic
 			updateSystem.UpdateBefore<PandemicSpreadSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<RenderDiseaseSystem>(SystemUpdatePhase.Rendering);
 			updateSystem.UpdateAt<HealthInfoUISystem>(SystemUpdatePhase.UIUpdate);
+			updateSystem.UpdateAt<DiseaseControlUISystem>(SystemUpdatePhase.UIUpdate);
 			updateSystem.UpdateBefore<DiseaseProgressionSystem>(SystemUpdatePhase.GameSimulation);
 		}
 

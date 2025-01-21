@@ -13,3 +13,76 @@
 		}
 	}
 }
+
+.createDiseaseButton {
+	width: 40rem;
+	height: 40rem;
+	background-color: #5555FFCC;
+	border-radius: 5rem;
+
+	&.parkingMonitorMenuOpen {
+		background-color: #BBBBFFCC
+	}
+}
+
+.createDiseasePanelHeader {
+	color: rgba(75,195,241,1);
+	text-align: center;
+	background-color: rgba(24, 33, 51, 0.599922);
+	backdrop-filter: blur(5px);
+	border-bottom-left-radius: 4rem 4rem;
+	border-bottom-right-radius: 4rem 4rem;
+	border-top-left-radius: 4rem 4rem;
+	border-top-right-radius: 4rem 4rem;
+	padding-top: 5rem;
+	padding-bottom: 5rem;
+}
+
+.createDiseasePanel {
+	margin-top: 50rem;
+	margin-left: 420rem;
+	position: absolute;
+	width: 450rem;
+	//background-color: rgba(42, 55, 83, 0.4375);
+	background-color: rgba(32, 45, 73, 0.5375);
+}
+
+.paramInputRow {
+	//width: 400rem;
+}
+
+.paramTextInput {
+	background-color: lightblue;
+	height: 25rem;
+	width:100%;
+}
+
+.tinyHeader {
+	font-size:14rem;
+	color: white;
+	font-weight: bold;
+	//width: 400rem;
+}
+
+.diseaseListPane {
+	width: 220rem;
+	padding:8rem;
+	background-color: rgba(32, 45, 73, 0.5375);
+	border-radius:10rem;
+}
+
+.diseaseParamInputPane {
+	width: 220rem;
+	padding: 8rem;
+}
+
+.controlDiseaseRow {
+
+	&:hover {
+		background-color: rgba(132, 45, 73, 0.4375);
+	}
+
+	&.selected {
+		color:lightblue;
+	}
+}
