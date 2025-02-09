@@ -51,22 +51,26 @@ namespace Pandemic
 			this.modEnabled = true;
 		}
 
-		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
 		[SettingsUISection(mainSection, diseaseRaritySettings)]
 		public float newDiseaseChance { get; set; }
 
 		//Disease Chances
-		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
 		[SettingsUISection(mainSection, diseaseRaritySettings)]
 		public float ccChance { get; set; }
 
-		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
 		[SettingsUISection(mainSection, diseaseRaritySettings)]
 		public float flChance { get; set; }
 
-		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kInteger)]
+		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
 		[SettingsUISection(mainSection, diseaseRaritySettings)]
 		public float exChance { get; set; }
+
+		[SettingsUISlider(min = 60, max = 1000, step = 5, unit = Unit.kInteger)]
+		[SettingsUISection(mainSection, diseaseRaritySettings)]
+		public int globalMutationCooldown { get; set; }
 
 		[SettingsUISection(diseaseSection, kButtonGroup)]
 		public bool resetDefaulDiseasesButton { set { this.setDiseaseDefaults(); this.ApplyAndSave(); } }
@@ -204,6 +208,7 @@ namespace Pandemic
 			this.flChance = 30;
 			this.exChance = 1;
 			this.modEnabled = true;
+			this.globalMutationCooldown = 60 * 30;
 		}
 
 		public void setDiseaseDefaults()
@@ -261,6 +266,7 @@ namespace Pandemic
 				{ m_Setting.GetOptionTabLocaleID(PandemicSettings.diseaseSection), "Diseases Config" },
 
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.appearanceSettings), "Appearance Settings" },
+				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.diseaseRaritySettings), "Relative Disease Rarity" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.diseaseSpreadSettings), "Disease Spread Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.citizenBehaviorGroup), "Citizen Behavior Settings" },
 				{ m_Setting.GetOptionGroupLocaleID(PandemicSettings.diseaseImpactSettings), "Disease Progression Settings" },
@@ -279,6 +285,8 @@ namespace Pandemic
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flChance)), $"The weighted chance for a new disease to be a Flu" },
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.exChance)), "Novel Disease Chance" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.exChance)), $"The weighted chance for a new disease to be a unique strain with highly variable parameters." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.globalMutationCooldown)), "Global Mutation Cooldown" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.globalMutationCooldown)), $"The minimum number of frames between disease mutations or creations." },
 				
 				/**
 				 * Common Cold

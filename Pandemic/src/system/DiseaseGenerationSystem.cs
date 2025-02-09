@@ -1,10 +1,7 @@
-﻿using Game;
+﻿using Colossal.Entities;
+using Game;
+using Game.Common;
 using Game.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -80,39 +77,58 @@ namespace Pandemic
 
 		private Entity getOrCreateRandomDisease(out Disease disease)
 		{
-			NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
-			if (diseases.Length > 0 && !this.shouldCreateNewDisease())
+			uint diseaseType = this.chooseNewDiseaseType();
+			if (!this.shouldCreateNewDisease())
 			{
-				disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
-				return disease.entity;
-			}
-			else
-			{
-				uint diseaseType = this.chooseNewDiseaseType();
-
-				switch (diseaseType)
+				NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
+				if (diseases.Length > 0)
 				{
-					case 1:
-						disease = this.createCommonCold();
-						break;
-					case 2:
-						disease = this.createFlu();
-						break;
-					case 3:
-						disease = this.createNovelVirus();
-						break;
-					default:
-						disease = this.createCommonCold();
-						break;
+					int startInd = UnityEngine.Random.Range(0, diseases.Length - 1);
+					for (int i = startInd; i < diseases.Length; ++i)
+					{
+						disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
+						if (!disease.preventSpontaneously && disease.type == diseaseType)
+						{
+							return disease.entity;
+						}
+					}
+
+					if (startInd > 0)
+					{
+						for (int i = 0; i < startInd; ++i)
+						{
+							disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
+							if (!disease.preventSpontaneously && disease.type == diseaseType)
+							{
+								return disease.entity;
+							}
+						}
+					}
 				}
-
-				Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
-				disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
-
-				EntityManager.SetComponentData(newDisease, disease);
-				this.lastMutationFrame = this.simulationSystem.frameIndex;
-				return newDisease;
 			}
+
+			switch (diseaseType)
+			{
+				case 1:
+					disease = this.createCommonCold();
+					break;
+				case 2:
+					disease = this.createFlu();
+					break;
+				case 3:
+					disease = this.createNovelVirus();
+					break;
+				default:
+					disease = this.createCommonCold();
+					break;
+			}
+
+			Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
+			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
+
+			EntityManager.SetComponentData(newDisease, disease);
+			this.lastMutationFrame = this.simulationSystem.frameIndex;
+			return newDisease;
 		}
 
 		public Disease createCommonCold()
@@ -182,6 +198,7 @@ namespace Pandemic
 				mutationChance = inp.mutationChance,
 				mutationMagnitude = inp.mutationMagnitude,
 				progressionSpeed = inp.progressionSpeed,
+				spontaneousProbability = inp.spontaneousProbability,
 			};
 
 			Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
@@ -190,6 +207,36 @@ namespace Pandemic
 			EntityManager.SetComponentData(newDisease, disease);
 			this.nameSystem.SetCustomName(newDisease, inp.name);
 			return disease;
+		}
+
+		public Disease editDisease(DiseaseCreateInput inp)
+		{
+			Entity diseaseEntity = new Entity { Index = inp.entityIndex, Version = inp.entityVersion };
+			if (EntityManager.Exists(diseaseEntity) && EntityManager.TryGetComponent<Disease>(diseaseEntity, out var currentDisease))
+			{
+				currentDisease.baseSpreadChance = inp.baseSpreadChance;
+				currentDisease.baseDeathChance = inp.baseDeathChance;
+				currentDisease.baseHealthPenalty = inp.baseHealthPenalty;
+				currentDisease.baseSpreadRadius = inp.baseSpreadRadius;
+				currentDisease.maxDeathHealth = MAX_DEATH_HEALTH;
+				currentDisease.mutationChance = inp.mutationChance;
+				currentDisease.mutationMagnitude = inp.mutationMagnitude;
+				currentDisease.progressionSpeed = inp.progressionSpeed;
+				currentDisease.preventSpontaneously = inp.preventSpontaneously;
+				currentDisease.spontaneousProbability = inp.spontaneousProbability;
+				EntityManager.SetComponentData(diseaseEntity, currentDisease);
+				return currentDisease;
+			}
+			else
+			{
+				return new Disease();
+			}
+		}
+
+		public void deleteDisease(Entity disease)
+		{
+			this.cureDisease(disease);
+			EntityManager.DestroyEntity(disease);
 		}
 	}
 }

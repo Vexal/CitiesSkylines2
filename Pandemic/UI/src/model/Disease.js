@@ -139,4 +139,14 @@ export default class Disease {
 
 		return { diseaseList: l, diseaseMap: m };
 	}
+
+	static patientCountMap = (countList) => {
+		const results = {};
+		for (let i = 0; i < countList.length; ++i) {
+			const c = countList[i].split("_");
+			results[c[0]] = c[1]
+		}
+
+		return results;
+	}
 }

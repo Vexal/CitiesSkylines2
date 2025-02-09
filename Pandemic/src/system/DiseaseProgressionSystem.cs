@@ -1,7 +1,5 @@
 ﻿using Colossal.Entities;
-using Colossal.UI.Binding;
 using Game;
-using Game.Buildings;
 using Game.Citizens;
 using Game.City;
 using Game.Common;
@@ -9,18 +7,12 @@ using Game.Creatures;
 using Game.Events;
 using Game.Prefabs;
 using Game.SceneFlow;
-using Game.Settings;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
-using Game.Vehicles;
-using System;
-using System.Runtime.Remoting.Lifetime;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Mathematics;
-using UnityEngine.InputSystem;
 
 namespace Pandemic
 {
@@ -251,6 +243,9 @@ namespace Pandemic
 					case 2:
 						lastDisease.lastFlu = disease;
 						break;
+					case 3:
+						lastDisease.lastNovel = disease;
+						break;
 				}
 
 				diseaseDefinition.infectionCount++;
@@ -328,6 +323,44 @@ namespace Pandemic
 
 		}
 
+		public bool validateDisease(Entity disease)
+		{
+			return EntityManager.Exists(disease) && EntityManager.HasComponent<Disease>(disease);
+		}
+
+		public void cureDisease(Entity disease)
+		{
+			if (disease != Entity.Null && !this.validateDisease(disease))
+			{
+				return;
+			}
+
+			NativeArray<Entity> citizens = this.unhealthyDiseaseEntityQuery.ToEntityArray(Allocator.Temp);
+			NativeArray<CurrentDisease> currentDiseases = disease == Entity.Null ? default : this.unhealthyDiseaseEntityQuery.ToComponentDataArray<CurrentDisease>(Allocator.Temp);
+			NativeArray<HealthProblem> healthProblems = this.unhealthyDiseaseEntityQuery.ToComponentDataArray<HealthProblem>(Allocator.Temp);
+
+			for (int i = 0; i < citizens.Length; i++)
+			{
+				if ((disease == Entity.Null || currentDiseases[i].disease == disease) && isSick(healthProblems[i].m_Flags))
+				{
+					EntityManager.RemoveComponent<HealthProblem>(citizens[i]);
+					this.resetCitizenTrip(citizens[i], Purpose.Hospital);
+				}
+			}
+		}
+
+		public void cureCitizen(Entity targetCitizen)
+		{
+			if (EntityManager.Exists(targetCitizen))
+			{
+				if (EntityManager.TryGetComponent<HealthProblem>(targetCitizen, out var healthProblem) && isSick(healthProblem.m_Flags))
+				{
+					Mod.log.Info("Attempt curing " + targetCitizen);
+					EntityManager.RemoveComponent<HealthProblem>(targetCitizen);
+					this.resetCitizenTrip(targetCitizen, Purpose.Hospital);
+				}
+			}
+		}
 
 		public byte getHealthDecreaseAmount()
 		{
@@ -356,16 +389,17 @@ namespace Pandemic
 			EntityManager.GetBuffer<TargetElement>(eventEntity).Add(new TargetElement() { m_Entity = target });
 		}
 
-		private void resetTrip(Entity citizen)
+		private void resetCitizenTrip(Entity citizen, Purpose purposeFilter)
 		{
-			if (EntityManager.TryGetComponent<CurrentTransport>(citizen, out var transport))
+			if (EntityManager.TryGetComponent<CurrentTransport>(citizen, out var currentTransport) &&
+				(purposeFilter == Purpose.None ||
+				EntityManager.TryGetComponent<TravelPurpose>(citizen, out var travelPurpose) && travelPurpose.m_Purpose == purposeFilter))
 			{
-				EntityManager.AddComponentData(EntityManager.CreateEntity(this.resetTripArchetype), new ResetTrip
+				Entity e = EntityManager.CreateEntity(this.resetTripArchetype);
+				EntityManager.AddComponentData(e, new ResetTrip
 				{
-					m_Creature = transport.m_CurrentTransport,
-					m_Target = Entity.Null,
-					//m_DivertPurpose = Purpose.Hospital
-					//m_DivertPurpose = Purpose.Hospital
+					m_Creature = currentTransport.m_CurrentTransport,
+					m_Target = Entity.Null
 				});
 			}
 		}

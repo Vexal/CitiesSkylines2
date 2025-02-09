@@ -25,7 +25,6 @@ namespace Pandemic
 		private ValueBinding<string[]> currentInfectionCountBinding;
 		private ValueBinding<uint> mutationCooldown;
 		private ValueBinding<Dictionary<string, string>> diseaseNameBinding;
-		private TriggerBinding<DiseaseCreateInput> createDiseaseTrigger;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
 		private DiseaseProgressionSystem diseaseProgressionSystem;

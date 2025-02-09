@@ -1,6 +1,5 @@
 ﻿using Colossal.UI.Binding;
 using System;
-using Unity.Burst;
 using Unity.Entities;
 
 namespace Pandemic
@@ -27,6 +26,8 @@ namespace Pandemic
 		public uint victimCount;
 		public float mutationChance;
 		public float mutationMagnitude;
+		public float spontaneousProbability;
+		public bool preventSpontaneously;
 		public Entity entity;
 		public Entity parent;
 
@@ -49,6 +50,7 @@ namespace Pandemic
 				mutationChance = Utils.mutated(this.mutationChance, m),
 				mutationMagnitude = Utils.mutated(this.mutationMagnitude, m),
 				progressionSpeed = Utils.mutated(this.progressionSpeed, m),
+				spontaneousProbability = Utils.mutated(this.spontaneousProbability, m),
 			};
 
 			return mutation;
@@ -107,6 +109,10 @@ namespace Pandemic
 			writer.Write(this.createWeek);
 			writer.PropertyName(nameof(this.createSecond));
 			writer.Write(this.createSecond);
+			writer.PropertyName(nameof(this.spontaneousProbability));
+			writer.Write(this.spontaneousProbability);
+			writer.PropertyName(nameof(this.preventSpontaneously));
+			writer.Write(this.preventSpontaneously);
 			writer.PropertyName(nameof(this.parent));
 			writer.Write(this.parent.keyString());
 			writer.TypeEnd();
@@ -176,5 +182,14 @@ namespace Pandemic
 		public float mutationChance { get; set; }
 		public float mutationMagnitude { get; set; }
 		public float progressionSpeed { get; set; }
+		public float spontaneousProbability { get; set; }
+		public bool preventSpontaneously { get; set; }
+		public int entityIndex { get; set; }
+		public int entityVersion { get; set; }
+
+		public Entity getEntity()
+		{
+			return new Entity { Index = this.entityIndex, Version = this.entityVersion };
+		}
 	}
 }

@@ -20,7 +20,9 @@ export default class CreateDiseasePanel extends Component {
 		selectedDisease: null,
 		/** @type {{diseaseList: Disease[], diseaseMap: Object.<string, Disease>}} */
 		diseaseList: Disease.buildDiseaseList(CustomBindings.diseaseList.value),
-		diseaseNames: CustomBindings.diseaseNames.value
+		currentInfectionCount: Disease.patientCountMap(CustomBindings.currentInfectionCount.value),
+		diseaseNames: CustomBindings.diseaseNames.value,
+		activeOnlyFilter: true
 
 	}
 
@@ -60,29 +62,78 @@ export default class CreateDiseasePanel extends Component {
 								<ParamInputRow name="Mutation Magnitude" defaultValue=".15" ref={el => this.mutationMagnitude = el} />
 								<ParamInputRow name="Progression Speed" defaultValue=".02" ref={el => this.progressionSpeed = el} />
 								<div style={{ margin: "3rem" }} />
-								<Button selected={false} variant="flat" onSelect={() => {
-									trigger(MOD_NAME, "createCustomDisease", this.createDiseeaseJson());
-								}}>
-									<div style={{ padding: "4rem" }}><LocalizedText text="Create" /></div>
-								</Button>
-								<div style={{margin:"3rem"} }/>
+								<div style={{display:"flex"} }>
+									<div style={{width:"48%"} }>
+										<Button selected={false} variant="flat" onSelect={() => {
+											trigger(MOD_NAME, "createCustomDisease", this.createDiseeaseJson(null));
+										}}>
+											<div style={{ padding: "4rem" }}><LocalizedText text="Create" /></div>
+										</Button>
+									</div>
+									<div style={{ margin: "3rem" }} />
+									<div style={{width:"48%"} }>
+										<Button style={this.getEditStyle()} selected={false} variant="flat" onSelect={() => {
+											if (this.state.selectedDisease === null) {
+												return;
+											}
+
+											trigger(MOD_NAME, "editDisease", this.createDiseeaseJson(this.state.selectedDisease));
+										}}>
+											<div style={{ padding: "4rem" }}><LocalizedText text={"Update"} /></div>
+										</Button>
+									</div>
+								</div>
+								<div style={{ margin: "3rem" }} />
 								<Button style={this.getEditStyle()} selected={false} variant="flat" onSelect={() => {
 									if (this.state.selectedDisease === null) {
 										return;
 									}
 
-									trigger(MOD_NAME, "editDisease", this.createDiseeaseJson());
+									trigger(MOD_NAME, "cureDisease", this.createDiseeaseJson(this.state.selectedDisease));
 								}}>
-									<div style={{ padding: "4rem" }}><LocalizedText text={"Update Selected"} /></div>
+									<div style={{ padding: "4rem" }}><LocalizedText text={"Cure Selected Disease"} /></div>
+								</Button>
+								<div style={{ margin: "3rem" }} />
+								<Button selected={false} variant="flat" onSelect={() => {
+								
+									trigger(MOD_NAME, "cureSelected", "na");
+								}}>
+									<div style={{ padding: "4rem" }}><LocalizedText text={"Cure Selected Citizen"} /></div>
+								</Button>
+								<div style={{ margin: "3rem" }} />
+								<Button selected={false} variant="flat" onSelect={() => {
+								
+									trigger(MOD_NAME, "cureAll", "");
+								}}>
+									<div style={{ padding: "4rem" }}><LocalizedText text={"Cure All Citizens"} /></div>
+								</Button>
+								<div style={{ margin: "3rem" }} />
+								<Button style={this.getEditStyle()} selected={false} variant="flat" onSelect={() => {
+									if (this.state.selectedDisease === null) {
+										return;
+									}
+
+									trigger(MOD_NAME, "infectCitizen", this.createDiseeaseJson(this.state.selectedDisease));
+								}}>
+									<div style={{ padding: "4rem" }}><LocalizedText text={"Infect Selected Citizen"} /></div>
 								</Button>
 							</div>
 							<div style={{ flex: "1" }} />
 							<div className={styles.diseaseListPane}>
-								{this.state.diseaseList.diseaseList.map((disease: Disease) => <div
+								<div style={{fontSize:"13rem", marginBottom:"6rem"} }>
+								Select a disease to view or edit its properties; click again to deselect.
+								</div>
+								<div className={styles.diseaseListPaneContent }>
+								{this.state.diseaseList.diseaseList.filter((disease: Disease) => !this.state.activeOnlyFilter || this.diseaseIsActive(disease)).map((disease: Disease) => <div
 									className={styles.controlDiseaseRow + (this.isSelected(disease) ? " " + styles.selected : "")}
 									onClick={() => this.selectDisease(disease.uniqueKey)}>
-									{disease.strainHeader }
+									<div style={{ display: "flex" }}>
+										<div style={{fontSize:"14rem"} }>{disease.strainHeader}</div>
+										<div style={{ flex: "1" }} />
+										<div style={{fontSize:"13rem", color:"palevioletred"} }>{this.state.currentInfectionCount[disease.uniqueKey]}</div>
+									</div>
 								</div>)}
+								</div>
 							</div>
 						</div>
 					</PanelSection>
@@ -94,6 +145,7 @@ export default class CreateDiseasePanel extends Component {
 	componentDidMount() {
 		CustomBindings.diseaseNames.subscribe(val => this.setState({ diseaseNames: val }));
 		CustomBindings.diseaseList.subscribe(val => this.setState({ diseaseList: Disease.buildDiseaseList(val) }));
+		CustomBindings.currentInfectionCount.subscribe(val => this.setState({ currentInfectionCount: Disease.patientCountMap(val) }));
 	}
 
 	selectDisease = (diseaseKey: string) => {
@@ -101,6 +153,13 @@ export default class CreateDiseasePanel extends Component {
 			/** @type {Disease} */
 			const disease:Disease = this.state.diseaseList.diseaseMap[diseaseKey];
 			this.baseSpreadChance.value = disease.baseSpreadChance;
+			this.baseDeathChance.value = disease.baseDeathChance;
+			this.diseaseType.value = disease.type;
+			this.baseHealthPenalty.value = disease.baseHealthPenalty;
+			this.baseSpreadRadius.value = disease.baseSpreadRadius;
+			this.mutationChance.value = disease.mutationChance;
+			this.mutationMagnitude.value = disease.mutationMagnitude;
+			this.progressionSpeed.value = disease.progressionSpeed;
 			this.name.value = this.state.diseaseNames[disease.uniqueKey] ? this.state.diseaseNames[disease.uniqueKey] : disease.strainHeader;
 			this.setState({ selectedDisease: diseaseKey});
 
@@ -109,8 +168,9 @@ export default class CreateDiseasePanel extends Component {
 		}
 	}
 
-	createDiseeaseJson = (): string => {
-		return JSON.stringify({
+	createDiseeaseJson = (currentDisease: string | null): string => {
+		console.log("disease", currentDisease);
+		const inp = {
 			name: this.name.value,
 			type: parseInt(this.diseaseType.value),
 			baseSpreadChance: parseFloat(this.baseSpreadChance.value),
@@ -120,7 +180,15 @@ export default class CreateDiseasePanel extends Component {
 			mutationChance: parseFloat(this.mutationChance.value),
 			mutationMagnitude: parseFloat(this.mutationMagnitude.value),
 			progressionSpeed: parseFloat(this.progressionSpeed.value),
-		});
+		};
+
+		if (currentDisease) {
+			const entity = currentDisease.split(":");
+			inp.entityIndex = parseInt(entity[0]);
+			inp.entityVersion = parseInt(entity[1]);
+		}
+
+		return JSON.stringify(inp);
 	}
 
 	getEditStyle = () :any => {
@@ -137,6 +205,10 @@ export default class CreateDiseasePanel extends Component {
 
 	isSelected(d: Disease) : boolean {
 		return this.state.selectedDisease === d.uniqueKey;
+	}
+
+	diseaseIsActive = (disease: Disease): boolean => {
+		return this.state.currentInfectionCount[disease.uniqueKey] > 0
 	}
 }
 

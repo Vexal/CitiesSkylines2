@@ -40,7 +40,7 @@
 
 .createDiseasePanel {
 	margin-top: 50rem;
-	margin-left: 420rem;
+	margin-left: 620rem;
 	position: absolute;
 	width: 450rem;
 	//background-color: rgba(42, 55, 83, 0.4375);
@@ -66,9 +66,15 @@
 
 .diseaseListPane {
 	width: 220rem;
-	padding:8rem;
+	padding: 8rem;
 	background-color: rgba(32, 45, 73, 0.5375);
-	border-radius:10rem;
+	border-radius: 10rem;
+	//
+}
+
+.diseaseListPaneContent {
+	overflow-y: scroll;
+	height: 600rem;
 }
 
 .diseaseParamInputPane {
@@ -79,10 +85,15 @@
 .controlDiseaseRow {
 
 	&:hover {
-		background-color: rgba(132, 45, 73, 0.4375);
+		background-color: rgba(132, 45, 73, 0.5375);
 	}
 
 	&.selected {
-		color:lightblue;
+		color: lightblue;
+		background-color: rgba(132, 45, 73, 0.84375);
+
+		&:hover {
+			background-color: rgba(132, 45, 73, 0.9375);
+		}
 	}
 }
