@@ -28,18 +28,18 @@ namespace Pandemic
 		{
 			for (int i = start; i < start + count; ++i)
 			{
-				if (math.lengthsq(this.citizenPositions[i]) < 1)
+				/*if (math.lengthsq(this.citizenPositions[i]) < 1)
 				{
 					continue;
-				}
+				}*/
 
 				for (int j = 0; j < this.diseasePositions.Length; ++j)
 				{
 					float distance = math.distancesq(this.diseasePositions[j], this.citizenPositions[i]);
-					if (float.IsNaN(distance) || float.IsInfinity(distance))
+					/*if (float.IsNaN(distance) || float.IsInfinity(distance))
 					{
 						continue;
-					}
+					}*/
 
 					if (distance < diseaseRadiusSq[j])
 					{

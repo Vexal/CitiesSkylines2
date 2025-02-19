@@ -47,7 +47,7 @@ namespace Pandemic
 			AddBinding(new TriggerBinding<string>("Pandemic", "cureSelected", (
 				string json) =>
 			{
-				this.diseaseProgressionSystem.cureCitizen(EntityManager.tryGetCitizen(this.toolSystem.selected));
+				this.diseaseProgressionSystem.cureCitizen(EntityManager.getCitizenFromSelected(this.toolSystem.selected));
 			}));
 
 			AddBinding(new TriggerBinding<string>("Pandemic", "cureAll", (
@@ -64,6 +64,13 @@ namespace Pandemic
 				{
 					this.diseaseProgressionSystem.makeCitizenSick(this.toolSystem.selected, inp.getEntity());
 				}
+			}));
+
+			AddBinding(new TriggerBinding<string>("Pandemic", "deleteDisease", (
+				string json) =>
+			{
+				DiseaseCreateInput inp = JsonSerializer.Deserialize<DiseaseCreateInput>(json);
+				this.diseaseProgressionSystem.deleteDisease(inp.getEntity());
 			}));
 		}
 	}

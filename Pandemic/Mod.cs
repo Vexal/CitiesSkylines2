@@ -13,8 +13,6 @@ namespace Pandemic
 		public static ILog log = LogManager.GetLogger($"{nameof(Pandemic)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
 		public PandemicSettings m_Setting;
 		public static Mod INSTANCE;
-		public static ProxyAction impartDiseaseAction;
-		public const string impartDiseaseActionName = "ImpartDiseaseBinding";
 
 		public void OnLoad(UpdateSystem updateSystem)
 		{
@@ -27,14 +25,11 @@ namespace Pandemic
 			m_Setting = new PandemicSettings(this);
 			m_Setting.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
-			m_Setting.RegisterKeyBindings();
-			impartDiseaseAction = m_Setting.GetAction(impartDiseaseActionName);
-			impartDiseaseAction.shouldBeEnabled = true;
+			//m_Setting.RegisterKeyBindings();
 
 			AssetDatabase.global.LoadSettings(nameof(Pandemic), m_Setting, new PandemicSettings(this));
 
 			//updateSystem.UpdateBefore<ForceSicknessSystem>(SystemUpdatePhase.GameSimulation);
-			updateSystem.UpdateBefore<DiseaseToolSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<PandemicSpreadSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<RenderDiseaseSystem>(SystemUpdatePhase.Rendering);
 			updateSystem.UpdateAt<HealthInfoUISystem>(SystemUpdatePhase.UIUpdate);

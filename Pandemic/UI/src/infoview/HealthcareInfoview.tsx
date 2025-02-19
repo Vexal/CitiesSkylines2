@@ -69,16 +69,16 @@ export class DiseaseInfoPanel extends Component {
 		diseaseList: null,// DiseaseInfoPanel.buildDiseaseList(diseaseList.value, patientCountMap(currentInfectionCount.value)),
 		diseaseMap: null,
 		currentInfectionCount: null,// patientCountMap(currentInfectionCount.value),
-		mutationCooldown: 0,
+		mutationCooldown: mutationCooldown.value,
 		activeOnly: true,
 		expandedDisease: {}
 	}
 
 	render() {
-		console.log("the disease list", InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
+		//console.log("the disease list", this.state.mutationCooldown, mutationCooldown.value, InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
 		return <div>
 			<InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
-				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"} rightText={this.state.mutationCooldown}></InfoviewPanelLabel>
+				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"} rightText={this.state.mutationCooldown.toString()}></InfoviewPanelLabel>
 				{this.state.diseaseList?.filter((disease: Disease) => !this.state.activeOnly || this.state.currentInfectionCount[disease.uniqueKey] > 0).map((disease: Disease) => <><InfoviewPanelLabel
 					small={1}
 					text={disease.strainHeader}
@@ -106,7 +106,9 @@ export class DiseaseInfoPanel extends Component {
 			});
 		});
 
+		//console.log("mutation cooldown", mutationCooldown.value);
 		mutationCooldown.subscribe(val => {
+			//console.log("mutation cooldown", val);
 			this.setState({ mutationCooldown: val });
 		});
 	}

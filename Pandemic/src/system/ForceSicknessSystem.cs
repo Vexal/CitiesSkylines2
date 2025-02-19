@@ -37,7 +37,6 @@ namespace Pandemic
 		protected override void OnCreate()   
 		{
 			base.OnCreate();
-			Mod.INSTANCE.m_Setting.forceSicknessSystem = this;
 			this.prefabSystem = World.DefaultGameObjectInjectionWorld?.GetOrCreateSystemManaged<PrefabSystem>();
 			this.addHealthProblemArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<AddHealthProblem>());
 			this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();

@@ -28,6 +28,7 @@ namespace Pandemic
 		public float mutationMagnitude;
 		public float spontaneousProbability;
 		public bool preventSpontaneously;
+		public int spreadCount;
 		public Entity entity;
 		public Entity parent;
 
@@ -113,6 +114,8 @@ namespace Pandemic
 			writer.Write(this.spontaneousProbability);
 			writer.PropertyName(nameof(this.preventSpontaneously));
 			writer.Write(this.preventSpontaneously);
+			writer.PropertyName(nameof(this.spreadCount));
+			writer.Write(this.spreadCount);
 			writer.PropertyName(nameof(this.parent));
 			writer.Write(this.parent.keyString());
 			writer.TypeEnd();
@@ -186,6 +189,7 @@ namespace Pandemic
 		public bool preventSpontaneously { get; set; }
 		public int entityIndex { get; set; }
 		public int entityVersion { get; set; }
+		public int spreadCount { get; set; }
 
 		public Entity getEntity()
 		{

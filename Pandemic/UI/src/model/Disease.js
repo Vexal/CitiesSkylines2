@@ -62,7 +62,7 @@ export default class Disease {
 
 	/** @returns {number}*/
 	get progressionSpeed() {
-		return (Math.round(this._diseaseJson.progressionSpeed * 1000 * 100) / 1000).toFixed(3);
+		return (Math.round(this._diseaseJson.progressionSpeed * 1000) / 1000).toFixed(3);
 	}
 
 	/** @returns {number}*/

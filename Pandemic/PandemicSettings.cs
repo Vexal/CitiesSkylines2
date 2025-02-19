@@ -13,7 +13,6 @@ namespace Pandemic
 	[SettingsUIGroupOrder(diseaseRaritySettings, diseaseSpreadSettings, ccDiseaseGrp, flDiseaseGrp, diseaseImpactSettings, citizenBehaviorGroup, appearanceSettings, kKeybindingGroup)]
 	[SettingsUITabOrder(mainSection, actionsSection, actionsSection)]
 	[SettingsUIShowGroupName(diseaseRaritySettings, citizenBehaviorGroup, ccDiseaseGrp, flDiseaseGrp, diseaseImpactSettings, diseaseSpreadSettings, kKeybindingGroup, appearanceSettings)]
-	[SettingsUIKeyboardAction(Mod.impartDiseaseActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "PTestUsage" })]
 	public class PandemicSettings : ModSetting
 	{
 		public const string mainSection = "Main";
@@ -30,12 +29,9 @@ namespace Pandemic
 		public const string ccDiseaseGrp = "CommonCold";
 		public const string flDiseaseGrp = "Flu";
 
-		internal DiseaseToolSystem diseaseToolSystem;
-		internal ForceSicknessSystem forceSicknessSystem;
-
 		public PandemicSettings(IMod mod) : base(mod)
 		{
-			this.diseaseSpreadInterval = 60;
+			/*this.diseaseSpreadInterval = 60;
 			this.maxDiseaseSpreadPerFrame = 100;
 			//this.diseaseFleeRadius = 10f;
 			this.maskEffectiveness = 65;
@@ -48,7 +44,7 @@ namespace Pandemic
 			this.ccChance = 100;
 			this.flChance = 30;
 			this.exChance = 1;
-			this.modEnabled = true;
+			this.modEnabled = true;*/
 		}
 
 		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
@@ -86,7 +82,7 @@ namespace Pandemic
 		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
 		public float ccMutationMagnitude { get; set; }
 
-		[SettingsUISlider(min = 0, max = 1, step = .001f, unit = Unit.kFloatThreeFractions)]
+		[SettingsUISlider(min = 0, max = 1, step = .001f)]
 		[SettingsUISection(diseaseSection, ccDiseaseGrp)]
 		public float ccProgressionSpeed { get; set; }
 
@@ -138,12 +134,6 @@ namespace Pandemic
 		public int flHealthImpact { get; set; }
 
 
-		[SettingsUISection(actionsSection, kButtonGroup)]
-		public bool MakeEveryoneSickButton { set { this.forceSicknessSystem.makeAllCitizensSick(); } }
-
-		[SettingsUISection(actionsSection, kButtonGroup)]
-		public bool DecreaseHealthButton { set { this.forceSicknessSystem.applyDiseasePenalty(true, 10); } }
-
 		//Disease Impact Settings
 
 		//Disease Spread Settings
@@ -160,7 +150,7 @@ namespace Pandemic
 		[SettingsUISection(mainSection, kSliderGroup)]
 		public float diseaseFleeRadius { get; set; }*/
 
-		[SettingsUISlider(min = 0, max = 100, step = 1, scalarMultiplier = 1)]
+		[SettingsUISlider(min = 0, max = 10000, step = 1, scalarMultiplier = 1)]
 		[SettingsUISection(mainSection, diseaseSpreadSettings)]
 		public float maxDiseaseSpreadPerFrame { get; set; }
 
@@ -186,10 +176,8 @@ namespace Pandemic
 		[SettingsUISection(mainSection, appearanceSettings)]
 		public bool modEnabled { get; set; }
 
-		//Key bindings
-		[SettingsUIKeyboardBinding(BindingKeyboard.X, Mod.impartDiseaseActionName, shift: true)]
-		[SettingsUISection(mainSection, kKeybindingGroup)]
-		public ProxyBinding impartDiseaseKeyBinding { get; set; }
+		[SettingsUISection(mainSection, appearanceSettings)]
+		public bool resetAllDefaults { set { this.SetDefaults(); this.ApplyAndSave(); } }
 
 		public override void SetDefaults()
 		{
@@ -205,10 +193,11 @@ namespace Pandemic
 
 			this.newDiseaseChance = 5;
 			this.ccChance = 100;
-			this.flChance = 30;
-			this.exChance = 1;
+			this.flChance = 0;
+			this.exChance = 0;
 			this.modEnabled = true;
 			this.globalMutationCooldown = 60 * 30;
+
 		}
 
 		public void setDiseaseDefaults()
@@ -216,7 +205,7 @@ namespace Pandemic
 			this.ccMutationChance = .005f;
 			this.ccMutationMagnitude = .15f;
 			this.ccProgressionSpeed = .015f;
-			this.ccHealthImpact = 2;
+			this.ccHealthImpact = 0;
 			this.ccDeathChance = 0;
 			this.ccSpreadChance = .02f;
 			this.ccSpreadRadius = 10f;
@@ -324,15 +313,10 @@ namespace Pandemic
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flSpreadRadius)), "Disease Spread Radius" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.flSpreadRadius)), $"The distance at which a contagious citizen can spread disease to nearby citizens. The chance of spreading falls off with distance." },
 
-
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.MakeEveryoneSickButton)), "Make All Citizens Sick" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.MakeEveryoneSickButton)), $"Make all citizens sick." },
-
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.DecreaseHealthButton)), "Decrease Health" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.DecreaseHealthButton)), $"Decrease all health." },
-
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.resetDefaulDiseasesButton)), "Reset Disease Config" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.resetDefaulDiseasesButton)), $"Reset diseases config to defaults." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.resetAllDefaults)), "Reset Config" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.resetAllDefaults)), $"Reset all options to defaults." },
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.modEnabled)), "Mod Enabled" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.modEnabled)), $"Enable / disable the pandemic mod." },
 
@@ -375,8 +359,6 @@ namespace Pandemic
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Moderate), "Moderate" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Severe), "Severe" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Extreme), "Extreme" },
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.impartDiseaseKeyBinding)), "Apply Contagious Disease Key" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.impartDiseaseKeyBinding)), $"Key binding to apply contagious disease to citizen." },
 				{"Policy.TITLE[Mask Mandate]", "Mask Mandate" },
 				{"Policy.DESCRIPTION[Mask Mandate]", $"Require all citizens to wear masks, drastically decreasing the chance of spreading or catching " +
 				$"contagious sickness.\n\nDecreases citizen happiness.\nLower education citizens have a higher chance of defying the mask mandate." },

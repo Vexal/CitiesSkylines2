@@ -29,7 +29,7 @@ namespace Pandemic
 			return (byte)(original * amp);
 		}
 
-		public static Entity tryGetCitizen(this EntityManager entityManager, Entity target)
+		public static Entity getCitizenFromSelected(this EntityManager entityManager, Entity target)
 		{
 			if (entityManager.TryGetComponent<Game.Creatures.Resident>(target, out var resident) && entityManager.Exists(resident.m_Citizen))
 			{

@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck
-import { Button, PanelSection, PanelSectionRow } from "cs2/ui";
+import { Button, Dropdown, DropdownItem, DropdownToggle, PanelSection, PanelSectionRow } from "cs2/ui";
 import { bindValue, trigger } from "cs2/api";
 import { Component } from "react";
 import { useLocalization } from "cs2/l10n";
@@ -22,12 +22,12 @@ export default class CreateDiseasePanel extends Component {
 		diseaseList: Disease.buildDiseaseList(CustomBindings.diseaseList.value),
 		currentInfectionCount: Disease.patientCountMap(CustomBindings.currentInfectionCount.value),
 		diseaseNames: CustomBindings.diseaseNames.value,
-		activeOnlyFilter: true
+		activeOnlyFilter: false
 
 	}
 
 	render() {
-		console.log("disease names", this.state.diseaseNames);
+		//console.log("disease names", this.state.diseaseNames);
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
 		return <> 
 			<div className={styles.createDiseaseButton + " " + (this.state.menuOpen ? styles.createDiseasePanelExpanded : "")} onClick={() => {
@@ -117,6 +117,16 @@ export default class CreateDiseasePanel extends Component {
 								}}>
 									<div style={{ padding: "4rem" }}><LocalizedText text={"Infect Selected Citizen"} /></div>
 								</Button>
+								<div style={{ margin: "3rem" }} />
+								<Button style={this.getEditStyle()} selected={false} variant="flat" onSelect={() => {
+									if (this.state.selectedDisease === null) {
+										return;
+									}
+
+									trigger(MOD_NAME, "deleteDisease", this.createDiseeaseJson(this.state.selectedDisease));
+								}}>
+									<div style={{ padding: "4rem" }}><LocalizedText text={"Delete Selected Disease"} /></div>
+								</Button>
 							</div>
 							<div style={{ flex: "1" }} />
 							<div className={styles.diseaseListPane}>
@@ -169,9 +179,9 @@ export default class CreateDiseasePanel extends Component {
 	}
 
 	createDiseeaseJson = (currentDisease: string | null): string => {
-		console.log("disease", currentDisease);
+		//console.log("disease", currentDisease);
 		const inp = {
-			name: this.name.value,
+			name: this.name.value === this.state.diseaseNames[disease.uniqueKey] ? "" : this.name.value,
 			type: parseInt(this.diseaseType.value),
 			baseSpreadChance: parseFloat(this.baseSpreadChance.value),
 			baseDeathChance: parseFloat(this.baseDeathChance.value),

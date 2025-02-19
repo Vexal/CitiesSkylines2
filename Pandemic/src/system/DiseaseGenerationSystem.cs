@@ -23,12 +23,14 @@ namespace Pandemic
 				disease = EntityManager.GetComponentData<Disease>(prev);
 				if (this.isMutationCooldownActive() == 0 && disease.shouldMutate())
 				{
-					Disease mutation = disease.mutate();
-					Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
+					disease = disease.mutate();
+					/*Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
 					mutation.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
 					disease = mutation;
-					this.lastMutationFrame = this.simulationSystem.frameIndex;
-					return newDisease;
+					this.lastMutationFrame[disease.type] = this.simulationSystem.frameIndex;
+					this.frameDiseases[disease.type] = mutation;
+					return newDisease;*/
+					return this.instantiateDiseaseEntity(ref disease);
 				}
 				else
 				{
@@ -37,7 +39,7 @@ namespace Pandemic
 			}
 		}
 
-		private bool shouldCreateNewDisease()
+		private bool shouldCreateNewDisease(uint type)
 		{
 			return this.isMutationCooldownActive() == 0 && UnityEngine.Random.Range(0f, 100f) < Mod.settings.newDiseaseChance;
 		}
@@ -78,7 +80,7 @@ namespace Pandemic
 		private Entity getOrCreateRandomDisease(out Disease disease)
 		{
 			uint diseaseType = this.chooseNewDiseaseType();
-			if (!this.shouldCreateNewDisease())
+			//if (!this.shouldCreateNewDisease(diseaseType))
 			{
 				NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
 				if (diseases.Length > 0)
@@ -86,7 +88,7 @@ namespace Pandemic
 					int startInd = UnityEngine.Random.Range(0, diseases.Length - 1);
 					for (int i = startInd; i < diseases.Length; ++i)
 					{
-						disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
+						disease = EntityManager.GetComponentData<Disease>(diseases[i]);
 						if (!disease.preventSpontaneously && disease.type == diseaseType)
 						{
 							return disease.entity;
@@ -97,7 +99,7 @@ namespace Pandemic
 					{
 						for (int i = 0; i < startInd; ++i)
 						{
-							disease = EntityManager.GetComponentData<Disease>(diseases[UnityEngine.Random.Range(0, diseases.Length - 1)]);
+							disease = EntityManager.GetComponentData<Disease>(diseases[i]);
 							if (!disease.preventSpontaneously && disease.type == diseaseType)
 							{
 								return disease.entity;
@@ -105,6 +107,12 @@ namespace Pandemic
 						}
 					}
 				}
+
+				/*if (this.frameDiseases[diseaseType].id != 0)
+				{
+					disease = this.frameDiseases[diseaseType];
+					return disease.entity;
+				}*/
 			}
 
 			switch (diseaseType)
@@ -123,12 +131,24 @@ namespace Pandemic
 					break;
 			}
 
-			Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
+			/*Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
 			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
 
 			EntityManager.SetComponentData(newDisease, disease);
+			this.lastMutationFrame[diseaseType] = this.simulationSystem.frameIndex;
+			this.frameDiseases[diseaseType] = disease;
+			return newDisease;*/
+			return this.instantiateDiseaseEntity(ref disease);
+		}
+
+		public Entity instantiateDiseaseEntity(ref Disease disease)
+		{
+			Entity diseaseEntity = EntityManager.CreateEntity(this.diseaseArchetype);
+			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), diseaseEntity);
+			EntityManager.SetComponentData(diseaseEntity, disease);
+
 			this.lastMutationFrame = this.simulationSystem.frameIndex;
-			return newDisease;
+			return diseaseEntity;
 		}
 
 		public Disease createCommonCold()
@@ -146,7 +166,7 @@ namespace Pandemic
 				progressionSpeed = Mod.settings.ccProgressionSpeed,
 			};
 
-			return disease.mutate(true);
+			return disease;
 		}
 
 		public Disease createFlu()
@@ -164,7 +184,7 @@ namespace Pandemic
 				progressionSpeed = Mod.settings.flProgressionSpeed,
 			};
 
-			return disease.mutate(true);
+			return disease;
 		}
 
 		public Disease createNovelVirus()
@@ -182,7 +202,7 @@ namespace Pandemic
 				progressionSpeed = UnityEngine.Random.Range(.0001f, .99f),
 			};
 
-			return disease.mutate(true);
+			return disease;
 		}
 
 		public Disease createCustomDisease(DiseaseCreateInput inp)
@@ -205,7 +225,11 @@ namespace Pandemic
 			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
 
 			EntityManager.SetComponentData(newDisease, disease);
-			this.nameSystem.SetCustomName(newDisease, inp.name);
+			if (inp.name != "")
+			{
+				this.nameSystem.SetCustomName(newDisease, inp.name);
+			}
+
 			return disease;
 		}
 
@@ -225,6 +249,11 @@ namespace Pandemic
 				currentDisease.preventSpontaneously = inp.preventSpontaneously;
 				currentDisease.spontaneousProbability = inp.spontaneousProbability;
 				EntityManager.SetComponentData(diseaseEntity, currentDisease);
+				if (inp.name != "")
+				{
+					this.nameSystem.SetCustomName(diseaseEntity, inp.name);
+				}
+
 				return currentDisease;
 			}
 			else
@@ -236,7 +265,7 @@ namespace Pandemic
 		public void deleteDisease(Entity disease)
 		{
 			this.cureDisease(disease);
-			EntityManager.DestroyEntity(disease);
+			EntityManager.AddComponent<Deleted>(disease);
 		}
 	}
 }

@@ -10,6 +10,8 @@ using Game.SceneFlow;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
+using System.Collections.Generic;
+using System.Runtime.Remoting.Lifetime;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -212,6 +214,9 @@ namespace Pandemic
 		{
 			NativeArray<Entity> citizens = this.healthProblemEntityQuery.ToEntityArray(Allocator.Temp);
 			NativeArray<HealthProblem> healthProblems = this.healthProblemEntityQuery.ToComponentDataArray<HealthProblem>(Allocator.Temp);
+
+			Dictionary<Entity, uint> newInfectionCounts = new Dictionary<Entity, uint>();
+
 			for (int i = 0; i < citizens.Length; ++i)
 			{
 				if (!isSick(healthProblems[i].m_Flags))
@@ -248,15 +253,32 @@ namespace Pandemic
 						break;
 				}
 
-				diseaseDefinition.infectionCount++;
+				//diseaseDefinition.infectionCount++;
 
-				EntityManager.SetComponentData(disease, diseaseDefinition);
+				//EntityManager.SetComponentData(disease, diseaseDefinition);
 
 				EntityManager.SetComponentData(citizens[i], lastDisease);
 
 				EntityManager.AddComponent<CurrentDisease>(citizens[i]);
 				EntityManager.SetComponentData(citizens[i], new CurrentDisease() { disease = disease, progression = .001f });
+				if (newInfectionCounts.ContainsKey(disease))
+				{
+					newInfectionCounts[disease]++;
+				}
+				else
+				{
+					newInfectionCounts[disease] = 1;
+				}
 				
+			}
+
+			foreach (var e in newInfectionCounts)
+			{
+				if (EntityManager.TryGetComponent<Disease>(e.Key, out var disease))
+				{
+					disease.infectionCount += e.Value;
+					EntityManager.SetComponentData(e.Key, disease);
+				}
 			}
 		}
 
@@ -422,7 +444,13 @@ namespace Pandemic
 		protected override void OnGamePreload(Colossal.Serialization.Entities.Purpose purpose, GameMode mode)
 		{
 			base.OnGamePreload(purpose, mode);
-			EntityManager.AddComponent<Deleted>(this.diseaseEntityQuery);
+			EntityManager.DestroyEntity(this.diseaseEntityQuery);
+			Disease cc = this.createCommonCold();
+			this.instantiateDiseaseEntity(ref cc);
+			Disease ff = this.createFlu();
+			this.instantiateDiseaseEntity(ref ff);
+			Disease nv = this.createNovelVirus();
+			this.instantiateDiseaseEntity(ref nv);
 		}
 	}
 }
