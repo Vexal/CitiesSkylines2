@@ -45,11 +45,8 @@ namespace Pandemic
 			this.flChance = 30;
 			this.exChance = 1;
 			this.modEnabled = true;*/
+			this.SetDefaults();
 		}
-
-		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
-		[SettingsUISection(mainSection, diseaseRaritySettings)]
-		public float newDiseaseChance { get; set; }
 
 		//Disease Chances
 		[SettingsUISlider(min = 0, max = 100, step = .1f, unit = Unit.kFloatSingleFraction)]
@@ -155,9 +152,6 @@ namespace Pandemic
 		public float maxDiseaseSpreadPerFrame { get; set; }
 
 
-		[SettingsUISection(mainSection, diseaseImpactSettings)]
-		public DiseaseProgression diseaseProgressionSpeed { get; set; } = DiseaseProgression.Minor;
-
 		//Appearance
 		[SettingsUISection(mainSection, appearanceSettings)]
 		public bool showContagiousCircle { get; set; }
@@ -191,7 +185,6 @@ namespace Pandemic
 
 			this.setDiseaseDefaults();
 
-			this.newDiseaseChance = 5;
 			this.ccChance = 100;
 			this.flChance = 0;
 			this.exChance = 0;
@@ -266,8 +259,6 @@ namespace Pandemic
 				/**
 				 * Disease chance
 				 */
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.newDiseaseChance)), "New Disease Chance" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.newDiseaseChance)), $"The % chance for a citizen who becomes spontanously sick via the normal base sick mechanic, to contract a disease that does not yet exist." },
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.ccChance)), "Common Cold Chance" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.ccChance)), $"The weighted chance for a new disease to be a Common Cold" },
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.flChance)), "Flu Chance" },
@@ -350,10 +341,7 @@ namespace Pandemic
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.contagiousGraphicOpacity)), $"The opacity of the circle graphic indicating the contagious radius of a sick citizen." },
 
 				
-				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.diseaseProgressionSpeed)), "Disease Progress Speed" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.diseaseProgressionSpeed)), $"The speed at which disease lowers the citizen's health. A citizen with low health is considered" +
-				$"to be in \"late-stage\" severity and may have a higher chance to die" },
-
+			
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Vanilla), "Vanilla" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Minor), "Minor" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Moderate), "Moderate" },

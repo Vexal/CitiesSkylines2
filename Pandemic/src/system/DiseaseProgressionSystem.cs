@@ -384,23 +384,6 @@ namespace Pandemic
 			}
 		}
 
-		public byte getHealthDecreaseAmount()
-		{
-			switch (Mod.INSTANCE.m_Setting.diseaseProgressionSpeed)
-			{
-				case PandemicSettings.DiseaseProgression.Minor:
-					return 5;
-				case PandemicSettings.DiseaseProgression.Moderate:
-					return 10;
-				case PandemicSettings.DiseaseProgression.Severe:
-					return 15;
-				case PandemicSettings.DiseaseProgression.Extreme:
-					return 25;
-				default:
-					return 0;
-			}
-		}
-
 		private void killCitizen(Entity target)
 		{
 			Entity eventEntity = EntityManager.CreateEntity(this.deathEventArchetype);

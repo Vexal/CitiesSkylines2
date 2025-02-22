@@ -1,27 +1,62 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="102782" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="Pandemic" />
+	<DisplayName Value="Pandemic (TEST VERSION)" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="This is a short description" />
+	<ShortDescription Value="Pandemic (TEST VERSION)" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
-This is a long description
+TEST VERSION: Adds enhanced disease gameplay, including:
+* Contagious sickness -- the contagious radius of a sick citizen is shown as a green circle; this can be turned off in settings
+* Disease progression -- contagiousness and health impact increases by disease stage
+* Tracking of disease strains; all sick citizens are assigned a disease strain upon becoming sick. Disease stats can be viewed in the health tab or disease control panel
+* Random and configurable disease mutations -- disease have a chance to mutate into a new strain upon spread
+* New 'Mask Mandate' city policy -- citizen adherence to mask mandates is based on eduction level
+* Custom disease creator
+* Immunity to strains recently contracted
+
+All disease strains are mutations Base Disease Types:
+* 1 - Common Cold
+* 2 - Flu
+* 3 - Novel
+
+* An unlimited number of strains can exist per disease type; future versions will make it possible to create new base disease types.
+* For vanilla disease lethality, set 2 and 3 to have zero spawn chance in the settings menu. The settings menu parameters only affect the disease configurations at game start; You can alter the parameters of the base diseases in-game in the control panel.
+* A full-scale pandemic can easily be triggered by experimenting with the disease parameters
+
+**TEST VERSION -- this mod is a work in progress**
+The test version *does not affect savegames*; reloading a game will clear all disease configurations and reassign new diseases; savegame functionality will be added once the disease format is finalized.
+The test version has not yet been optimized for large cities. 
+
+The final version of the mod will also include:
+* Vaccine research
+* Quarantine / disaster shelter usage
+* More random distribution types to use for mutation parameters (in this test version, all random variables are linear)
+* UI improvements
+* Performance optimizations
+* Disease export
+* Tourism affects on disease
+
+
+
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="Properties/pandemic1.jpg" />
+	<Screenshot Value="Properties/pandemic2.png" />
+	<Screenshot Value="Properties/pandemic3.jpg" />
+	<Screenshot Value="Properties/pandemic4.jpg" />
 	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
+	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/pandemic-test-version.1729680/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.*.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
@@ -29,5 +64,5 @@ This is a long description
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/Vexal/CitiesSkylines2/tree/master/Pandemic" />
 </Publish>

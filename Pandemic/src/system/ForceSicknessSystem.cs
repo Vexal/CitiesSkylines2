@@ -169,23 +169,6 @@ namespace Pandemic
 			this.forceAllSickAction.Disable();
 		}
 
-		private byte getDiseasePenalty()
-		{
-			switch (Mod.INSTANCE.m_Setting.diseaseProgressionSpeed)
-			{
-				case PandemicSettings.DiseaseProgression.Minor:
-					return 2;
-				case PandemicSettings.DiseaseProgression.Moderate:
-					return 5;
-				case PandemicSettings.DiseaseProgression.Severe:
-					return 15;
-				case PandemicSettings.DiseaseProgression.Extreme:
-					return 35;
-				default:
-					return 0;
-			}
-		}
-
 		protected override void OnUpdate()
 		{
 			this.checkHospitals();
@@ -209,7 +192,7 @@ namespace Pandemic
 				}
 			}
 
-			this.applyDiseasePenalty(false, this.getDiseasePenalty());
+			//this.applyDiseasePenalty(false, this.getDiseasePenalty());
 
 			Entity selected = this.getSelected();
 

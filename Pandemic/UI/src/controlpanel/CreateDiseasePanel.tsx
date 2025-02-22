@@ -38,7 +38,7 @@ export default class CreateDiseasePanel extends Component {
 			}} onMouseLeave={() => {
 				this.setState({ hovering: false })
 				}}>
-				{ic}
+				{healthIcon}
 				</div>
 			{this.state.hovering && <ToolTip text={"Disease Customizer"} />}
 
@@ -181,7 +181,7 @@ export default class CreateDiseasePanel extends Component {
 	createDiseeaseJson = (currentDisease: string | null): string => {
 		//console.log("disease", currentDisease);
 		const inp = {
-			name: this.name.value === this.state.diseaseNames[disease.uniqueKey] ? "" : this.name.value,
+			name: this.name.value === this.state.diseaseNames[currentDisease] ? "" : this.name.value,
 			type: parseInt(this.diseaseType.value),
 			baseSpreadChance: parseFloat(this.baseSpreadChance.value),
 			baseDeathChance: parseFloat(this.baseDeathChance.value),
@@ -276,3 +276,14 @@ const houseIcon = <svg width="90%" height="90%" viewBox="0 0 32 32"><defs><clipP
 const officeIcon = <svg width="90%" height="90%" viewBox="0 0 32 32"><defs><clipPath><rect width="32" height="32" /></clipPath></defs><g><g transform="translate(0.795 5.408)"><path d="M-10008-10482.914l16.191,10,13.512-10-16.52-8.08Z" transform="translate(10008.002 10493.75)" fill="#660090" /><path d="M-9906.381-10484.037l8.623,4.932.007-11.116-8.751-4.479Z" transform="translate(9914.063 10495.162)" fill="#9a0ad6" /><path d="M-9888.85-10478.244l5.781-4.1v-12.535l-4.4,2.859-1.393,2.635Z" transform="translate(9905.157 10494.277)" fill="#7902ab" /><path d="M-9905.352-10489.791l9.012,4.674,4.421-2.923-8.732-4.233Z" transform="translate(9914.057 10487.453)" fill="#d078f5" /><path d="M-9750.371-10484.5l8.645,4.572v4.243l-8.645-4.645Z" transform="translate(9758.059 10489.511)" fill="#64028d" /><path d="M-9750.558-10483.292l8.831,4.556v3.052l-8.645-4.645Z" transform="translate(9758.059 10484.511)" fill="#64028d" /><path d="M-9732.8-10478.926l5.771-3.8v3.8l-5.771,4.074Z" transform="translate(9749.131 10488.658)" fill="#310146" /><path d="M-9732.8-10478.926l5.771-3.8v2.972l-5.771,3.865Z" transform="translate(9749.131 10484.658)" fill="#310146" /><path d="M7.546.5l1.178-2.82,9.055,4.653L16.294,4.94Z" fill="#c65af3" /></g></g></svg>
 const industryIcon = <svg width="90%" height="90%" viewBox="0 0 32 32"><defs><linearGradient x1="0.5" x2="0.5" y2="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#8a6d00" /><stop offset="1" stop-color="#f1bf00" /></linearGradient><clipPath><rect width="32" height="32" /></clipPath></defs><g><g transform="translate(0.796 4.408)"><path d="M-10008-10482.843l16.188,10.105,13.515-10.105-16.512-8.157Z" transform="translate(10008 10493.885)" fill="#ffdc00" /><path d="M-9906.379-10481.035l8.623,4.981.145-4.981-8.771-4.782Z" transform="translate(9914.058 10492.352)" fill="#d6a900" /><path d="M-9888.85-10475.07l5.781-4.144v-4.669l-5.781,3.848Z" transform="translate(9905.154 10491.461)" fill="#a48700" /><path d="M-9906.28-10489l8.7,4.788,5.612-3.837-8.653-4.337Z" transform="translate(9914.016 10495.641)" fill="#fff69f" /><path d="M-9902.63-10487.994l5.228,2.607,3.594-2.426-4.818-2.471Z" transform="translate(9912.163 10494.567)" fill="#f29d00" /><path d="M1.23-14.7a1.76,1.76,0,0,1,.957.284c.117.054.272,7.749.272,7.968,0,.421-.55.764-1.23.764S0-6.028,0-6.451c0-.122.046-7.727.24-7.942A1.415,1.415,0,0,1,1.23-14.7Z" transform="translate(17.216 14.703)" fill="url(#a)" /><path d="M.722-.412c.407,0,.734.114.734.254S1.129.1.722.1-.017-.016-.017-.158.313-.412.722-.412Z" transform="translate(17.717 0.56)" fill="#504200" /></g></g></svg>
 const commercialIcon = <svg width="90%" height="90%" viewBox="0 0 32 32"><defs><clipPath><rect width="32" height="32" /></clipPath></defs><g><g transform="translate(1.488 6.767)"><path d="M-10008-10482.843l16.188,10.105,13.515-10.105-16.512-8.157Z" transform="translate(10008 10492.43)" fill="#005f95" /></g><g transform="translate(-2 2.599)"><path d="M-9991.4-10488.85l11.725,7.117.133-10.134-11.857-6.12Z" transform="translate(9999.999 10501.578)" fill="#0089cf" /><path d="M-9989.369-10489.464l11.91,6.406v-1.086l-11.91-6.3Z" transform="translate(9997.982 10495.559)" fill="#03243e" /><path d="M-9989.369-10489.464l11.91,6.406v-1.086l-11.91-6.3Z" transform="translate(9997.982 10497.388)" fill="#03243e" /><path d="M-9989.369-10489.464l11.91,6.593.086-1.138-12-6.435Z" transform="translate(9997.982 10499.217)" fill="#03243e" /><path d="M-9988.707-10487.747l9.987,5.894v-2.545l-9.987-5.58Z" transform="translate(9997.982 10501.044)" fill="#03243e" /><path d="M-9977.839-10488.589l7.228-5.24.233-9.236-7.329,4.376Z" transform="translate(9998.165 10508.451)" fill="#0071a9" /><path d="M-9991.34-10489.177l11.824,6.146,7.4-4.48-11.895-5.35Z" transform="translate(9999.967 10492.854)" fill="#73e0fc" /><path d="M34.45,19.64l7.271-4.419-.1,1.09L34.45,20.749Z" transform="translate(-13.991 -8.267)" fill="#001209" /><path d="M34.45,19.64l7.271-4.419-.1,1.09L34.45,20.749Z" transform="translate(-13.991 -6.438)" fill="#001209" /><path d="M34.45,19.64l7.271-4.419-.1,1.09L34.45,20.749Z" transform="translate(-13.991 -4.609)" fill="#001209" /><path d="M35.1,19.2,41,15.593v2.288l-5.9,4.206Z" transform="translate(-13.991 -2.781)" fill="#001209" /><path d="M5.688,8.846l1.041-.583V3.825L.549,1.052-.4,1.493Z" transform="translate(11 2)" fill="#0071a9" /><path d="M-9991.4-10493.844l6.02,3.223.068-4.59-6.088-2.773Z" transform="translate(10001.999 10501.467)" fill="#73d0ff" /></g></g></svg>
+const healthIcon = <svg width="40" height="40"
+	viewBox="0 0 24 24">
+	<g transform="translate(3.564 4.035)">
+		<path
+			d="M95.218,881.713v-3.587l-2.4,2.579-3.25-3.256,2.58-2.767H88.436v-4.687h3.457l-2.484-2.489,3.142-3.37,2.667,2.672v-3.843h4.521v3.572l2.395-2.568,3.25,3.256-2.583,2.77h3.722v4.687h-3.446l2.478,2.483-3.146,3.367-2.67-2.676v3.857Z"
+			transform="translate(-88.436 -862.965)" fill="#e56333" />
+		<path
+			d="M9478.84-29.554h2.415V-31h1.208v1.443h2.949v1.318h-2.548a2.885,2.885,0,0,0-.4,1.277,2.508,2.508,0,0,0,.4,1.215,2.007,2.007,0,0,1,.67,1.023c.2.69-.2,2.071-1.071,2.2a5.445,5.445,0,0,0-2.014,1.067,3.838,3.838,0,0,1,.806-1.067c.738-.816,1.475-1,1.208-1.82s-1.074-1.381-1.208-2.008a8.316,8.316,0,0,1,0-1.883h-2.415Z"
+			transform="translate(-9473.102 36.091)" fill="#fff" />
+	</g>
+</svg>

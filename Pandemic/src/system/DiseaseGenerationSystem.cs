@@ -39,11 +39,6 @@ namespace Pandemic
 			}
 		}
 
-		private bool shouldCreateNewDisease(uint type)
-		{
-			return this.isMutationCooldownActive() == 0 && UnityEngine.Random.Range(0f, 100f) < Mod.settings.newDiseaseChance;
-		}
-
 		private uint chooseNewDiseaseType()
 		{
 			float totalWeight = Mod.settings.ccChance + Mod.settings.flChance + Mod.settings.exChance;
