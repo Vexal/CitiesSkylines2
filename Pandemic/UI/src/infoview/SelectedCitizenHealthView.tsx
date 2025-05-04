@@ -1,3 +1,4 @@
+import CustomBindings from "../model/CustomBindings";
 import Disease from "../model/Disease";
 import { VanillaComponentResolver } from "../mods/VanillaComponentResolver";
 import { InfoRow, InfoRowTheme, InfoSection, InfoSectionTheme } from "../mods/VanillaComponents";
@@ -11,6 +12,10 @@ interface InfoSectionComponent {
 export const SelectedCitizenHealthView = (componentList: any): any => {
 	// I believe you should not put anything here.
 	componentList["Pandemic.HealthInfoUISystem"] = (e: InfoSectionComponent) => {
+		if (!CustomBindings.showCitizenHealth) {
+			return null;
+		}
+
 		const disease = JSON.parse(e.group);
 		if (!disease.strainName) {
 			return null;

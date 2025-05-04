@@ -24,6 +24,7 @@ namespace Pandemic
 		private ValueBinding<Disease[]> diseaseBinding;
 		private ValueBinding<string[]> currentInfectionCountBinding;
 		private ValueBinding<uint> mutationCooldown;
+		private ValueBinding<bool> showCitizenHealth;
 		private ValueBinding<Dictionary<string, string>> diseaseNameBinding;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
@@ -33,6 +34,11 @@ namespace Pandemic
 		{
 			base.OnCreate();
 			m_InfoUISystem.AddTopSection(this);
+			this.showCitizenHealth = new ValueBinding<bool>("Pandemic", "showCitizenHealth", Mod.INSTANCE.m_Setting.showCitizenHealth);
+			Mod.INSTANCE.m_Setting.onSettingsApplied += setting =>
+			{
+				showCitizenHealth.Update(((PandemicSettings)setting).showCitizenHealth);
+			};
 			this.uf = UIUpdateState.Create(base.World, 60);
 
 			this.diseaseBinding = new ValueBinding<Disease[]>("Pandemic", "diseases", new Disease[] { }, new ArrayWriter<Disease>(new ValueWriter<Disease>()));
@@ -136,7 +142,14 @@ namespace Pandemic
 			}
 
 			this.currentInfectionCountBinding.Update(r);
-			visible = true;
+			if (!Mod.INSTANCE.m_Setting.showCitizenHealth)
+			{
+				visible = false;
+			}
+			else
+			{
+				visible = true;
+			}
 		}
 
 		protected override void Reset()

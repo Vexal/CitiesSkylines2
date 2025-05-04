@@ -163,6 +163,9 @@ namespace Pandemic
 
 		private bool hideContagiousAppearanceOptions => !this.showContagiousCircle;
 
+		[SettingsUISection(mainSection, appearanceSettings)]
+		public bool showCitizenHealth { get; set; }
+
 		//Citizen behavior
 		[SettingsUISection(mainSection, citizenBehaviorGroup)]
 		public UnderEducatedPolicyAdherenceModifier underEducatedModifier { get; set; } = UnderEducatedPolicyAdherenceModifier.Minor;
@@ -190,6 +193,7 @@ namespace Pandemic
 			this.exChance = 0;
 			this.modEnabled = true;
 			this.globalMutationCooldown = 60 * 30;
+			this.showCitizenHealth = true;
 
 		}
 
@@ -340,8 +344,10 @@ namespace Pandemic
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.contagiousGraphicOpacity)), "Contagious Radius Graphic Opacity" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.contagiousGraphicOpacity)), $"The opacity of the circle graphic indicating the contagious radius of a sick citizen." },
 
-				
-			
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.showCitizenHealth)), "Show Selected Citizen Health Information" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.showCitizenHealth)), $"Display the disease information for selected citizens, if the citizen is currently sick." },
+
+
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Vanilla), "Vanilla" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Minor), "Minor" },
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Moderate), "Moderate" },
