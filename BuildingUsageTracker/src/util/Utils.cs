@@ -41,5 +41,20 @@ namespace BuildingUsageTracker
 		{
 			return EntityManager.Exists(entity) && EntityManager.HasComponent<Building>(entity);
 		}
+
+		public static bool isTransitStation(this EntityManager EntityManager, Entity entity)
+		{
+			return EntityManager.Exists(entity) && EntityManager.HasComponent<PublicTransportStation>(entity);
+		}
+
+		public static Entity entity(string str)
+		{
+			string[] e = str.Split(':');
+			if (e.Length != 2 )
+			{
+				return Entity.Null;
+			}
+			return new Entity { Index = int.Parse(e[0]), Version = int.Parse(e[1]) };
+		}
 	}
 }

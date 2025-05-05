@@ -2,6 +2,7 @@
 using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
+using Game.Pathfind;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -42,18 +43,31 @@ namespace BuildingUsageTracker
 		public NativeCounter.Concurrent shoppingCount;
 		public NativeCounter.Concurrent liesureCount;
 		public NativeCounter.Concurrent movingInCount;
+		public NativeCounter.Concurrent passingThroughCount;
 
 		[ReadOnly]
 		public bool returnEntities;
 		public NativeList<Entity> resultEntities;
 
+		[ReadOnly]
+		public bool checkPathElements;
+		[ReadOnly]
+		public NativeHashSet<Entity> pathTargets;
+		[ReadOnly]
+		public BufferTypeHandle<PathElement> pathHandle;
+		[ReadOnly]
+		public ComponentTypeHandle<PathOwner> pathOwnerHandle;
 
 		public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 		{
 			NativeArray<Target> targets = chunk.GetNativeArray(ref this.targetHandle);
 			bool hasResident = chunk.Has<Resident>();
+			bool checkPaths = this.checkPathElements && chunk.Has<PathOwner>() && chunk.Has<PathElement>();
 			NativeArray<Resident> residents = hasResident ? chunk.GetNativeArray(ref this.residentHandle) : default;
 			NativeArray<Entity> entities = this.returnEntities ? chunk.GetNativeArray(this.entityHandle) : default;
+
+			BufferAccessor<PathElement> entityPaths = checkPaths ? chunk.GetBufferAccessor(ref this.pathHandle) : default;
+			NativeArray<PathOwner> pathOwners = checkPaths ? chunk.GetNativeArray(ref this.pathOwnerHandle) : default;
 
 			var chunkIterator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
 			int totalCount = 0;
@@ -68,10 +82,28 @@ namespace BuildingUsageTracker
 			int shoppingCount = 0;
 			int movingInCount = 0;
 			int otherCount = 0;
+			int passingThroughCount = 0;
 			while (chunkIterator.NextEntityIndex(out var i))
 			{
 				Target target = targets[i];
-				if (target.m_Target == this.searchTarget || (this.hasTarget2 && target.m_Target == this.searchTarget2))
+				bool isExactTarget = target.m_Target == this.searchTarget ||
+					(this.hasTarget2 && target.m_Target == this.searchTarget2);
+
+				bool isPassingThrough = false;
+				if (!isExactTarget && checkPaths)
+				{
+					int startInd = pathOwners[i].m_ElementIndex;
+					DynamicBuffer<PathElement> path = entityPaths[i];
+					for (int pathIndex = pathOwners[i].m_ElementIndex; pathIndex < path.Length; ++pathIndex)
+					{
+						if (this.pathTargets.Contains(path[pathIndex].m_Target))
+						{
+							isPassingThrough = true;
+							break;
+						}
+					}
+				}
+				if (isExactTarget || isPassingThrough)
 				{
 					bool shouldCount = true;
 					if (hasResident) 
@@ -141,6 +173,11 @@ namespace BuildingUsageTracker
 						{
 							this.resultEntities.Add(entities[i]);
 						}
+
+						if (isPassingThrough)
+						{
+							++passingThroughCount;
+						}
 					}
 				}
 			}
@@ -157,6 +194,7 @@ namespace BuildingUsageTracker
 			this.movingInCount.Increment(movingInCount);
 			this.shoppingCount.Increment(shoppingCount);
 			this.otherCount.Increment(otherCount);
+			this.passingThroughCount.Increment(passingThroughCount);
 		}
 	}
 }

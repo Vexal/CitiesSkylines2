@@ -11,7 +11,10 @@ namespace BuildingUsageTracker
 	{
 		protected UIUpdateState uf;
 		private Entity previousSelectedEntity = Entity.Null;
-		private ToolSystem toolSystem;
+		protected ToolSystem toolSystem;
+		protected static string MOD_NAME = "BuildingUsageTracker";
+		protected SelectedBuildingInfoSection otherView;
+		protected bool showEntities = false;
 
 		protected override void OnCreate()
 		{
@@ -35,25 +38,45 @@ namespace BuildingUsageTracker
 				this.previousSelectedEntity = selectedEntity;
 				this.uf.ForceUpdate();
 				this.selectionChanged();
-				if (!EntityManager.isBuilding(selectedEntity))
+				if (!this.shouldBeVisible(selectedEntity))
 				{
 					this.visible = false;
 					return;
 				}
 			}
 
-			if (!EntityManager.Exists(selectedEntity))
-			{
-				this.visible = false;
-				return;
-			}
-
 			if (this.uf.Advance())
 			{
+				if (!this.shouldBeVisible(selectedEntity))
+				{
+					this.visible = false;
+					return;
+				}
+
 				this.update(selectedEntity);
+				this.visible = true;
+			}
+		}
+
+		protected void toggleEntities(bool toggle)
+		{
+			this.showEntities = toggle;
+			if (toggle)
+			{
+				this.otherView.toggleEntities(false);
 			}
 
-			this.visible = true;
+			this.uf.ForceUpdate();
+		}
+
+		protected virtual bool shouldBeVisible(Entity selectedEntity)
+		{
+			if (!EntityManager.Exists(selectedEntity) || !EntityManager.isBuilding(selectedEntity))
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		protected abstract void selectionChanged();

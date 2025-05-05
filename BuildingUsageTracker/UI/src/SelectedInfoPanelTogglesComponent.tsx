@@ -3,6 +3,7 @@ import { Theme, FocusKey, UniqueFocusKey } from "cs2/bindings";
 import { bindValue, trigger, useValue } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
 import { VanillaComponentResolver } from "./mods/VanillaComponentResolver";
+import CustomBindings, { MOD_NAME } from "./CustomBindings";
 
 
 interface InfoSectionComponent {
@@ -31,7 +32,7 @@ const InfoRow: any = getModule(
 	"InfoRow"
 )
 
-export const MOD_NAME = "BuildingUsageTracker";
+
 
 function handleClick(eventName: string) {
 	// This triggers an event on C# side and C# designates the method to implement.
@@ -40,29 +41,26 @@ function handleClick(eventName: string) {
 let showList = false;
 
 export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
+	const getInfoRow = (data: any, field: string, text: string): any => {
+		if (data[field]) {
+			return <InfoRow
+				left={text}
+				right=
+				{
+					data[field]
+				}
+				uppercase={false}
+				disableFocus={true}
+				subRow={true}
+				className={InfoRowTheme.infoRow}
+			></InfoRow>
+		} else {
+			return null;
+		}
+	}
 	// I believe you should not put anything here.
 	componentList["BuildingUsageTracker.SelectedBuildingOccupancyView"] = (e: InfoSectionComponent) => {
 		const data = JSON.parse(e.group);
-		console.log("the parts", data);
-
-
-		const getInfoRow = (field:string, text:string): any =>  {
-			if (data[field]) {
-				return <InfoRow
-					left={text}
-					right=
-					{
-						data[field]
-					}
-					uppercase={false}
-					disableFocus={true}
-					subRow={true}
-					className={InfoRowTheme.infoRow}
-				></InfoRow>
-			} else {
-				return undefined;
-			}
-		}
 
 		const infs = <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
 			<InfoRow
@@ -73,87 +71,73 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 				subRow={false}
 				className={InfoRowTheme.infoRow}
 			></InfoRow>
-			{getInfoRow("workers", "Workers") }
-			{getInfoRow("patients", "Patients") }
-			{getInfoRow("students", "Students") }
-			{getInfoRow("sleepers", "Sleeping") }
-			{getInfoRow("other", "Other") }
+			{getInfoRow(data, "workers", "Workers") }
+			{getInfoRow(data, "patients", "Patients") }
+			{getInfoRow(data, "students", "Students") }
+			{getInfoRow(data, "sleepers", "Sleeping") }
+			{getInfoRow(data, "other", "Other") }
 		</InfoSection>
 			;
 		console.log(infs);
 		return infs;
 	}
 	componentList["BuildingUsageTracker.SelectedBuildingEnRouteView"] = (e: InfoSectionComponent) => {
-		console.log("the unparsed json", e.group);
 		const data = JSON.parse(e.group);
-		console.log("the parts", data);
+		console.log("enroute cims", data);
+		const isShowingEntities = data.entities !== null && data.entities !== undefined;
 
-
-		const getInfoRow = (field: string, text: string): any => {
-			if (data[field]) {
-				return <InfoRow
-					left={text}
-					right=
-					{
-						data[field]
-					}
-					uppercase={false}
-					disableFocus={true}
-					subRow={true}
-					className={InfoRowTheme.infoRow}
-				></InfoRow>
-			} else {
-				return null;
-			}
-		}
-
-		/*
-		public NativeCounter totalCount;
-			public NativeCounter workerCount;
-			public NativeCounter studentCount;
-			public NativeCounter touristCount;
-			public NativeCounter healthcareCount;
-			public NativeCounter emergencyCount;
-			public NativeCounter jailCount;
-			public NativeCounter goingHomeCount;
-			public NativeCounter otherCount;
-			public NativeCounter shoppingCount;
-			public NativeCounter liesureCount;
-			public NativeCounter movingInCount;
-		*/
-		const entityList = (entities: string[]): any => {
-			return <div>
-				{entities.map(entity => <div key={entity}>
-					{entity}
-				</div>)}
-			</div>
-		}
-		return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={false} className={InfoSectionTheme.infoSection}>
+		return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
 			<InfoRow
 				left={<div>
 					<div>En-route Cims</div>
-					{showList && data.entities && entityList(data.entities) }
 				</div>}
 				right={<span><button style={{ color: "lightblue" }} onClick={() => {
-					trigger("BuildingUsageTracker", "toggleShowEnrouteEntityList", true);
+					trigger(MOD_NAME, "toggleShowEnrouteEntityList", !isShowingEntities);
 
-					showList = true;
-					console.log("testing")
-				}}>First</button> {data["totalCount"]}</span>}
+				}}>{isShowingEntities ? "Hide  " : "Show  "}</button> {data["totalCount"]}</span>}
 				uppercase={true}
 				disableFocus={true}
 				subRow={false}
 				className={InfoRowTheme.infoRow}
 			></InfoRow>
-			{getInfoRow("workerCount", "Going to Work")}
-			{getInfoRow("healthcareCount", "Seeking Healthcare")}
-			{getInfoRow("studentCount", "Going to School")}
-			{getInfoRow("goingHomeCount", "Going Home")}
-			{getInfoRow("movingInCount", "Moving In")}
-			{getInfoRow("shoppingCount", "Shopping")}
-			{getInfoRow("liesureCount", "Liesure")}
-			{getInfoRow("other", "Other")}
-			{getInfoRow("touristCount", "Toruists")}
+			{getInfoRow(data, "passingThroughCount", "(Passing Through Station)")}
+			{getInfoRow(data, "workerCount", "Going to Work")}
+			{getInfoRow(data, "healthcareCount", "Seeking Healthcare")}
+			{getInfoRow(data, "studentCount", "Going to School")}
+			{getInfoRow(data, "goingHomeCount", "Going Home")}
+			{getInfoRow(data, "movingInCount", "Moving In")}
+			{getInfoRow(data, "shoppingCount", "Shopping")}
+			{getInfoRow(data, "liesureCount", "Liesure")}
+			{getInfoRow(data, "other", "Other")}
+			{getInfoRow(data, "touristCount", "Toruists")}
+		</InfoSection>
+			;
+	}
+	componentList["BuildingUsageTracker.SelectedBuildingVehicleEnRouteView"] = (e: InfoSectionComponent) => {
+		const data = JSON.parse(e.group);
+		console.log("the data", data);
+
+		const isShowingEntities = data.entities !== null && data.entities !== undefined;
+
+		return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
+			<InfoRow
+				left={<div>
+					<div>En-route Vehicles</div>
+				</div>}
+				right={<span><button style={{ color: "lightblue" }} onClick={() => {
+					trigger(MOD_NAME, "toggleShowEnrouteVehicleEntityList", !isShowingEntities);
+
+				}}>{isShowingEntities ? "Hide   " : "Show   "}</button> {data["totalCount"]}</span>}
+				uppercase={true}
+				disableFocus={true}
+				subRow={false}
+				className={InfoRowTheme.infoRow}
+			></InfoRow>
+			{getInfoRow(data, "personalCarCount", "Personal Vehicles")}
+			{getInfoRow(data, "serviceCount", "Service Vehicles")}
+			{getInfoRow(data, "deliveryCount", "Delilvery Vehicles")}
+			{getInfoRow(data, "taxiCount", "Taxis")}
+			{getInfoRow(data, "otherCount", "Other")}
 		</InfoSection>
 			;
 	}

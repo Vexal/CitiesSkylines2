@@ -1,0 +1,28 @@
+.entityPanel {
+	margin-top: 50rem;
+	margin-left: 650rem;
+	position: absolute;
+	width: 150rem;
+	//background-color: rgba(42, 55, 83, 0.4375);
+	background-color: rgba(32, 45, 73, 0.5375);
+}
+
+.entityPaneList {
+	overflow-y: scroll;
+	max-height: 400rem;
+	padding: 10rem;
+	color: rgba(75,195,241,1);
+}
+
+.entityPanelHeader {
+	color: rgba(75,195,241,1);
+	text-align: center;
+	background-color: rgba(24, 33, 51, 0.599922);
+	backdrop-filter: blur(5px);
+	border-bottom-left-radius: 4rem 4rem;
+	border-bottom-right-radius: 4rem 4rem;
+	border-top-left-radius: 4rem 4rem;
+	border-top-right-radius: 4rem 4rem;
+	padding-top: 5rem;
+	padding-bottom: 5rem;
+}

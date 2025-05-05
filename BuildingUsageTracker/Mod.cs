@@ -47,6 +47,7 @@ namespace BuildingUsageTracker
 
 			AssetDatabase.global.LoadSettings(nameof(BuildingUsageTracker), m_Setting, new Setting(this));
 			updateSystem.UpdateAt<SelectedBuildingEnRouteView>(SystemUpdatePhase.UIUpdate);
+			updateSystem.UpdateAt<SelectedBuildingVehicleEnRouteView>(SystemUpdatePhase.UIUpdate);
 			updateSystem.UpdateAt<SelectedBuildingOccupancyView>(SystemUpdatePhase.UIUpdate);
 		}
 
