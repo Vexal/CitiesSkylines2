@@ -27,7 +27,7 @@ namespace BuildingUsageTracker
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
 				log.Info($"Current mod asset at {asset.path}");
 
-			m_Setting = new Setting(this);
+			/*m_Setting = new Setting(this);
 			m_Setting.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
 
@@ -43,9 +43,9 @@ namespace BuildingUsageTracker
 
 			m_ButtonAction.onInteraction += (_, phase) => log.Info($"[{m_ButtonAction.name}] On{phase} {m_ButtonAction.ReadValue<float>()}");
 			m_AxisAction.onInteraction += (_, phase) => log.Info($"[{m_AxisAction.name}] On{phase} {m_AxisAction.ReadValue<float>()}");
-			m_VectorAction.onInteraction += (_, phase) => log.Info($"[{m_VectorAction.name}] On{phase} {m_VectorAction.ReadValue<Vector2>()}");
+			m_VectorAction.onInteraction += (_, phase) => log.Info($"[{m_VectorAction.name}] On{phase} {m_VectorAction.ReadValue<Vector2>()}");*/
 
-			AssetDatabase.global.LoadSettings(nameof(BuildingUsageTracker), m_Setting, new Setting(this));
+			//AssetDatabase.global.LoadSettings(nameof(BuildingUsageTracker), m_Setting, new Setting(this));
 			updateSystem.UpdateAt<SelectedBuildingEnRouteView>(SystemUpdatePhase.UIUpdate);
 			updateSystem.UpdateAt<SelectedBuildingVehicleEnRouteView>(SystemUpdatePhase.UIUpdate);
 			updateSystem.UpdateAt<SelectedBuildingOccupancyView>(SystemUpdatePhase.UIUpdate);

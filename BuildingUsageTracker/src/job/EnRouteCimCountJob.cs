@@ -44,6 +44,7 @@ namespace BuildingUsageTracker
 		public NativeCounter.Concurrent liesureCount;
 		public NativeCounter.Concurrent movingInCount;
 		public NativeCounter.Concurrent passingThroughCount;
+		public NativeCounter.Concurrent inVehicleCount;
 
 		[ReadOnly]
 		public bool returnEntities;
@@ -83,6 +84,7 @@ namespace BuildingUsageTracker
 			int movingInCount = 0;
 			int otherCount = 0;
 			int passingThroughCount = 0;
+			int inVehicleCount = 0;
 			while (chunkIterator.NextEntityIndex(out var i))
 			{
 				Target target = targets[i];
@@ -110,6 +112,11 @@ namespace BuildingUsageTracker
 					{
 						if ((residents[i].m_Flags & ResidentFlags.Arrived) == 0)
 						{
+							if ((residents[i].m_Flags & ResidentFlags.InVehicle) > 0)
+							{
+								++inVehicleCount;
+							}
+
 							if (this.travelPurposeLookup.TryGetComponent(residents[i].m_Citizen, out var travelPurpose))
 							{
 								switch (travelPurpose.m_Purpose)
@@ -195,6 +202,7 @@ namespace BuildingUsageTracker
 			this.shoppingCount.Increment(shoppingCount);
 			this.otherCount.Increment(otherCount);
 			this.passingThroughCount.Increment(passingThroughCount);
+			this.inVehicleCount.Increment(inVehicleCount);
 		}
 	}
 }

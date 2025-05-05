@@ -1,5 +1,6 @@
 ﻿using Colossal;
 using Game.Buildings;
+using Game.Routes;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -44,7 +45,7 @@ namespace BuildingUsageTracker
 
 		public static bool isTransitStation(this EntityManager EntityManager, Entity entity)
 		{
-			return EntityManager.Exists(entity) && EntityManager.HasComponent<PublicTransportStation>(entity);
+			return EntityManager.Exists(entity) && (EntityManager.HasComponent<PublicTransportStation>(entity) || EntityManager.HasComponent<BusStop>(entity));
 		}
 
 		public static Entity entity(string str)

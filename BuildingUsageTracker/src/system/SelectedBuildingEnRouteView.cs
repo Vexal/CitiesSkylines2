@@ -5,13 +5,16 @@ using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
+using Game.Objects;
+using Game.Pathfind;
+using Game.Routes;
 using Game.Tools;
 using Unity.Collections;
 using Unity.Entities;
 
 namespace BuildingUsageTracker
 {
-	partial class SelectedBuildingEnRouteView2 : SelectedBuildingInfoSection
+	partial class SelectedBuildingEnRouteView : SelectedBuildingInfoSection
 	{
 		private EntityQuery enrouteCitizenQuery;
 		private ValueBinding<string> enrouteCountBinding;
@@ -48,8 +51,24 @@ namespace BuildingUsageTracker
 
 		protected override void update(Entity selectedEntity)
 		{
-			this.counters.init(this.showEntities);
 			EnRouteCimCountJob job = new EnRouteCimCountJob();
+			bool isTransitStation = EntityManager.isTransitStation(selectedEntity);
+			if (isTransitStation)
+			{
+				job.pathTargets = new NativeHashSet<Entity>(5, Allocator.TempJob);
+
+				this.addSubObjectsConnectedRoutes(ref job.pathTargets, selectedEntity);
+				this.addConnectedRoutes(ref job.pathTargets, selectedEntity);
+
+				if (job.pathTargets.Count > 0)
+				{
+					job.checkPathElements = true;
+					job.pathHandle = SystemAPI.GetBufferTypeHandle<PathElement>(true);
+					job.pathOwnerHandle = SystemAPI.GetComponentTypeHandle<PathOwner>(true);
+				}
+			}
+
+			this.counters.init(this.showEntities);
 			job.searchTarget = selectedEntity;
 			if (EntityManager.TryGetBuffer<Renter>(selectedEntity, true, out var renterBuffer) && renterBuffer.Length > 0)
 			{
@@ -75,7 +94,38 @@ namespace BuildingUsageTracker
 
 			jobHandle.Complete();
 			this.counters.disposeAndBuild();
+			if (isTransitStation)
+			{
+				job.pathTargets.Dispose();
+			}
+			
 			this.enrouteCountBinding.Update(this.counters.json);
+		}
+
+		private void addSubObjectsConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
+		{
+			if (EntityManager.TryGetBuffer<SubObject>(entity, true, out var subObjects))
+			{
+				for (int i = 0; i < subObjects.Length; i++)
+				{
+					this.addConnectedRoutes(ref results, subObjects[i].m_SubObject);
+					this.addSubObjectsConnectedRoutes(ref results, subObjects[i].m_SubObject);
+				}
+			}
+		}
+
+		private void addConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
+		{
+			if (EntityManager.TryGetBuffer<ConnectedRoute>(entity, true, out var routes))
+			{
+				for (int j = 0; j < routes.Length; ++j)
+				{
+					if (EntityManager.Exists(routes[j].m_Waypoint))
+					{
+						results.Add(routes[j].m_Waypoint);
+					}
+				}
+			}
 		}
 
 		private struct Counters
@@ -92,6 +142,8 @@ namespace BuildingUsageTracker
 			public NativeCounter shoppingCount;
 			public NativeCounter liesureCount;
 			public NativeCounter movingInCount;
+			public NativeCounter passingThroughCount;
+			public NativeCounter inVehicleCount;
 			public NativeList<Entity> entities;
 			public string json;
 
@@ -109,6 +161,8 @@ namespace BuildingUsageTracker
 				this.shoppingCount = new NativeCounter(Allocator.TempJob);
 				this.liesureCount = new NativeCounter(Allocator.TempJob);
 				this.movingInCount = new NativeCounter(Allocator.TempJob);
+				this.inVehicleCount = new NativeCounter(Allocator.TempJob);
+				this.passingThroughCount = new NativeCounter(Allocator.TempJob);
 
 				if (returnEntities)
 				{
@@ -130,6 +184,8 @@ namespace BuildingUsageTracker
 				job.shoppingCount = this.shoppingCount.ToConcurrent();
 				job.liesureCount = this.liesureCount.ToConcurrent();
 				job.movingInCount = this.movingInCount.ToConcurrent();
+				job.inVehicleCount = this.inVehicleCount.ToConcurrent();
+				job.passingThroughCount = this.passingThroughCount.ToConcurrent();
 
 				if (this.entities.IsCreated)
 				{
@@ -150,6 +206,8 @@ namespace BuildingUsageTracker
 				Utils.jsonFieldC("other", this.otherCount) +
 				Utils.jsonFieldC("shoppingCount", this.shoppingCount) +
 				Utils.jsonFieldC("liesureCount", this.liesureCount) +
+				Utils.jsonFieldC("passingThroughCount", this.passingThroughCount) +
+				Utils.jsonFieldC("inVehicleCount", this.inVehicleCount) +
 				Utils.jsonFieldC("movingInCount", this.movingInCount);
 
 				if (this.entities.IsCreated)
@@ -172,6 +230,8 @@ namespace BuildingUsageTracker
 				this.shoppingCount.Dispose();
 				this.liesureCount.Dispose();
 				this.movingInCount.Dispose();
+				this.passingThroughCount.Dispose();
+				this.inVehicleCount.Dispose();
 			}
 		}
 
@@ -180,6 +240,16 @@ namespace BuildingUsageTracker
 			this.showEntities = false;
 			this.counters.json = "{}";
 			this.enrouteCountBinding.Update("{}");
+		}
+
+		protected override bool shouldBeVisible(Entity selectedEntity)
+		{
+			if (!EntityManager.Exists(selectedEntity) || (!EntityManager.HasComponent<Building>(selectedEntity) && !EntityManager.HasComponent<BusStop>(selectedEntity)))
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		protected override string group => this.counters.json;
