@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<LangVersion>9.0</LangVersion>
-		<TargetFramework>net472</TargetFramework>
+		<TargetFramework>net48</TargetFramework>
 		<Configurations>Debug;Release</Configurations>
 		
 		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->
@@ -56,6 +56,10 @@
 		</Reference>
 		<Reference Include="Colossal.Mathematics">
 			<Private>false</Private>
+		</Reference>
+		<Reference Include="mscorlib">
+			<Private>false</Private>
+			<HintPath>$(ManagedPath)\mscorlib.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

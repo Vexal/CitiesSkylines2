@@ -36,7 +36,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pandemic", "Pandemic\Pandem
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Click2Sick", "Click2Sick\Click2Sick.csproj", "{F452432C-3FFA-49F2-85C2-6289A1888E13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingUsageTracker", "BuildingUsageTracker\BuildingUsageTracker.csproj", "{849753EF-202B-4F41-A3ED-C9550447EC6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuildingUsageTracker", "BuildingUsageTracker\BuildingUsageTracker.csproj", "{849753EF-202B-4F41-A3ED-C9550447EC6B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Project1", "Project1\Project1.csproj", "{B67A8C77-3CD0-42ED-AB01-C84F4A2E690C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -104,6 +106,10 @@ Global
 		{849753EF-202B-4F41-A3ED-C9550447EC6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{849753EF-202B-4F41-A3ED-C9550447EC6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{849753EF-202B-4F41-A3ED-C9550447EC6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B67A8C77-3CD0-42ED-AB01-C84F4A2E690C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B67A8C77-3CD0-42ED-AB01-C84F4A2E690C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B67A8C77-3CD0-42ED-AB01-C84F4A2E690C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B67A8C77-3CD0-42ED-AB01-C84F4A2E690C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,11 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<OutputType>Library</OutputType>
-		<LangVersion>9.0</LangVersion>
-		<TargetFramework>net48</TargetFramework>
 		<Configurations>Debug;Release</Configurations>
-		
+	
 		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->
 		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
 	</PropertyGroup>
@@ -52,9 +49,6 @@
 			<Private>false</Private>
 		</Reference>
 		<Reference Include="Unity.Mathematics">
-			<Private>false</Private>
-		</Reference>
-		<Reference Include="Colossal.Mathematics">
 			<Private>false</Private>
 		</Reference>
 	</ItemGroup>

@@ -23,9 +23,9 @@ using Unity.Jobs;
 namespace EmploymentTracker
 {
 	[BurstCompile]
-	internal partial class HighlightRoutesSystem : InfoSectionBase
+	partial class HighlightRoutesSystem : InfoSectionBase
 	{
-        private Entity selectedEntity = default;
+        private new Entity selectedEntity = default;
 		private SelectionType selectionType;
 		private SimpleOverlayRendererSystem overlayRenderSystem;
 		private OverlayRenderSystem overlayRenderSystem2;
