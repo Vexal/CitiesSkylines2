@@ -1,10 +1,8 @@
 ﻿using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
-using Game.Input;
 using Game.Modding;
 using Game.SceneFlow;
-using UnityEngine;
 
 namespace BuildingUsageTracker
 {
@@ -12,13 +10,7 @@ namespace BuildingUsageTracker
 	{
 		public static ILog log = LogManager.GetLogger($"{nameof(BuildingUsageTracker)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
 		private Setting m_Setting;
-		public static ProxyAction m_ButtonAction;
-		public static ProxyAction m_AxisAction;
-		public static ProxyAction m_VectorAction;
-
-		public const string kButtonActionName = "ButtonBinding";
-		public const string kAxisActionName = "FloatBinding";
-		public const string kVectorActionName = "Vector2Binding";
+		public static Setting SETTINGS;
 
 		public void OnLoad(UpdateSystem updateSystem)
 		{
@@ -26,7 +18,11 @@ namespace BuildingUsageTracker
 
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
 				log.Info($"Current mod asset at {asset.path}");
-
+			m_Setting = new Setting(this);
+			m_Setting.RegisterInOptionsUI();
+			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
+			AssetDatabase.global.LoadSettings(nameof(BuildingUsageTracker), m_Setting, new Setting(this));
+			SETTINGS = this.m_Setting;
 			/*m_Setting = new Setting(this);
 			m_Setting.RegisterInOptionsUI();
 			GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));

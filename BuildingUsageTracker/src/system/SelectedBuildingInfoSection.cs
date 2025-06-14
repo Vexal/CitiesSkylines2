@@ -1,8 +1,13 @@
-﻿using Colossal.UI.Binding;
+﻿using Colossal.Entities;
+using Colossal.UI.Binding;
 using Game;
+using Game.Net;
+using Game.Objects;
+using Game.Routes;
 using Game.Tools;
 using Game.UI;
 using Game.UI.InGame;
+using Unity.Collections;
 using Unity.Entities;
 
 namespace BuildingUsageTracker
@@ -55,6 +60,47 @@ namespace BuildingUsageTracker
 
 				this.update(selectedEntity);
 				this.visible = true;
+			}
+		}
+
+		protected void addSubObjectsConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
+		{
+			if (EntityManager.TryGetBuffer<SubObject>(entity, true, out var subObjects))
+			{
+				for (int i = 0; i < subObjects.Length; i++)
+				{
+					this.addConnectedRoutes(ref results, subObjects[i].m_SubObject);
+					this.addSubObjectsConnectedRoutes(ref results, subObjects[i].m_SubObject);
+				}
+			}
+			if (EntityManager.TryGetBuffer<SubLane>(entity, true, out var subLanes))
+			{
+				for (int i = 0; i < subLanes.Length; i++)
+				{
+					this.addParkingSpots(ref results, subLanes[i].m_SubLane);
+				}
+			}
+		}
+
+		protected void addConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
+		{
+			if (EntityManager.TryGetBuffer<ConnectedRoute>(entity, true, out var routes))
+			{
+				for (int j = 0; j < routes.Length; ++j)
+				{
+					if (EntityManager.Exists(routes[j].m_Waypoint))
+					{
+						results.Add(routes[j].m_Waypoint);
+					}
+				}
+			}
+		}
+
+		protected void addParkingSpots(ref NativeHashSet<Entity> results, Entity entity)
+		{
+			if (EntityManager.TryGetComponent<ParkingLane>(entity, out var parkingLane))
+			{
+				results.Add(entity);
 			}
 		}
 

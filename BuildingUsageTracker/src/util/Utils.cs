@@ -48,6 +48,11 @@ namespace BuildingUsageTracker
 			return EntityManager.Exists(entity) && (EntityManager.HasComponent<PublicTransportStation>(entity) || EntityManager.HasComponent<BusStop>(entity));
 		}
 
+		public static bool isParkingStructure(this EntityManager EntityManager, Entity entity)
+		{
+			return EntityManager.Exists(entity) && (EntityManager.HasComponent<ParkingFacility>(entity));
+		}
+
 		public static Entity entity(string str)
 		{
 			string[] e = str.Split(':');

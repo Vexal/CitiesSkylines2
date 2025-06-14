@@ -1,7 +1,6 @@
 ﻿using Colossal;
-using Game.Citizens;
 using Game.Common;
-using Game.Creatures;
+using Game.Pathfind;
 using Game.Vehicles;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
@@ -34,17 +33,30 @@ namespace BuildingUsageTracker
 		public bool returnEntities;
 		public NativeList<Entity> resultEntities;
 
+		[ReadOnly]
+		public bool checkPathElements;
+		[ReadOnly]
+		public NativeHashSet<Entity> pathTargets;
+		[ReadOnly]
+		public BufferTypeHandle<PathElement> pathHandle;
+		[ReadOnly]
+		public ComponentTypeHandle<PathOwner> pathOwnerHandle;
+
 
 		public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 		{
 			NativeArray<Target> targets = chunk.GetNativeArray(ref this.targetHandle);
 			NativeArray<Entity> entities = this.returnEntities ? chunk.GetNativeArray(this.entityHandle) : default;
 
+			bool checkPaths = this.checkPathElements && chunk.Has<PathOwner>() && chunk.Has<PathElement>();
 			bool isDelivery = chunk.Has<DeliveryTruck>();
 			bool isPersonalCar = chunk.Has<PersonalCar>();
 			bool isTaxi = chunk.Has<Taxi>();
 			bool isServiceVehicle = chunk.Has<PostVan>() || chunk.Has<PoliceCar>() || chunk.Has<Hearse>() ||
 				chunk.Has<GarbageTruck>() || chunk.Has<Ambulance>() || chunk.Has<FireEngine>();
+
+			BufferAccessor<PathElement> entityPaths = checkPaths ? chunk.GetBufferAccessor(ref this.pathHandle) : default;
+			NativeArray<PathOwner> pathOwners = checkPaths ? chunk.GetNativeArray(ref this.pathOwnerHandle) : default;
 
 			int totalCount = 0;
 			int serviceCount = 0;
@@ -56,7 +68,24 @@ namespace BuildingUsageTracker
 			while (chunkIterator.NextEntityIndex(out var i))
 			{
 				Target target = targets[i];
-				if (target.m_Target == this.searchTarget || (this.hasTarget2 && target.m_Target == this.searchTarget2))
+				bool isExactTarget = target.m_Target == this.searchTarget ||
+					(this.hasTarget2 && target.m_Target == this.searchTarget2);
+
+				bool isPassingThrough = false;
+				if (!isExactTarget && checkPaths)
+				{
+					DynamicBuffer<PathElement> path = entityPaths[i];
+					for (int pathIndex = pathOwners[i].m_ElementIndex; pathIndex < path.Length; ++pathIndex)
+					{
+						if (this.pathTargets.Contains(path[pathIndex].m_Target))
+						{
+							isPassingThrough = true;
+							break;
+						}
+					}		
+				}
+
+				if (isExactTarget || isPassingThrough)
 				{
 					++totalCount;
 					if (isServiceVehicle)

@@ -100,7 +100,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 				subRow={false}
 				className={InfoRowTheme.infoRow}
 			></InfoRow>
-			{getInfoRow(data, "passingThroughCount", "(Passing Through Station)")}
+			{getInfoRow(data, "passingThroughCount", "(Passing Through Station / Parking)")}
 			{getInfoRow(data, "inVehicleCount", "(In Vehicles)")}
 			{getInfoRow(data, "workerCount", "Going to Work")}
 			{getInfoRow(data, "healthcareCount", "Seeking Healthcare")}

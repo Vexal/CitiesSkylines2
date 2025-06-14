@@ -3,6 +3,7 @@ using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game.Buildings;
 using Game.Common;
+using Game.Pathfind;
 using Game.Tools;
 using Game.Vehicles;
 using Unity.Collections;
@@ -55,6 +56,23 @@ namespace BuildingUsageTracker
 			{
 				job.searchTarget2 = renterBuffer[0].m_Renter;
 				job.hasTarget2 = true;
+			}
+
+			bool isParkingStructure = EntityManager.isParkingStructure(selectedEntity);
+			if (isParkingStructure)
+			{
+				job.pathTargets = new NativeHashSet<Entity>(5, Allocator.TempJob);
+
+				this.addSubObjectsConnectedRoutes(ref job.pathTargets, selectedEntity);
+				this.addConnectedRoutes(ref job.pathTargets, selectedEntity);
+				this.addParkingSpots(ref job.pathTargets, selectedEntity);
+
+				if (job.pathTargets.Count > 0)
+				{
+					job.checkPathElements = true;
+					job.pathHandle = SystemAPI.GetBufferTypeHandle<PathElement>(true);
+					job.pathOwnerHandle = SystemAPI.GetComponentTypeHandle<PathOwner>(true);
+				}
 			}
 
 			if (this.showEntities)
@@ -153,5 +171,10 @@ namespace BuildingUsageTracker
 		}
 
 		protected override string group => this.counters.json;
+
+		protected override bool shouldBeVisible(Entity selectedEntity)
+		{
+			return Mod.SETTINGS.showEnrouteVehicleCounts && base.shouldBeVisible(selectedEntity);
+		}
 	}
 }

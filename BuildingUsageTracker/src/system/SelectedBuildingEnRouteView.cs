@@ -5,7 +5,7 @@ using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
-using Game.Objects;
+using Game.Net;
 using Game.Pathfind;
 using Game.Routes;
 using Game.Tools;
@@ -53,18 +53,29 @@ namespace BuildingUsageTracker
 		{
 			EnRouteCimCountJob job = new EnRouteCimCountJob();
 			bool isTransitStation = EntityManager.isTransitStation(selectedEntity);
-			if (isTransitStation)
+			bool isParkingStructure = EntityManager.isParkingStructure(selectedEntity);
+			if (isTransitStation || isParkingStructure)
 			{
 				job.pathTargets = new NativeHashSet<Entity>(5, Allocator.TempJob);
 
 				this.addSubObjectsConnectedRoutes(ref job.pathTargets, selectedEntity);
 				this.addConnectedRoutes(ref job.pathTargets, selectedEntity);
+				this.addParkingSpots(ref job.pathTargets, selectedEntity);
 
 				if (job.pathTargets.Count > 0)
 				{
 					job.checkPathElements = true;
 					job.pathHandle = SystemAPI.GetBufferTypeHandle<PathElement>(true);
 					job.pathOwnerHandle = SystemAPI.GetComponentTypeHandle<PathOwner>(true);
+					job.currentVehicleHandle = SystemAPI.GetComponentTypeHandle<CurrentVehicle>(true);
+					job.pathOwnerLookup = SystemAPI.GetComponentLookup<PathOwner>(true);
+					job.pathLookup = SystemAPI.GetBufferLookup<PathElement>(true);
+
+					if (isParkingStructure)
+					{
+						job.isParkingStructure = true;
+						job.parkingLaneLookup = SystemAPI.GetComponentLookup<ParkingLane>(true);
+					}
 				}
 			}
 
@@ -100,32 +111,6 @@ namespace BuildingUsageTracker
 			}
 			
 			this.enrouteCountBinding.Update(this.counters.json);
-		}
-
-		private void addSubObjectsConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
-		{
-			if (EntityManager.TryGetBuffer<SubObject>(entity, true, out var subObjects))
-			{
-				for (int i = 0; i < subObjects.Length; i++)
-				{
-					this.addConnectedRoutes(ref results, subObjects[i].m_SubObject);
-					this.addSubObjectsConnectedRoutes(ref results, subObjects[i].m_SubObject);
-				}
-			}
-		}
-
-		private void addConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
-		{
-			if (EntityManager.TryGetBuffer<ConnectedRoute>(entity, true, out var routes))
-			{
-				for (int j = 0; j < routes.Length; ++j)
-				{
-					if (EntityManager.Exists(routes[j].m_Waypoint))
-					{
-						results.Add(routes[j].m_Waypoint);
-					}
-				}
-			}
 		}
 
 		private struct Counters
@@ -244,7 +229,7 @@ namespace BuildingUsageTracker
 
 		protected override bool shouldBeVisible(Entity selectedEntity)
 		{
-			if (!EntityManager.Exists(selectedEntity) || (!EntityManager.HasComponent<Building>(selectedEntity) && !EntityManager.HasComponent<BusStop>(selectedEntity)))
+			if (!Mod.SETTINGS.showEnrouteCimCounts || !EntityManager.Exists(selectedEntity) || (!EntityManager.HasComponent<Building>(selectedEntity) && !EntityManager.HasComponent<BusStop>(selectedEntity)))
 			{
 				return false;
 			}

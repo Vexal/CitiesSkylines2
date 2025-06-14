@@ -118,5 +118,9 @@ namespace BuildingUsageTracker
 				Utils.jsonFieldC("other", this.occupancy.otherCount) +
 				"}";
 		}
+		protected override bool shouldBeVisible(Entity selectedEntity)
+		{
+			return Mod.SETTINGS.showBuildingOccupancy && base.shouldBeVisible(selectedEntity);
+		}
 	}
 }

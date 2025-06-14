@@ -2,6 +2,7 @@
 using Game.Citizens;
 using Game.Common;
 using Game.Creatures;
+using Game.Net;
 using Game.Pathfind;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
@@ -10,7 +11,7 @@ using Unity.Entities;
 
 namespace BuildingUsageTracker
 {
-	//[BurstCompile]
+	[BurstCompile]
 	public struct EnRouteCimCountJob : IJobChunk
 	{
 		[ReadOnly]
@@ -24,11 +25,19 @@ namespace BuildingUsageTracker
 		[ReadOnly]
 		public ComponentTypeHandle<Resident> residentHandle;
 		[ReadOnly]
+		public ComponentTypeHandle<CurrentVehicle> currentVehicleHandle;
+		[ReadOnly]
 		public ComponentLookup<TravelPurpose> travelPurposeLookup;
 		[ReadOnly]
 		public ComponentLookup<HouseholdMember> householdMemberLookup;
 		[ReadOnly]
 		public ComponentLookup<Household> householdLookup;
+		[ReadOnly]
+		public ComponentLookup<ParkingLane> parkingLaneLookup;
+		[ReadOnly]
+		public ComponentLookup<PathOwner> pathOwnerLookup;
+		[ReadOnly]
+		public BufferLookup<PathElement> pathLookup;
 		[ReadOnly]
 		public EntityTypeHandle entityHandle;
 		public NativeCounter.Concurrent totalCount;
@@ -53,6 +62,8 @@ namespace BuildingUsageTracker
 		[ReadOnly]
 		public bool checkPathElements;
 		[ReadOnly]
+		public bool isParkingStructure;
+		[ReadOnly]
 		public NativeHashSet<Entity> pathTargets;
 		[ReadOnly]
 		public BufferTypeHandle<PathElement> pathHandle;
@@ -64,7 +75,9 @@ namespace BuildingUsageTracker
 			NativeArray<Target> targets = chunk.GetNativeArray(ref this.targetHandle);
 			bool hasResident = chunk.Has<Resident>();
 			bool checkPaths = this.checkPathElements && chunk.Has<PathOwner>() && chunk.Has<PathElement>();
+			bool checkVehicle = this.checkPathElements && chunk.Has<CurrentVehicle>();
 			NativeArray<Resident> residents = hasResident ? chunk.GetNativeArray(ref this.residentHandle) : default;
+			NativeArray<CurrentVehicle> currentVehicles = checkVehicle ? chunk.GetNativeArray(ref this.currentVehicleHandle) : default;
 			NativeArray<Entity> entities = this.returnEntities ? chunk.GetNativeArray(this.entityHandle) : default;
 
 			BufferAccessor<PathElement> entityPaths = checkPaths ? chunk.GetBufferAccessor(ref this.pathHandle) : default;
@@ -92,16 +105,29 @@ namespace BuildingUsageTracker
 					(this.hasTarget2 && target.m_Target == this.searchTarget2);
 
 				bool isPassingThrough = false;
-				if (!isExactTarget && checkPaths)
+				if (!isExactTarget)
 				{
-					int startInd = pathOwners[i].m_ElementIndex;
-					DynamicBuffer<PathElement> path = entityPaths[i];
-					for (int pathIndex = pathOwners[i].m_ElementIndex; pathIndex < path.Length; ++pathIndex)
+					if (checkPaths)
 					{
-						if (this.pathTargets.Contains(path[pathIndex].m_Target))
+						DynamicBuffer<PathElement> path = entityPaths[i];
+						for (int pathIndex = pathOwners[i].m_ElementIndex; pathIndex < path.Length; ++pathIndex)
 						{
-							isPassingThrough = true;
-							break;
+							if (this.pathTargets.Contains(path[pathIndex].m_Target))
+							{
+								isPassingThrough = true;
+								break;
+							}
+						}
+					}
+					if (checkVehicle && this.pathLookup.TryGetBuffer(currentVehicles[i].m_Vehicle, out var vehiclePath) && this.pathOwnerLookup.TryGetComponent(currentVehicles[i].m_Vehicle, out var vehiclePathOwner))
+					{
+						for (int pathIndex = vehiclePathOwner.m_ElementIndex; pathIndex < vehiclePath.Length; ++pathIndex)
+						{
+							if (this.pathTargets.Contains(vehiclePath[pathIndex].m_Target))
+							{
+								isPassingThrough = true;
+								break;
+							}
 						}
 					}
 				}
