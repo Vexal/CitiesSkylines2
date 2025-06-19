@@ -4,6 +4,7 @@ import { bindValue, trigger, useValue } from "cs2/api";
 import { useLocalization } from "cs2/l10n";
 import { VanillaComponentResolver } from "./mods/VanillaComponentResolver";
 import CustomBindings, { MOD_NAME } from "./CustomBindings";
+import styles from "./buildingusagetracker.module.scss"
 
 
 interface InfoSectionComponent {
@@ -30,7 +31,7 @@ const InfoSection: any = getModule(
 const InfoRow: any = getModule(
 	"game-ui/game/components/selected-info-panel/shared-components/info-row/info-row.tsx",
 	"InfoRow"
-)
+) 
 
 
 
@@ -41,7 +42,7 @@ function handleClick(eventName: string) {
 let showList = false;
 
 export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
-	const getInfoRow = (data: any, field: string, text: string): any => {
+	const getInfoRow = (data: any, field: string, text: string, small: boolean=false): any => {
 		if (data[field]) {
 			return <InfoRow
 				left={text}
@@ -52,7 +53,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 				uppercase={false}
 				disableFocus={true}
 				subRow={true}
-				className={InfoRowTheme.infoRow}
+				className={InfoRowTheme.infoRow + (small ? (" " + styles.smallInfoRow) : "")}
 			></InfoRow>
 		} else {
 			return null;
@@ -100,8 +101,10 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 				subRow={false}
 				className={InfoRowTheme.infoRow}
 			></InfoRow>
-			{getInfoRow(data, "passingThroughCount", "(Passing Through Station / Parking)")}
-			{getInfoRow(data, "inVehicleCount", "(In Vehicles)")}
+			{getInfoRow(data, "passingThroughCount", "(Passing Through Station / Parking)", true)}
+			{getInfoRow(data, "inVehicleCount", "(In Vehicles)", true)}
+			{getInfoRow(data, "inPublicTransportCount", "(In Public Transport)", true)}
+			{getInfoRow(data, "waitingTransportCount", "(Awaiting Public Transport)", true)}
 			{getInfoRow(data, "workerCount", "Going to Work")}
 			{getInfoRow(data, "healthcareCount", "Seeking Healthcare")}
 			{getInfoRow(data, "studentCount", "Going to School")}
@@ -109,8 +112,9 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 			{getInfoRow(data, "movingInCount", "Moving In")}
 			{getInfoRow(data, "shoppingCount", "Shopping")}
 			{getInfoRow(data, "liesureCount", "Liesure")}
-			{getInfoRow(data, "other", "Other")}
 			{getInfoRow(data, "touristCount", "Toruists")}
+			{getInfoRow(data, "movingAwayCount", "Moving Away")} 
+			{getInfoRow(data, "other", "Other")}
 		</InfoSection>
 			;
 	}

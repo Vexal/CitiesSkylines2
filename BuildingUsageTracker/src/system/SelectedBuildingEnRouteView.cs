@@ -7,8 +7,8 @@ using Game.Common;
 using Game.Creatures;
 using Game.Net;
 using Game.Pathfind;
-using Game.Routes;
 using Game.Tools;
+using Game.Vehicles;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -52,6 +52,8 @@ namespace BuildingUsageTracker
 		protected override void update(Entity selectedEntity)
 		{
 			EnRouteCimCountJob job = new EnRouteCimCountJob();
+			job.currentVehicleHandle = SystemAPI.GetComponentTypeHandle<CurrentVehicle>(true);
+			job.publicTransportLookup = SystemAPI.GetComponentLookup<PublicTransport>(true);
 			bool isTransitStation = EntityManager.isTransitStation(selectedEntity);
 			bool isParkingStructure = EntityManager.isParkingStructure(selectedEntity);
 			if (isTransitStation || isParkingStructure)
@@ -67,7 +69,6 @@ namespace BuildingUsageTracker
 					job.checkPathElements = true;
 					job.pathHandle = SystemAPI.GetBufferTypeHandle<PathElement>(true);
 					job.pathOwnerHandle = SystemAPI.GetComponentTypeHandle<PathOwner>(true);
-					job.currentVehicleHandle = SystemAPI.GetComponentTypeHandle<CurrentVehicle>(true);
 					job.pathOwnerLookup = SystemAPI.GetComponentLookup<PathOwner>(true);
 					job.pathLookup = SystemAPI.GetBufferLookup<PathElement>(true);
 
@@ -129,6 +130,9 @@ namespace BuildingUsageTracker
 			public NativeCounter movingInCount;
 			public NativeCounter passingThroughCount;
 			public NativeCounter inVehicleCount;
+			public NativeCounter movingAwayCount;
+			public NativeCounter waitingTransportCount;
+			public NativeCounter inPublicTransportCount;
 			public NativeList<Entity> entities;
 			public string json;
 
@@ -148,6 +152,9 @@ namespace BuildingUsageTracker
 				this.movingInCount = new NativeCounter(Allocator.TempJob);
 				this.inVehicleCount = new NativeCounter(Allocator.TempJob);
 				this.passingThroughCount = new NativeCounter(Allocator.TempJob);
+				this.movingAwayCount = new NativeCounter(Allocator.TempJob);
+				this.waitingTransportCount = new NativeCounter(Allocator.TempJob);
+				this.inPublicTransportCount = new NativeCounter(Allocator.TempJob);
 
 				if (returnEntities)
 				{
@@ -171,6 +178,9 @@ namespace BuildingUsageTracker
 				job.movingInCount = this.movingInCount.ToConcurrent();
 				job.inVehicleCount = this.inVehicleCount.ToConcurrent();
 				job.passingThroughCount = this.passingThroughCount.ToConcurrent();
+				job.movingAwayCount = this.movingAwayCount.ToConcurrent();
+				job.waitingTransportCount = this.waitingTransportCount.ToConcurrent();
+				job.inPublicTransportCount = this.inPublicTransportCount.ToConcurrent();
 
 				if (this.entities.IsCreated)
 				{
@@ -193,7 +203,10 @@ namespace BuildingUsageTracker
 				Utils.jsonFieldC("liesureCount", this.liesureCount) +
 				Utils.jsonFieldC("passingThroughCount", this.passingThroughCount) +
 				Utils.jsonFieldC("inVehicleCount", this.inVehicleCount) +
-				Utils.jsonFieldC("movingInCount", this.movingInCount);
+				Utils.jsonFieldC("movingInCount", this.movingInCount) +
+				Utils.jsonFieldC("waitingTransportCount", this.waitingTransportCount) +
+				Utils.jsonFieldC("inPublicTransportCount", this.inPublicTransportCount) +
+				Utils.jsonFieldC("movingAwayCount", this.movingAwayCount);
 
 				if (this.entities.IsCreated)
 				{
@@ -217,6 +230,9 @@ namespace BuildingUsageTracker
 				this.movingInCount.Dispose();
 				this.passingThroughCount.Dispose();
 				this.inVehicleCount.Dispose();
+				this.movingAwayCount.Dispose();
+				this.waitingTransportCount.Dispose();
+				this.inPublicTransportCount.Dispose();
 			}
 		}
 
@@ -229,7 +245,7 @@ namespace BuildingUsageTracker
 
 		protected override bool shouldBeVisible(Entity selectedEntity)
 		{
-			if (!Mod.SETTINGS.showEnrouteCimCounts || !EntityManager.Exists(selectedEntity) || (!EntityManager.HasComponent<Building>(selectedEntity) && !EntityManager.HasComponent<BusStop>(selectedEntity)))
+			if (!Mod.SETTINGS.showEnrouteCimCounts || !EntityManager.Exists(selectedEntity) || (!EntityManager.HasComponent<Building>(selectedEntity) && !EntityManager.isTransitStation(selectedEntity)))
 			{
 				return false;
 			}

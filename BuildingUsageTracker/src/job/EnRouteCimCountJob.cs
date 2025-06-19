@@ -4,6 +4,7 @@ using Game.Common;
 using Game.Creatures;
 using Game.Net;
 using Game.Pathfind;
+using Game.Vehicles;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -28,6 +29,8 @@ namespace BuildingUsageTracker
 		public ComponentTypeHandle<CurrentVehicle> currentVehicleHandle;
 		[ReadOnly]
 		public ComponentLookup<TravelPurpose> travelPurposeLookup;
+		[ReadOnly]
+		public ComponentLookup<PublicTransport> publicTransportLookup;
 		[ReadOnly]
 		public ComponentLookup<HouseholdMember> householdMemberLookup;
 		[ReadOnly]
@@ -54,6 +57,9 @@ namespace BuildingUsageTracker
 		public NativeCounter.Concurrent movingInCount;
 		public NativeCounter.Concurrent passingThroughCount;
 		public NativeCounter.Concurrent inVehicleCount;
+		public NativeCounter.Concurrent movingAwayCount;
+		public NativeCounter.Concurrent waitingTransportCount;
+		public NativeCounter.Concurrent inPublicTransportCount;
 
 		[ReadOnly]
 		public bool returnEntities;
@@ -75,7 +81,7 @@ namespace BuildingUsageTracker
 			NativeArray<Target> targets = chunk.GetNativeArray(ref this.targetHandle);
 			bool hasResident = chunk.Has<Resident>();
 			bool checkPaths = this.checkPathElements && chunk.Has<PathOwner>() && chunk.Has<PathElement>();
-			bool checkVehicle = this.checkPathElements && chunk.Has<CurrentVehicle>();
+			bool checkVehicle = chunk.Has<CurrentVehicle>();
 			NativeArray<Resident> residents = hasResident ? chunk.GetNativeArray(ref this.residentHandle) : default;
 			NativeArray<CurrentVehicle> currentVehicles = checkVehicle ? chunk.GetNativeArray(ref this.currentVehicleHandle) : default;
 			NativeArray<Entity> entities = this.returnEntities ? chunk.GetNativeArray(this.entityHandle) : default;
@@ -98,6 +104,9 @@ namespace BuildingUsageTracker
 			int otherCount = 0;
 			int passingThroughCount = 0;
 			int inVehicleCount = 0;
+			int movingAwayCount = 0;
+			int waitingTransportCount = 0;
+			int inPublicTransportCount = 0;
 			while (chunkIterator.NextEntityIndex(out var i))
 			{
 				Target target = targets[i];
@@ -119,7 +128,7 @@ namespace BuildingUsageTracker
 							}
 						}
 					}
-					if (checkVehicle && this.pathLookup.TryGetBuffer(currentVehicles[i].m_Vehicle, out var vehiclePath) && this.pathOwnerLookup.TryGetComponent(currentVehicles[i].m_Vehicle, out var vehiclePathOwner))
+					if (checkVehicle && checkPaths && this.pathLookup.TryGetBuffer(currentVehicles[i].m_Vehicle, out var vehiclePath) && this.pathOwnerLookup.TryGetComponent(currentVehicles[i].m_Vehicle, out var vehiclePathOwner))
 					{
 						for (int pathIndex = vehiclePathOwner.m_ElementIndex; pathIndex < vehiclePath.Length; ++pathIndex)
 						{
@@ -141,6 +150,14 @@ namespace BuildingUsageTracker
 							if ((residents[i].m_Flags & ResidentFlags.InVehicle) > 0)
 							{
 								++inVehicleCount;
+								if (checkVehicle && this.publicTransportLookup.HasComponent(currentVehicles[i].m_Vehicle))
+								{
+									++inPublicTransportCount;
+								}
+							}
+							else if ((residents[i].m_Flags & ResidentFlags.WaitingTransport) > 0)
+							{
+								++waitingTransportCount;
 							}
 
 							if (this.travelPurposeLookup.TryGetComponent(residents[i].m_Citizen, out var travelPurpose))
@@ -187,6 +204,9 @@ namespace BuildingUsageTracker
 									case Purpose.Shopping:
 										++shoppingCount;
 										break;
+									case Purpose.MovingAway:
+										++movingAwayCount;
+										break;
 									default:
 										++otherCount;
 										break;
@@ -229,6 +249,9 @@ namespace BuildingUsageTracker
 			this.otherCount.Increment(otherCount);
 			this.passingThroughCount.Increment(passingThroughCount);
 			this.inVehicleCount.Increment(inVehicleCount);
+			this.movingAwayCount.Increment(movingAwayCount);
+			this.waitingTransportCount.Increment(waitingTransportCount);
+			this.inPublicTransportCount.Increment(inPublicTransportCount);
 		}
 	}
 }

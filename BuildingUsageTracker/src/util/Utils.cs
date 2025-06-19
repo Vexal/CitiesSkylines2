@@ -45,7 +45,8 @@ namespace BuildingUsageTracker
 
 		public static bool isTransitStation(this EntityManager EntityManager, Entity entity)
 		{
-			return EntityManager.Exists(entity) && (EntityManager.HasComponent<PublicTransportStation>(entity) || EntityManager.HasComponent<BusStop>(entity));
+			return EntityManager.Exists(entity) && (EntityManager.HasComponent<PublicTransportStation>(entity) || EntityManager.HasComponent<BusStop>(entity) 
+				|| EntityManager.HasComponent<TramStop>(entity));
 		}
 
 		public static bool isParkingStructure(this EntityManager EntityManager, Entity entity)
