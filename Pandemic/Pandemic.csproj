@@ -8,6 +8,7 @@
 		
 		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->
 		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	
 	<!--Imports must be after PropertyGroup block-->
@@ -57,10 +58,6 @@
 		<Reference Include="Colossal.Mathematics">
 			<Private>false</Private>
 		</Reference>
-		<Reference Include="mscorlib">
-			<Private>false</Private>
-			<HintPath>$(ManagedPath)\mscorlib.dll</HintPath>
-		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -81,14 +78,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="System.Text.Json" Version="9.0.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="Properties\Settings.settings">
-	    <Generator>SettingsSingleFileGenerator</Generator>
-	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-	  </None>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 	
 	<Target Name="InstallUI" AfterTargets="AfterBuild">

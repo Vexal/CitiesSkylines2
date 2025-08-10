@@ -1,13 +1,7 @@
 ﻿using Colossal.UI.Binding;
 using Game.Tools;
 using Game.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Unity.Entities;
 
 namespace Pandemic
@@ -26,21 +20,21 @@ namespace Pandemic
 			AddBinding(new TriggerBinding<string>("Pandemic", "createCustomDisease", (
 				string json) =>
 			{
-				DiseaseCreateInput inp = JsonSerializer.Deserialize<DiseaseCreateInput>(json);
+				DiseaseCreateInput inp = JsonConvert.DeserializeObject<DiseaseCreateInput>(json);
 				this.diseaseProgressionSystem.createCustomDisease(inp);
 			}));
 
 			AddBinding(new TriggerBinding<string>("Pandemic", "editDisease", (
 				string json) =>
 			{
-				DiseaseCreateInput inp = JsonSerializer.Deserialize<DiseaseCreateInput>(json);
+				DiseaseCreateInput inp = JsonConvert.DeserializeObject<DiseaseCreateInput>(json);
 				this.diseaseProgressionSystem.editDisease(inp);
 			}));
 
 			AddBinding(new TriggerBinding<string>("Pandemic", "cureDisease", (
 				string json) =>
 			{
-				DiseaseCreateInput inp = JsonSerializer.Deserialize<DiseaseCreateInput>(json);
+				DiseaseCreateInput inp = JsonConvert.DeserializeObject<DiseaseCreateInput>(json);
 				this.diseaseProgressionSystem.cureDisease(inp.getEntity());
 			}));
 
@@ -59,7 +53,7 @@ namespace Pandemic
 			AddBinding(new TriggerBinding<string>("Pandemic", "infectCitizen", (
 				string json) =>
 			{
-				DiseaseCreateInput inp = JsonSerializer.Deserialize<DiseaseCreateInput>(json);
+				DiseaseCreateInput inp = JsonConvert.DeserializeObject<DiseaseCreateInput>(json);
 				if (this.diseaseProgressionSystem.validateDisease(inp.getEntity()))
 				{
 					this.diseaseProgressionSystem.makeCitizenSick(this.toolSystem.selected, inp.getEntity());
@@ -69,7 +63,7 @@ namespace Pandemic
 			AddBinding(new TriggerBinding<string>("Pandemic", "deleteDisease", (
 				string json) =>
 			{
-				DiseaseCreateInput inp = JsonSerializer.Deserialize<DiseaseCreateInput>(json);
+				DiseaseCreateInput inp = JsonConvert.DeserializeObject<DiseaseCreateInput>(json);
 				this.diseaseProgressionSystem.deleteDisease(inp.getEntity());
 			}));
 		}

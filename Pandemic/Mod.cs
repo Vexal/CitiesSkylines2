@@ -18,7 +18,7 @@ namespace Pandemic
 		{
 			INSTANCE = this;
 			log.Info(nameof(OnLoad));
-
+			
 			if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
 				log.Info($"Current mod asset at {asset.path}");
 
