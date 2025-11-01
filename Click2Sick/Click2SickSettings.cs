@@ -13,9 +13,9 @@ namespace Click2Sick
 	[FileLocation(nameof(Click2Sick))]
 	[SettingsUIGroupOrder(kButtonGroup, kKeybindingGroup)]
 	[SettingsUIShowGroupName(kButtonGroup, kKeybindingGroup)]
-	[SettingsUIKeyboardAction(Mod.makeSelectedSickActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "MSTestUsage" })]
-	[SettingsUIKeyboardAction(Mod.healSelectedActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "MSTestUsage" })]
-	[SettingsUIKeyboardAction(Mod.decreaseHealthSelectedActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "MSTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.makeSelectedSickActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "MSTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.healSelectedActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "MSTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.decreaseHealthSelectedActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "MSTestUsage" })]
 	public class Click2SickSettings : ModSetting
 	{
 		public const string kSection = "Main";

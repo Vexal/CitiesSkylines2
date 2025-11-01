@@ -9,10 +9,10 @@ using System.Collections.Generic;
 namespace EmploymentTracker
 {
 	[FileLocation(nameof(EmploymentTracker))]
-	[SettingsUIKeyboardAction(Mod.toggleAllActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
-	[SettingsUIKeyboardAction(Mod.toggleBuildingsActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
-	[SettingsUIKeyboardAction(Mod.togglePathDisplayActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
-	[SettingsUIKeyboardAction(Mod.toggleRouteToolActionName, ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.toggleAllActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(name: Mod.toggleBuildingsActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.togglePathDisplayActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
+	[SettingsUIKeyboardAction(Mod.toggleRouteToolActionName, rebindOptions: RebindOptions.All, type: ActionType.Button, usages: new string[] { Usages.kDefaultUsage, "CRHTestUsage" })]
 	[SettingsUIGroupOrder(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, routeHighlightTypes, kKeybindingGroup, routeHighlightOptions)]
 	[SettingsUIShowGroupName(routeHighlightTypes, infoPanelOptions, objectHighlightTypes, kKeybindingGroup, routeHighlightOptions)]
 	public class EmploymentTrackerSettings : ModSetting
