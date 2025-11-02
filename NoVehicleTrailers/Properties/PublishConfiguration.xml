@@ -26,13 +26,13 @@ Preventing vehicles from using trailers may impact gameplay because trailers inc
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/no-car-trailers.1697791/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.1" />
+	<ModVersion Value="1.2" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.1.*" />
+	<GameVersion Value="1.3.6*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Temporarily disabled the toggle functionality due to critical issue with save games. The 'remove all trailers' button still can be manually used." />
+	<ChangeLog Value="Compatibility with 1.3.6; Temporarily disabled the toggle functionality due to critical issue with save games. The 'remove all trailers' button still can be manually used." />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
