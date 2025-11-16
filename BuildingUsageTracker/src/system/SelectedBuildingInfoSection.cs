@@ -20,14 +20,22 @@ namespace BuildingUsageTracker
 		protected static string MOD_NAME = "BuildingUsageTracker";
 		protected SelectedBuildingInfoSection otherView;
 		protected bool showEntities = false;
+        protected ValueBinding<bool> showDetails;
+        protected TriggerBinding<bool> toggleShowDetails;
+        protected string sectionName;
 
-		protected override void OnCreate()
+		protected void OnCreate(string sectionName, bool expandDetails)
 		{
 			base.OnCreate();
-			this.uf = UIUpdateState.Create(World, 60);
+            this.sectionName = sectionName;
+            this.uf = UIUpdateState.Create(World, 60);
 			this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
 			m_InfoUISystem.AddMiddleSection(this);
-		}
+            this.showDetails = new ValueBinding<bool>(MOD_NAME, "showDetails_" + sectionName, expandDetails);
+            AddBinding(this.showDetails);
+            this.toggleShowDetails = new TriggerBinding<bool>(MOD_NAME, "toggleShowDetails_" + sectionName, s => { this.showDetails.Update(s); this.updateExpandDetailsSetting(s); });
+            AddBinding(this.toggleShowDetails);
+        }
 
 		protected override void OnUpdate()
 		{
@@ -131,8 +139,10 @@ namespace BuildingUsageTracker
 
 		public override GameMode gameMode => GameMode.Game;
 
+        protected abstract void updateExpandDetailsSetting(bool expanded);
 
-		public override void OnWriteProperties(IJsonWriter writer)
+
+        public override void OnWriteProperties(IJsonWriter writer)
 		{
 			
 		}

@@ -5,6 +5,8 @@ export const MOD_NAME = "BuildingUsageTracker";
 const CustomBindings = {
 	enrouteCount: bindValue<string>(MOD_NAME, 'enrouteCountBinding'),
 	enrouteVehicleCount: bindValue<string>(MOD_NAME, 'enrouteVehicleCountBinding'),
+    expandEnrouteView: bindValue<boolean>(MOD_NAME, 'showDetails_enrouteView'),
+    toggleShowDetails: (name:string) => "toggleShowDetails_" + name
 }
 
 export const getArray = (binding: ValueBinding<string>, name: string): string[] => {

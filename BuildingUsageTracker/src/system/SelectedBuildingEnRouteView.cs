@@ -16,13 +16,15 @@ namespace BuildingUsageTracker
 {
 	partial class SelectedBuildingEnRouteView : SelectedBuildingInfoSection
 	{
-		private EntityQuery enrouteCitizenQuery;
+        public static readonly string EXPAND_DETAILS_NAME = "enrouteView";
+
+        private EntityQuery enrouteCitizenQuery;
 		private ValueBinding<string> enrouteCountBinding;
 		private Counters counters = new Counters { json = "{}" };
 
 		protected override void OnCreate()
 		{
-			base.OnCreate();
+            OnCreate(EXPAND_DETAILS_NAME, Mod.SETTINGS.showDetailedEnrouteCimCounts);
 			this.enrouteCountBinding = new ValueBinding<string>(MOD_NAME, "enrouteCountBinding", counters.json);
 			this.otherView = World.GetOrCreateSystemManaged<SelectedBuildingVehicleEnRouteView>();
 			AddBinding(this.enrouteCountBinding);
@@ -47,6 +49,8 @@ namespace BuildingUsageTracker
 
 			AddBinding(new TriggerBinding<bool>("BuildingUsageTracker", "toggleShowEnrouteEntityList", s => { this.toggleEntities(s); }));
 			AddBinding(new TriggerBinding<string>("BuildingUsageTracker", "selectEnrouteEntity", s => { this.toolSystem.selected = Utils.entity(s) ; }));
+
+            Mod.SETTINGS.onSettingsApplied += s => { if (s is Setting setting) this.showDetails.Update(setting.showDetailedEnrouteCimCounts); };
 		}
 
 		protected override void update(Entity selectedEntity)
@@ -254,5 +258,11 @@ namespace BuildingUsageTracker
 		}
 
 		protected override string group => this.counters.json;
-	}
+
+        protected override void updateExpandDetailsSetting(bool showDetails)
+        {
+            Mod.SETTINGS.showDetailedEnrouteCimCounts = showDetails;
+            Mod.SETTINGS.ApplyAndSave();
+        }
+    }
 }

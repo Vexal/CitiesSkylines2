@@ -13,13 +13,14 @@ namespace BuildingUsageTracker
 {
 	partial class SelectedBuildingVehicleEnRouteView : SelectedBuildingInfoSection
 	{
-		private EntityQuery enrouteVehicleQuery;
+        public static readonly string EXPAND_DETAILS_NAME = "enrouteVehicleView";
+        private EntityQuery enrouteVehicleQuery;
 		private ValueBinding<string> enrouteCountBinding;
 		private Counters counters = new Counters { json = "{}" };
 
 		protected override void OnCreate()
 		{
-			base.OnCreate();
+			base.OnCreate(EXPAND_DETAILS_NAME, Mod.SETTINGS.showDetailedEnrouteVehicleCounts);
 			this.enrouteCountBinding = new ValueBinding<string>(MOD_NAME, "enrouteVehicleCountBinding", counters.json);
 			this.otherView = World.GetOrCreateSystemManaged<SelectedBuildingEnRouteView>();
 			AddBinding(this.enrouteCountBinding);
@@ -45,7 +46,9 @@ namespace BuildingUsageTracker
 
 			AddBinding(new TriggerBinding<bool>("BuildingUsageTracker", "toggleShowEnrouteVehicleEntityList", s => {this.toggleEntities(s); }));
 			AddBinding(new TriggerBinding<string>("BuildingUsageTracker", "selectEnrouteVehicleEntity", s => { this.toolSystem.selected = Utils.entity(s) ; }));
-		}
+
+            Mod.SETTINGS.onSettingsApplied += s => { if (s is Setting setting) this.showDetails.Update(setting.showDetailedEnrouteVehicleCounts); };
+        }
 
 		protected override void update(Entity selectedEntity)
 		{
@@ -176,5 +179,11 @@ namespace BuildingUsageTracker
 		{
 			return Mod.SETTINGS.showEnrouteVehicleCounts && base.shouldBeVisible(selectedEntity);
 		}
-	}
+
+        protected override void updateExpandDetailsSetting(bool expand)
+        {
+            Mod.SETTINGS.showDetailedEnrouteVehicleCounts = expand;
+            Mod.SETTINGS.ApplyAndSave();
+        }
+    }
 }

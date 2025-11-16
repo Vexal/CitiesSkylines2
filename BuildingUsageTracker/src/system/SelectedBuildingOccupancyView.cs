@@ -10,12 +10,13 @@ namespace BuildingUsageTracker
 {
 	partial class SelectedBuildingOccupancyView : SelectedBuildingInfoSection
 	{
-		private EntityQuery buildingOccupantQuery;
+        public static readonly string EXPAND_DETAILS_NAME = "occupancyView";
+        private EntityQuery buildingOccupantQuery;
 		private BuildingOccupancy occupancy = default;
 
 		protected override void OnCreate()
 		{
-			base.OnCreate();
+            OnCreate(EXPAND_DETAILS_NAME, Mod.SETTINGS.showDetailedBuildingOccupancy);
 
 			this.buildingOccupantQuery = GetEntityQuery(new EntityQueryDesc
 			{
@@ -35,9 +36,11 @@ namespace BuildingUsageTracker
 				ComponentType.ReadOnly<Building>()
 				}
 			});
-		}
 
-		protected override void update(Entity selectedEntity)
+            Mod.SETTINGS.onSettingsApplied += s => { if (s is Setting setting) this.showDetails.Update(setting.showDetailedBuildingOccupancy); };
+        }
+
+        protected override void update(Entity selectedEntity)
 		{
 			var resultCounter = new NativeCounter(Allocator.TempJob);
 			var workerResults = new NativeCounter(Allocator.TempJob);
@@ -107,7 +110,7 @@ namespace BuildingUsageTracker
 		protected override string group => this.buildOccupancyCountText();
 		private string buildOccupancyCountText()
 		{
-			return "{\"occupantCount\":" + this.occupancy.totalCount + 
+			return "{\"totalCount\":" + this.occupancy.totalCount + 
 				Utils.jsonFieldC("workers", this.occupancy.workerCount) +
 				Utils.jsonFieldC("students", this.occupancy.studentCount) +
 				Utils.jsonFieldC("tourists", this.occupancy.touristCount) +
@@ -122,5 +125,11 @@ namespace BuildingUsageTracker
 		{
 			return Mod.SETTINGS.showBuildingOccupancy && base.shouldBeVisible(selectedEntity);
 		}
-	}
+
+        protected override void updateExpandDetailsSetting(bool show)
+        {
+            Mod.SETTINGS.showDetailedBuildingOccupancy = show;
+            Mod.SETTINGS.ApplyAndSave();
+        }
+    }
 }

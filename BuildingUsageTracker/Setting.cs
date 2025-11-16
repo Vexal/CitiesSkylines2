@@ -28,19 +28,36 @@ namespace BuildingUsageTracker
 			this.showEnrouteCimCounts = true;
 			this.showEnrouteVehicleCounts = true;
 			this.showBuildingOccupancy = true;
+            this.showDetailedBuildingOccupancy = true;
+            this.showDetailedEnrouteCimCounts = true;
+            this.showDetailedEnrouteVehicleCounts = true;
 		}
 
 		[SettingsUISection(kSection, kButtonGroup)]
-		public bool showEnrouteCimCounts { get; set; }
+        public bool showEnrouteCimCounts { get; set; }
+
+		[SettingsUISection(kSection, kButtonGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(disableDetailedEC))]
+        public bool showDetailedEnrouteCimCounts { get; set; }
 
 		[SettingsUISection(kSection, kButtonGroup)]
 		public bool showEnrouteVehicleCounts { get; set; }
 
-		[SettingsUISection(kSection, kButtonGroup)]
+        [SettingsUISection(kSection, kButtonGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(disableDetailedVEC))]
+        public bool showDetailedEnrouteVehicleCounts { get; set; }
+
+        [SettingsUISection(kSection, kButtonGroup)]
 		public bool showBuildingOccupancy { get; set; }
 
-		
-	}
+        [SettingsUISection(kSection, kButtonGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(disableDetailedOC))]
+        public bool showDetailedBuildingOccupancy { get; set; }
+
+        private bool disableDetailedEC => !this.showEnrouteCimCounts;
+        private bool disableDetailedVEC => !this.showEnrouteVehicleCounts;
+        private bool disableDetailedOC => !this.showBuildingOccupancy;
+    }
 
 	public class LocaleEN : IDictionarySource
 	{
@@ -66,7 +83,16 @@ namespace BuildingUsageTracker
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(Setting.showBuildingOccupancy)), "Building Occupant Counts" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(Setting.showBuildingOccupancy)), $"Display counts and details of the number of cims currently inside the selected building" },
-			};
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.showDetailedEnrouteCimCounts)), "Detailed En-route Cim Counts" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.showDetailedEnrouteCimCounts)), $"Display detailed list of en-route cim counts." },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.showDetailedEnrouteVehicleCounts)), "Detailed En-route Vehicle Counts" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.showDetailedEnrouteVehicleCounts)), $"Display detailed list of en-route vehicle counts." },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.showDetailedBuildingOccupancy)), "Detailed Building Occupant Counts" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.showDetailedBuildingOccupancy)), $"Display detailed list of building occupant counts." },
+            };
 		}
 
 		public void Unload()

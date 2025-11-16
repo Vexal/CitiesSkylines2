@@ -30,3 +30,16 @@
 .smallInfoRow {
 	font-size:12rem;
 }
+
+.showEntitiesButton {
+    color: lightblue;
+    &:hover {
+        color:aquamarine;
+    }
+}
+
+.mainRowHeader {
+    &:hover {
+        color: lightblue;
+    }
+}
