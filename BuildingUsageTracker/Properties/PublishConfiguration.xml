@@ -22,7 +22,7 @@ Adds display of number of en-route cims and vehicles to the selected building, a
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/en-route-occupancy-counts.1780054/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.3" />
+	<ModVersion Value="1.4" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.3.6*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -30,7 +30,7 @@ Adds display of number of en-route cims and vehicles to the selected building, a
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="Update display name to 'Building Usage Displays'" />
+	<ChangeLog Value="Make counts displays collapsable and persistent collapse settings; Update mod display name to 'Building Usage Displays'" />
 	<!--<ChangeLog>
 	</ChangeLog>-->
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->

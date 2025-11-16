@@ -6,6 +6,8 @@ const CustomBindings = {
 	enrouteCount: bindValue<string>(MOD_NAME, 'enrouteCountBinding'),
 	enrouteVehicleCount: bindValue<string>(MOD_NAME, 'enrouteVehicleCountBinding'),
     expandEnrouteView: bindValue<boolean>(MOD_NAME, 'showDetails_enrouteView'),
+    expandVehicleEnrouteView: bindValue<boolean>(MOD_NAME, 'showDetails_enrouteVehicleView'),
+    expandOccupantView: bindValue<boolean>(MOD_NAME, 'showDetails_occupancyView'),
     toggleShowDetails: (name:string) => "toggleShowDetails_" + name
 }
 

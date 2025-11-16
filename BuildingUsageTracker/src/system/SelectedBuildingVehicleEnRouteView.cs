@@ -20,7 +20,7 @@ namespace BuildingUsageTracker
 
 		protected override void OnCreate()
 		{
-			base.OnCreate(EXPAND_DETAILS_NAME, Mod.SETTINGS.showDetailedEnrouteVehicleCounts);
+            OnCreate(EXPAND_DETAILS_NAME, Mod.SETTINGS.showDetailedEnrouteVehicleCounts);
 			this.enrouteCountBinding = new ValueBinding<string>(MOD_NAME, "enrouteVehicleCountBinding", counters.json);
 			this.otherView = World.GetOrCreateSystemManaged<SelectedBuildingEnRouteView>();
 			AddBinding(this.enrouteCountBinding);

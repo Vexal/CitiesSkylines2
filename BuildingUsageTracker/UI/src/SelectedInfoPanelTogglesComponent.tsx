@@ -69,7 +69,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 
         const infs = <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
             <SectionContainer data={data}
-                expandDetails={CustomBindings.expandEnrouteView.value}
+                expandDetails={CustomBindings.expandOccupantView.value}
                 triggerDetailsName={CustomBindings.toggleShowDetails("occupancyView")}
                 sectionName="Current Occupants"
                 showEntityList={false}
@@ -120,7 +120,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 		console.log("the data", data);
         return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
             <SectionContainer data={data}
-                expandDetails={CustomBindings.expandEnrouteView.value}
+                expandDetails={CustomBindings.expandVehicleEnrouteView.value}
                 triggerDetailsName={CustomBindings.toggleShowDetails("enrouteVehicleView")}
                 sectionName="En-route Vehicles"
                 triggerEntitiesName="toggleShowEnrouteVehicleEntityList"

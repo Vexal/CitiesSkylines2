@@ -70,7 +70,7 @@ namespace BuildingUsageTracker
 		{
 			return new Dictionary<string, string>
 			{
-				{ m_Setting.GetSettingsLocaleID(), "En-route / Occupancy Counts" },
+				{ m_Setting.GetSettingsLocaleID(), "Building Usage Displays" },
 				{ m_Setting.GetOptionTabLocaleID(Setting.kSection), "Main" },
 
 				{ m_Setting.GetOptionGroupLocaleID(Setting.kButtonGroup), "Show Display Options" },
