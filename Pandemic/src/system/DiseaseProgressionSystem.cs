@@ -54,44 +54,53 @@ namespace Pandemic
 			this.diseaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Disease>());
 			this.diseaseBaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<DiseaseBase>());
 
-			if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
-			{
-				//this.prefabSystem.TryGetEntity(prefabBase, out this.sicknessEventPrefabEntity);
-				//this.sickEventArchetype = EntityManager.GetComponentData<EventData>(this.sicknessEventPrefabEntity).m_Archetype;
+            if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
+            {
+                //this.prefabSystem.TryGetEntity(prefabBase, out this.sicknessEventPrefabEntity);
+                //this.sickEventArchetype = EntityManager.GetComponentData<EventData>(this.sicknessEventPrefabEntity).m_Archetype;
 
-				PrefabBase pandemicPrefab = prefabBase.Clone("Pandemic Sickness");
-				Game.Prefabs.HealthEvent healthEvent = pandemicPrefab.GetComponent<Game.Prefabs.HealthEvent>();
-				healthEvent.m_RequireTracking = true;
-				/*pandemicPrefab.Remove(typeof(Game.Prefabs.HealthEvent));
+                PrefabBase pandemicPrefab = prefabBase.Clone("Pandemic Sickness");
+                Game.Prefabs.HealthEvent healthEvent = pandemicPrefab.GetComponent<Game.Prefabs.HealthEvent>();
+                healthEvent.m_RequireTracking = true;
+                /*pandemicPrefab.Remove(typeof(Game.Prefabs.HealthEvent));
 				pandemicPrefab.AddComponent<Game.Prefabs.HealthEvent>();
 				pandemicPrefab.AddComponentFrom<Game.Prefabs.HealthEvent>();*/
-				prefabBase.AddComponentFrom(healthEvent);
-				if (this.prefabSystem.AddPrefab(pandemicPrefab))
-				{
-					if (this.prefabSystem.TryGetEntity(pandemicPrefab, out this.sicknessEventPrefabEntity))
-					{
-						if (this.prefabSystem.TryGetEntity(prefabBase, out var e))
-						{
-							EventData eventData = EntityManager.GetComponentData<EventData>(e);
-							this.sickEventArchetype = eventData.m_Archetype;
-						}
-					}
-					else
-					{
-						Mod.log.Info("Failed got sick archetype 2");
-					}
-				}
-				else
-				{
-					Mod.log.Info("Failed to get sick archetype");
-				}
-			}
+                prefabBase.AddComponentFrom(healthEvent);
+                if (this.prefabSystem.AddPrefab(pandemicPrefab))
+                {
+                    if (this.prefabSystem.TryGetEntity(pandemicPrefab, out this.sicknessEventPrefabEntity))
+                    {
+                        if (this.prefabSystem.TryGetEntity(prefabBase, out var e))
+                        {
+                            EventData eventData = EntityManager.GetComponentData<EventData>(e);
+                            this.sickEventArchetype = eventData.m_Archetype;
+                        }
+                        else
+                        {
+                            Mod.log.Info("Failed got sick archetype 5");
+                        }
+                    }
+                    else
+                    {
+                        Mod.log.Info("Failed got sick archetype 2");
+                    }
+                }
+                else
+                {
+                    Mod.log.Info("Failed to get sick archetype");
+                }
+            }
+            else
+            {
+                Mod.log.Info("Failed to find sick prefab");
+            }
 
-			if (this.prefabSystem.TryGetPrefab(this.suddenDeathPrefabId, out PrefabBase prefabBase2))
-			{
-				this.prefabSystem.TryGetEntity(prefabBase2, out this.suddenDeathPrefabEntity);
-				this.deathEventArchetype = EntityManager.GetComponentData<EventData>(this.suddenDeathPrefabEntity).m_Archetype;
-			}
+            Mod.log.Info("Loaded disease progression system.");
+            if (this.prefabSystem.TryGetPrefab(this.suddenDeathPrefabId, out PrefabBase prefabBase2))
+            {
+                this.prefabSystem.TryGetEntity(prefabBase2, out this.suddenDeathPrefabEntity);
+                this.deathEventArchetype = EntityManager.GetComponentData<EventData>(this.suddenDeathPrefabEntity).m_Archetype;
+            }
 
 			this.prefabSystem.TryGetPrefab(this.policyPrefabId, out this.policyPrefabEntity);
 
