@@ -143,6 +143,13 @@ namespace Pandemic
 			EntityManager.SetComponentData(diseaseEntity, disease);
 
 			this.lastMutationFrame = this.simulationSystem.frameIndex;
+            if (this.nameSystem.TryGetCustomName(disease.diseaseBase, out string name))
+            {
+                this.nameSystem.SetCustomName(diseaseEntity, name + " hello");
+            }
+
+            this.nameSystem.TryGetCustomName(diseaseEntity, out string newName);
+            Mod.log.Info("using name " + name + " for disease " + diseaseEntity.ToString() + " with new name " + newName);
 			return diseaseEntity;
 		}
 
@@ -159,7 +166,8 @@ namespace Pandemic
 				mutationChance = Mod.settings.ccMutationChance,
 				mutationMagnitude = Mod.settings.ccMutationMagnitude,
 				progressionSpeed = Mod.settings.ccProgressionSpeed,
-			};
+                diseaseBase = this.commonColdEntity
+            };
 
 			return disease;
 		}
@@ -177,7 +185,8 @@ namespace Pandemic
 				mutationChance = Mod.settings.flMutationChance,
 				mutationMagnitude = Mod.settings.flMutationMagnitude,
 				progressionSpeed = Mod.settings.flProgressionSpeed,
-			};
+                diseaseBase = this.commonColdEntity
+            };
 
 			return disease;
 		}
@@ -195,6 +204,7 @@ namespace Pandemic
 				mutationChance = UnityEngine.Random.Range(0f, 1f),
 				mutationMagnitude = UnityEngine.Random.Range(0f, 1.99f),
 				progressionSpeed = UnityEngine.Random.Range(.0001f, .99f),
+                diseaseBase = this.commonColdEntity
 			};
 
 			return disease;
@@ -214,7 +224,8 @@ namespace Pandemic
 				mutationMagnitude = inp.mutationMagnitude,
 				progressionSpeed = inp.progressionSpeed,
 				spontaneousProbability = inp.spontaneousProbability,
-			};
+                diseaseBase = this.commonColdEntity
+            };
 
 			Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
 			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
@@ -223,9 +234,12 @@ namespace Pandemic
 			if (inp.name != "")
 			{
 				this.nameSystem.SetCustomName(newDisease, inp.name);
-			}
+			} else
+            {
 
-			return disease;
+            }
+
+            return disease;
 		}
 
 		public Disease editDisease(DiseaseCreateInput inp)

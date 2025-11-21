@@ -24,6 +24,7 @@ namespace Pandemic
 		private EntityQuery unhealthyDiseaseEntityQuery;
 		private EntityQuery healthProblemEntityQuery;
 		private EntityQuery diseaseEntityQuery;
+		private EntityQuery diseaseBaseEntityQuery;
 
 		private PrefabSystem prefabSystem;
 		private SimulationSystem simulationSystem;
@@ -39,6 +40,7 @@ namespace Pandemic
 		private Entity suddenDeathPrefabEntity;
 		private EntityArchetype deathEventArchetype;
 		private EntityArchetype resetTripArchetype;
+        private EntityArchetype diseaseBaseArchetype;
 
 		protected override void OnCreate()
 		{
@@ -50,6 +52,7 @@ namespace Pandemic
 			this.nameSystem = World.GetOrCreateSystemManaged<NameSystem>();
 			this.resetTripArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<ResetTrip>());
 			this.diseaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Disease>());
+			this.diseaseBaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<DiseaseBase>());
 
 			if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
 			{
@@ -113,6 +116,19 @@ namespace Pandemic
 				All = new ComponentType[]
 			{
 				ComponentType.ReadOnly<Disease>(),
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>()
+				}
+			});
+
+			this.diseaseBaseEntityQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<DiseaseBase>(),
 			},
 				None = new ComponentType[]
 			{
@@ -427,13 +443,60 @@ namespace Pandemic
 		protected override void OnGamePreload(Colossal.Serialization.Entities.Purpose purpose, GameMode mode)
 		{
 			base.OnGamePreload(purpose, mode);
-			EntityManager.DestroyEntity(this.diseaseEntityQuery);
-			Disease cc = this.createCommonCold();
-			this.instantiateDiseaseEntity(ref cc);
-			Disease ff = this.createFlu();
-			this.instantiateDiseaseEntity(ref ff);
-			Disease nv = this.createNovelVirus();
-			this.instantiateDiseaseEntity(ref nv);
-		}
+            EntityManager.DestroyEntity(this.diseaseEntityQuery);
+            EntityManager.DestroyEntity(this.diseaseBaseEntityQuery);
+            Mod.log.Info("Preloading game");
+        }
+
+        protected override void OnGameLoaded(Colossal.Serialization.Entities.Context serializationContext)
+        {
+            base.OnGameLoaded(serializationContext);
+            Mod.log.Info("Loaded game");
+        }
+
+        protected override void OnGameLoadingComplete(Colossal.Serialization.Entities.Purpose purpose, GameMode mode)
+        {
+            base.OnGameLoadingComplete(purpose, mode);
+            Mod.log.Info("Loaded game complete " + purpose.ToString());
+
+            if (purpose == Colossal.Serialization.Entities.Purpose.NewGame || purpose == Colossal.Serialization.Entities.Purpose.LoadGame)
+            {
+                this.createDiseaseBases();
+
+                Disease cc = this.createCommonCold();
+                this.instantiateDiseaseEntity(ref cc);
+                Disease ff = this.createFlu();
+                this.instantiateDiseaseEntity(ref ff);
+                Disease nv = this.createNovelVirus();
+                this.instantiateDiseaseEntity(ref nv);
+            }
+        }
+
+        public void createDiseaseBases()
+        {
+            Mod.log.Info("initializing new game health system");
+            {
+                DiseaseBase diseaseBase = new()
+                {
+                    baseDeathChance = (Mod.settings.ccDeathChance),
+                    baseHealthPenalty = (byte)Mod.settings.ccHealthImpact,
+                    baseSpreadChance = Mod.settings.ccSpreadChance,
+                    baseSpreadRadius = Mod.settings.ccSpreadRadius,
+                    maxDeathHealth = 15,
+                    mutationChance = Mod.settings.ccMutationChance,
+                    mutationMagnitude = Mod.settings.ccMutationMagnitude,
+                    progressionSpeed = Mod.settings.ccProgressionSpeed,
+                };
+
+                {
+                    Entity entity = EntityManager.CreateEntity(this.diseaseBaseArchetype);
+                    EntityManager.SetComponentData(entity, diseaseBase);
+                    this.nameSystem.SetCustomName(entity, "Common Cold");
+                    this.commonColdEntity = entity;
+                }
+            }
+        }
+
+        public Entity commonColdEntity;
 	}
 }

@@ -26,7 +26,8 @@ export default class CreateDiseasePanel extends Component {
 
 	}
 
-	render() {
+    render() {
+        console.log(this.state.diseaseNames, CustomBindings.diseaseBaseNames.value);
 		//console.log("disease names", this.state.diseaseNames);
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
 		return <> 

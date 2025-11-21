@@ -31,6 +31,7 @@ namespace Pandemic
 		public int spreadCount;
 		public Entity entity;
 		public Entity parent;
+        public Entity diseaseBase;
 
 		public string getUniqueKey()
 		{
@@ -52,6 +53,7 @@ namespace Pandemic
 				mutationMagnitude = Utils.mutated(this.mutationMagnitude, m),
 				progressionSpeed = Utils.mutated(this.progressionSpeed, m),
 				spontaneousProbability = Utils.mutated(this.spontaneousProbability, m),
+                diseaseBase = this.diseaseBase
 			};
 
 			return mutation;
@@ -118,6 +120,8 @@ namespace Pandemic
 			writer.Write(this.spreadCount);
 			writer.PropertyName(nameof(this.parent));
 			writer.Write(this.parent.keyString());
+			writer.PropertyName(nameof(this.diseaseBase));
+			writer.Write(this.diseaseBase.keyString());
 			writer.TypeEnd();
 		}
 

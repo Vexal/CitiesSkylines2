@@ -10,6 +10,7 @@ using Game.UI.InGame;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Lifetime;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.Collections;
@@ -20,12 +21,14 @@ namespace Pandemic
 	public partial class HealthInfoUISystem : InfoSectionBase
 	{
 		private EntityQuery diseaseQuery;
+		private EntityQuery diseaseBaseQuery;
 		private EntityQuery currentDiseaseQuery;
 		private ValueBinding<Disease[]> diseaseBinding;
 		private ValueBinding<string[]> currentInfectionCountBinding;
 		private ValueBinding<uint> mutationCooldown;
 		private ValueBinding<bool> showCitizenHealth;
 		private ValueBinding<Dictionary<string, string>> diseaseNameBinding;
+		private ValueBinding<Dictionary<string, string>> diseaseBaseNameBinding;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
 		private DiseaseProgressionSystem diseaseProgressionSystem;
@@ -55,12 +58,30 @@ namespace Pandemic
 				new DictionaryWriter<string, string>());
 			AddBinding(this.diseaseNameBinding);
 
+			this.diseaseBaseNameBinding = new ValueBinding<Dictionary<string, string>>("Pandemic", "diseaseBaseNames", new Dictionary<string, string> (), 
+				new DictionaryWriter<string, string>());
+			AddBinding(this.diseaseBaseNameBinding);
+
 
 			this.diseaseQuery = GetEntityQuery(new EntityQueryDesc
 			{
 				All = new ComponentType[]
 			{
 				ComponentType.ReadOnly<Disease>(),
+			},
+				None = new ComponentType[]
+			{
+				ComponentType.ReadOnly<Deleted>(),
+				ComponentType.ReadOnly<Temp>()
+				}
+			});
+
+
+			this.diseaseBaseQuery = GetEntityQuery(new EntityQueryDesc
+			{
+				All = new ComponentType[]
+			{
+				ComponentType.ReadOnly<DiseaseBase>(),
 			},
 				None = new ComponentType[]
 			{
@@ -115,9 +136,24 @@ namespace Pandemic
 				if (this.m_NameSystem.TryGetCustomName(d.entity, out string name)) {
 					diseaseNames[d.getUniqueKey()] = name;
 				}
-			}
+            }
+
+			NativeArray<Entity> diseaseBases = this.diseaseBaseQuery.ToEntityArray(Allocator.Temp);
+
+			Dictionary<string, string> diseaseBaseNames = new Dictionary<string, string>();
+			foreach (Entity d in diseaseBases)
+			{
+				if (this.m_NameSystem.TryGetCustomName(d, out string name)) {
+					diseaseBaseNames[d.keyString()] = name;
+				}
+                else
+                {
+                    diseaseBaseNames[d.keyString()] = d.keyString();
+                }
+            }
 
 			this.diseaseNameBinding.Update(diseaseNames);
+			this.diseaseBaseNameBinding.Update(diseaseBaseNames);
 
 			NativeArray<CurrentDisease> currentSick = this.currentDiseaseQuery.ToComponentDataArray<CurrentDisease>(Allocator.Temp);
 
