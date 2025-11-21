@@ -17,15 +17,7 @@ namespace Pandemic
         public float mutationChance;
         public float mutationMagnitude;
         public float progressionSpeed;
-        /*
-         * baseDeathChance = (Mod.settings.ccDeathChance),
-				baseHealthPenalty = (byte)Mod.settings.ccHealthImpact,
-				baseSpreadChance = Mod.settings.ccSpreadChance,
-				baseSpreadRadius = Mod.settings.ccSpreadRadius,
-				maxDeathHealth = MAX_DEATH_HEALTH,
-				mutationChance = Mod.settings.ccMutationChance,
-				mutationMagnitude = Mod.settings.ccMutationMagnitude,
-				progressionSpeed = Mod.settings.ccProgressionSpeed,
-         */
+        public float baseSpontaneousChance;
+        public Entity entity;
     }
 }

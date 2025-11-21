@@ -240,8 +240,14 @@ namespace Pandemic
 				EntityManager.TryGetComponent(citizen, out Citizen citizenData) &&
 				EntityManager.TryGetComponent(citizen, out CurrentDisease currentDisease) && EntityManager.TryGetComponent(currentDisease.disease, out Disease disease))
 			{
+                string diseaseName;
+                if (!this.m_NameSystem.TryGetCustomName(currentDisease.disease, out diseaseName))
+                {
+                    diseaseName = disease.getUniqueKey();
+                }
+
 				string result = "{\"strainName\":\"" + disease.getStrainName() + "\",";
-				result += "\"diseaseName\":\"" + disease.getDiseaseTypeName() + "\",";
+				result += "\"diseaseName\":\"" + diseaseName + "\",";
 				result += "\"diseaseProgression\":" + currentDisease.progression + ",";
 				result += "\"health\":" + citizenData.m_Health + "}";
 				return result;

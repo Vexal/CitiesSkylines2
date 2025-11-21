@@ -214,6 +214,7 @@ namespace Pandemic
 
 		private bool isImmuneToDisease(Entity citizen, Entity diseaseEntity)
 		{
+            /*
 			if (!EntityManager.TryGetComponent<LastDisease>(citizen, out var lastDisease))
 			{
 				return false;
@@ -235,7 +236,8 @@ namespace Pandemic
 				return false;
 			}
 
-			return mostRecentDiseaseDefinition.ts >= disease.ts;
+			return mostRecentDiseaseDefinition.ts >= disease.ts;*/
+            return false;
 		}
 
 		private bool areMasksRequired()

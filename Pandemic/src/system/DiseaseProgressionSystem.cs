@@ -256,7 +256,7 @@ namespace Pandemic
 					EntityManager.AddComponent<LastDisease>(citizens[i]);
 				}
 
-				switch (diseaseDefinition.type)
+				/*switch (diseaseDefinition.type)
 				{
 					case 1:
 						lastDisease.lastCold = disease;
@@ -267,7 +267,7 @@ namespace Pandemic
 					case 3:
 						lastDisease.lastNovel = disease;
 						break;
-				}
+				}*/
 
 				//diseaseDefinition.infectionCount++;
 
@@ -350,6 +350,12 @@ namespace Pandemic
 
 		public void makeCitizenSick(Entity targetCitizen, Entity disease)
 		{
+            if (!EntityManager.Exists(disease))
+            {
+                Mod.log.Info("Error: " + disease + " " + disease.ToString() + " does not exist");
+                return;
+            }
+
 			Entity eventEntity = EntityManager.CreateEntity(this.sickEventArchetype);
 
 			EntityManager.AddComponent<PrefabRef>(eventEntity);
@@ -463,12 +469,8 @@ namespace Pandemic
             {
                 this.createDiseaseBases();
 
-                Disease cc = this.createCommonCold();
+                Disease cc = this.createDisease(this.commonColdDiseaseBase);
                 this.instantiateDiseaseEntity(ref cc);
-                Disease ff = this.createFlu();
-                this.instantiateDiseaseEntity(ref ff);
-                Disease nv = this.createNovelVirus();
-                this.instantiateDiseaseEntity(ref nv);
             }
         }
 
@@ -476,6 +478,7 @@ namespace Pandemic
         {
             Mod.log.Info("initializing new game health system");
             {
+                Entity entity = EntityManager.CreateEntity(this.diseaseBaseArchetype);
                 DiseaseBase diseaseBase = new()
                 {
                     baseDeathChance = (Mod.settings.ccDeathChance),
@@ -486,17 +489,19 @@ namespace Pandemic
                     mutationChance = Mod.settings.ccMutationChance,
                     mutationMagnitude = Mod.settings.ccMutationMagnitude,
                     progressionSpeed = Mod.settings.ccProgressionSpeed,
+                    baseSpontaneousChance = Mod.settings.ccChance,
+                    entity = entity
                 };
 
-                {
-                    Entity entity = EntityManager.CreateEntity(this.diseaseBaseArchetype);
-                    EntityManager.SetComponentData(entity, diseaseBase);
-                    this.nameSystem.SetCustomName(entity, "Common Cold");
-                    this.commonColdEntity = entity;
-                }
+                EntityManager.SetComponentData(entity, diseaseBase);
+                this.nameSystem.SetCustomName(entity, "Common Cold");
+                   
+                this.commonColdEntity = entity;
+                this.commonColdDiseaseBase = diseaseBase;
             }
         }
 
         public Entity commonColdEntity;
+        public DiseaseBase commonColdDiseaseBase;
 	}
 }

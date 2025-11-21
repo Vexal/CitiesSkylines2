@@ -6,8 +6,6 @@ namespace Pandemic
 {
 	public struct Disease : IComponentData, IQueryTypeParameter, IJsonWritable
 	{
-		public int id;
-		public uint type;
 		public float baseSpreadRadius;
 		public float baseSpreadChance;
 		public float baseDeathChance;
@@ -43,7 +41,6 @@ namespace Pandemic
 			float m = this.mutationMagnitude;
 			Disease mutation = new Disease() {
 				parent = !noParent ? this.entity : Entity.Null,
-				type = this.type,
 				baseSpreadRadius = Utils.mutated(this.baseSpreadRadius, m),
 				baseSpreadChance = Utils.mutated(this.baseSpreadChance, m),
 				baseHealthPenalty = Utils.mutated(this.baseHealthPenalty, m),
@@ -74,10 +71,6 @@ namespace Pandemic
 		public void Write(IJsonWriter writer)
 		{
 			writer.TypeBegin(GetType().FullName);
-			writer.PropertyName(nameof(this.id));
-			writer.Write(id.ToString());
-			writer.PropertyName(nameof(this.type));
-			writer.Write(this.type);
 			writer.PropertyName(nameof(this.baseSpreadRadius));
 			writer.Write(baseSpreadRadius);
 			writer.PropertyName(nameof(this.baseDeathChance));
@@ -125,40 +118,11 @@ namespace Pandemic
 			writer.TypeEnd();
 		}
 
-		public string getStrainAbbr()
-		{
-			switch (this.type)
-			{
-				case 1:
-					return "CC";
-				case 2:
-					return "FL";
-				case 3:
-					return "EX";
-				default:
-					return "UNK";
-			}
-		}
-
 		public string getStrainName()
 		{
-			return this.getStrainAbbr() + this.createYear.ToString() + "." + (this.createMonth.ToString()) + "." + (this.createHour.ToString()) + "." + (this.createMinute.ToString());
+			return this.createYear.ToString() + "." + (this.createMonth.ToString()) + "." + (this.createHour.ToString()) + "." + (this.createMinute.ToString());
 		}
 
-		public string getDiseaseTypeName()
-		{
-			switch (this.type)
-			{
-				case 1:
-					return "Common Cold";
-				case 2:
-					return "Influenza";
-				case 3:
-					return "Novel Virus";
-				default:
-					return "Unknown";
-			}
-		}
 
 
 		private static DateTime EPOCH = new DateTime(1970, 1, 1);
@@ -167,7 +131,6 @@ namespace Pandemic
 		{
 			long unixTs = (long)date.Subtract(EPOCH).TotalMilliseconds;
 
-			this.id = UnityEngine.Random.Range(1, int.MaxValue);
 			this.ts = unixTs;
 			this.entity = diseaseEntity;
 			this.createYear = date.Year;
@@ -181,7 +144,8 @@ namespace Pandemic
 	public struct DiseaseCreateInput
 	{
 		public string name { get; set; }
-		public uint type { get; set; }
+		public int baseEntityIndex { get; set; }
+		public int baseEntityVersion { get; set; }
 		public float baseSpreadChance { get; set; }
 		public float baseDeathChance { get; set; }
 		public byte baseHealthPenalty { get; set; }
@@ -198,6 +162,11 @@ namespace Pandemic
 		public Entity getEntity()
 		{
 			return new Entity { Index = this.entityIndex, Version = this.entityVersion };
+		}
+
+		public Entity getBaseEntity()
+		{
+			return new Entity { Index = this.baseEntityIndex, Version = this.baseEntityVersion };
 		}
 	}
 }

@@ -1,17 +1,5 @@
 import CustomBindings from "./CustomBindings";
 
-const TYPE_ABBRV = {
-	1: "CC",
-	2: "FL",
-	3: "EX"
-}
-
-const TYPE_NAME = {
-	1: "Common Cold",
-	2: "Influenza",
-	3: "Novel Virus"
-}
-
 
 export default class Disease {
 	constructor(diseaseJson) {
@@ -73,16 +61,11 @@ export default class Disease {
 	/** @returns {string} */
 	get createTimeString() {
 		return this._diseaseJson.createYear + "." + (this._diseaseJson.createWeek) + "." + (this._diseaseJson.createHour) + "." + (this._diseaseJson.createMinute);
-	}
-
-	/** @returns {string} */
-	get typeString() {
-		return TYPE_NAME[this.type]
-	}
+    }
 
 	/** @returns {string} */
 	get strainName() {
-		return TYPE_ABBRV[this.type] + this.createTimeString;
+		return this.createTimeString;
 	}
 
 	/** @returns {string} */
@@ -91,7 +74,7 @@ export default class Disease {
 		return (n !== undefined && n !== null ? n : this.typeString) + " " + this.strainName;
 	}
 
-	/** @returns {string|undefined}*/
+	/** @returns {string|undefined}*/ 
 	get customName() {
 		return CustomBindings.diseaseNames.value[this.uniqueKey];
 	}

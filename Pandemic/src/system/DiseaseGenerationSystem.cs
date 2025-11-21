@@ -4,6 +4,7 @@ using Game.Common;
 using Game.UI;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 
 namespace Pandemic
 {
@@ -39,23 +40,27 @@ namespace Pandemic
 			}
 		}
 
-		private uint chooseNewDiseaseType()
+		private Entity chooseNewDiseaseType()
 		{
-			float totalWeight = Mod.settings.ccChance + Mod.settings.flChance + Mod.settings.exChance;
+            NativeArray<DiseaseBase> diseaseBases = this.diseaseBaseEntityQuery.ToComponentDataArray<DiseaseBase>(Allocator.Temp);
+            float totalWeight = 0;
+			for (int i = 0; i < diseaseBases.Length; ++i)
+            {
+                totalWeight += diseaseBases[i].baseSpontaneousChance;
+            }
 			float rnd = UnityEngine.Random.Range(0f, totalWeight);
 
-			if (rnd < Mod.settings.ccChance)
-			{
-				return 1;
-			}
+            for (int i = 0; i < diseaseBases.Length; ++i)
+            {
+                if (rnd < diseaseBases[i].baseSpontaneousChance)
+                {
+                    return diseaseBases[i].entity;
+                }
 
-			rnd-= Mod.settings.ccChance;
-			if (rnd < Mod.settings.flChance)
-			{
-				return 2;
-			}
+                rnd -= diseaseBases[i].baseSpontaneousChance;
+            }
 
-			return 3;
+            return this.commonColdDiseaseBase.entity;
 		}
 
 		private uint lastMutationFrame = 0;
@@ -74,7 +79,7 @@ namespace Pandemic
 
 		private Entity getOrCreateRandomDisease(out Disease disease)
 		{
-			uint diseaseType = this.chooseNewDiseaseType();
+			Entity diseaseType = this.chooseNewDiseaseType();
 			//if (!this.shouldCreateNewDisease(diseaseType))
 			{
 				NativeArray<Entity> diseases = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
@@ -84,7 +89,7 @@ namespace Pandemic
 					for (int i = startInd; i < diseases.Length; ++i)
 					{
 						disease = EntityManager.GetComponentData<Disease>(diseases[i]);
-						if (!disease.preventSpontaneously && disease.type == diseaseType)
+						if (!disease.preventSpontaneously && disease.diseaseBase == diseaseType)
 						{
 							return disease.entity;
 						}
@@ -95,7 +100,7 @@ namespace Pandemic
 						for (int i = 0; i < startInd; ++i)
 						{
 							disease = EntityManager.GetComponentData<Disease>(diseases[i]);
-							if (!disease.preventSpontaneously && disease.type == diseaseType)
+							if (!disease.preventSpontaneously && disease.diseaseBase == diseaseType)
 							{
 								return disease.entity;
 							}
@@ -103,37 +108,15 @@ namespace Pandemic
 					}
 				}
 
-				/*if (this.frameDiseases[diseaseType].id != 0)
+                /*if (this.frameDiseases[diseaseType].id != 0)
 				{
 					disease = this.frameDiseases[diseaseType];
 					return disease.entity;
 				}*/
+
+                disease = EntityManager.GetComponentData<Disease>(diseases[0]);
+                return disease.entity;
 			}
-
-			switch (diseaseType)
-			{
-				case 1:
-					disease = this.createCommonCold();
-					break;
-				case 2:
-					disease = this.createFlu();
-					break;
-				case 3:
-					disease = this.createNovelVirus();
-					break;
-				default:
-					disease = this.createCommonCold();
-					break;
-			}
-
-			/*Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
-			disease.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
-
-			EntityManager.SetComponentData(newDisease, disease);
-			this.lastMutationFrame[diseaseType] = this.simulationSystem.frameIndex;
-			this.frameDiseases[diseaseType] = disease;
-			return newDisease;*/
-			return this.instantiateDiseaseEntity(ref disease);
 		}
 
 		public Entity instantiateDiseaseEntity(ref Disease disease)
@@ -145,67 +128,29 @@ namespace Pandemic
 			this.lastMutationFrame = this.simulationSystem.frameIndex;
             if (this.nameSystem.TryGetCustomName(disease.diseaseBase, out string name))
             {
-                this.nameSystem.SetCustomName(diseaseEntity, name + " hello");
+                this.nameSystem.SetCustomName(diseaseEntity, name);
             }
 
             this.nameSystem.TryGetCustomName(diseaseEntity, out string newName);
-            Mod.log.Info("using name " + name + " for disease " + diseaseEntity.ToString() + " with new name " + newName);
+            Mod.log.Info("using name " + name + " for disease " + diseaseEntity.ToString() + " with new name " + newName + " for strain " + disease.getStrainName());
 			return diseaseEntity;
 		}
 
-		public Disease createCommonCold()
+		public Disease createDisease(DiseaseBase diseaseBase)
 		{
 			Disease disease = new Disease()
 			{
-				type = 1,
-				baseDeathChance = (Mod.settings.ccDeathChance),
-				baseHealthPenalty = (byte)Mod.settings.ccHealthImpact,
-				baseSpreadChance = Mod.settings.ccSpreadChance,
-				baseSpreadRadius = Mod.settings.ccSpreadRadius,
+				baseDeathChance = diseaseBase.baseDeathChance,
+				baseHealthPenalty = diseaseBase.baseHealthPenalty,
+				baseSpreadChance = diseaseBase.baseSpreadChance,
+				baseSpreadRadius = diseaseBase.baseSpreadRadius,
 				maxDeathHealth = MAX_DEATH_HEALTH,
-				mutationChance = Mod.settings.ccMutationChance,
-				mutationMagnitude = Mod.settings.ccMutationMagnitude,
-				progressionSpeed = Mod.settings.ccProgressionSpeed,
-                diseaseBase = this.commonColdEntity
+				mutationChance = diseaseBase.mutationChance,
+				mutationMagnitude = diseaseBase.mutationMagnitude,
+				progressionSpeed = diseaseBase.progressionSpeed,
+                spontaneousProbability = diseaseBase.baseSpontaneousChance,
+                diseaseBase = diseaseBase.entity
             };
-
-			return disease;
-		}
-
-		public Disease createFlu()
-		{
-			Disease disease = new Disease()
-			{
-				type = 2,
-				baseDeathChance = (Mod.settings.flDeathChance),
-				baseHealthPenalty = (byte)Mod.settings.flHealthImpact,
-				baseSpreadChance = Mod.settings.flSpreadChance,
-				baseSpreadRadius = Mod.settings.flSpreadRadius,
-				maxDeathHealth = MAX_DEATH_HEALTH,
-				mutationChance = Mod.settings.flMutationChance,
-				mutationMagnitude = Mod.settings.flMutationMagnitude,
-				progressionSpeed = Mod.settings.flProgressionSpeed,
-                diseaseBase = this.commonColdEntity
-            };
-
-			return disease;
-		}
-
-		public Disease createNovelVirus()
-		{
-			Disease disease = new Disease()
-			{
-				type = 3,
-				baseDeathChance = UnityEngine.Random.Range(0f, 100f),
-				baseHealthPenalty = (byte)UnityEngine.Random.Range(0, 100),
-				baseSpreadChance = UnityEngine.Random.Range(0f, 100f),
-				baseSpreadRadius = UnityEngine.Random.Range(1, 100f),
-				maxDeathHealth = MAX_DEATH_HEALTH,
-				mutationChance = UnityEngine.Random.Range(0f, 1f),
-				mutationMagnitude = UnityEngine.Random.Range(0f, 1.99f),
-				progressionSpeed = UnityEngine.Random.Range(.0001f, .99f),
-                diseaseBase = this.commonColdEntity
-			};
 
 			return disease;
 		}
@@ -214,7 +159,6 @@ namespace Pandemic
 		{
 			Disease disease = new()
 			{
-				type = inp.type,
 				baseSpreadChance = inp.baseSpreadChance,
 				baseDeathChance = inp.baseDeathChance,
 				baseHealthPenalty = inp.baseHealthPenalty,
@@ -224,7 +168,7 @@ namespace Pandemic
 				mutationMagnitude = inp.mutationMagnitude,
 				progressionSpeed = inp.progressionSpeed,
 				spontaneousProbability = inp.spontaneousProbability,
-                diseaseBase = this.commonColdEntity
+                diseaseBase = inp.getBaseEntity()
             };
 
 			Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
@@ -234,9 +178,10 @@ namespace Pandemic
 			if (inp.name != "")
 			{
 				this.nameSystem.SetCustomName(newDisease, inp.name);
-			} else
+			}
+            else if (this.nameSystem.TryGetCustomName(inp.getBaseEntity(), out string baseName))
             {
-
+                this.nameSystem.SetCustomName(newDisease, baseName);
             }
 
             return disease;
