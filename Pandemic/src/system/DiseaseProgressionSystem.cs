@@ -51,45 +51,6 @@ namespace Pandemic
 			this.resetTripArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<ResetTrip>());
 			this.diseaseArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Disease>());
 
-			if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
-			{
-				//this.prefabSystem.TryGetEntity(prefabBase, out this.sicknessEventPrefabEntity);
-				//this.sickEventArchetype = EntityManager.GetComponentData<EventData>(this.sicknessEventPrefabEntity).m_Archetype;
-
-				PrefabBase pandemicPrefab = prefabBase.Clone("Pandemic Sickness");
-				Game.Prefabs.HealthEvent healthEvent = pandemicPrefab.GetComponent<Game.Prefabs.HealthEvent>();
-				healthEvent.m_RequireTracking = true;
-				/*pandemicPrefab.Remove(typeof(Game.Prefabs.HealthEvent));
-				pandemicPrefab.AddComponent<Game.Prefabs.HealthEvent>();
-				pandemicPrefab.AddComponentFrom<Game.Prefabs.HealthEvent>();*/
-				prefabBase.AddComponentFrom(healthEvent);
-				if (this.prefabSystem.AddPrefab(pandemicPrefab))
-				{
-					if (this.prefabSystem.TryGetEntity(pandemicPrefab, out this.sicknessEventPrefabEntity))
-					{
-						if (this.prefabSystem.TryGetEntity(prefabBase, out var e))
-						{
-							EventData eventData = EntityManager.GetComponentData<EventData>(e);
-							this.sickEventArchetype = eventData.m_Archetype;
-						}
-					}
-					else
-					{
-						Mod.log.Info("Failed got sick archetype 2");
-					}
-				}
-				else
-				{
-					Mod.log.Info("Failed to get sick archetype");
-				}
-			}
-
-			if (this.prefabSystem.TryGetPrefab(this.suddenDeathPrefabId, out PrefabBase prefabBase2))
-			{
-				this.prefabSystem.TryGetEntity(prefabBase2, out this.suddenDeathPrefabEntity);
-				this.deathEventArchetype = EntityManager.GetComponentData<EventData>(this.suddenDeathPrefabEntity).m_Archetype;
-			}
-
 			this.prefabSystem.TryGetPrefab(this.policyPrefabId, out this.policyPrefabEntity);
 
 
@@ -181,7 +142,55 @@ namespace Pandemic
 		private const uint PROGRESSION_FRAME_COUNT = 300;
 		private const byte MAX_DEATH_HEALTH = 15;
 
-		protected override void OnUpdate()
+        private void initializeEvents()
+        {
+            if (this.prefabSystem.TryGetPrefab(sicknessEventPrefabId, out PrefabBase prefabBase))
+            {
+                //this.prefabSystem.TryGetEntity(prefabBase, out this.sicknessEventPrefabEntity);
+                //this.sickEventArchetype = EntityManager.GetComponentData<EventData>(this.sicknessEventPrefabEntity).m_Archetype;
+
+                PrefabBase pandemicPrefab = prefabBase.Clone("Pandemic Sickness");
+                Game.Prefabs.HealthEvent healthEvent = pandemicPrefab.GetComponent<Game.Prefabs.HealthEvent>();
+                healthEvent.m_RequireTracking = true;
+                /*pandemicPrefab.Remove(typeof(Game.Prefabs.HealthEvent));
+				pandemicPrefab.AddComponent<Game.Prefabs.HealthEvent>();
+				pandemicPrefab.AddComponentFrom<Game.Prefabs.HealthEvent>();*/
+                prefabBase.AddComponentFrom(healthEvent);
+                if (this.prefabSystem.AddPrefab(pandemicPrefab))
+                {
+                    if (this.prefabSystem.TryGetEntity(pandemicPrefab, out this.sicknessEventPrefabEntity))
+                    {
+                        if (this.prefabSystem.TryGetEntity(prefabBase, out var e))
+                        {
+                            EventData eventData = EntityManager.GetComponentData<EventData>(e);
+                            this.sickEventArchetype = eventData.m_Archetype;
+                        }
+                    }
+                    else
+                    {
+                        Mod.log.Info("Failed got sick archetype 2");
+                    }
+                }
+                else
+                {
+                    Mod.log.Info("Failed to get sick archetype");
+                }
+            }
+
+            if (this.prefabSystem.TryGetPrefab(this.suddenDeathPrefabId, out PrefabBase prefabBase2))
+            {
+                this.prefabSystem.TryGetEntity(prefabBase2, out this.suddenDeathPrefabEntity);
+                this.deathEventArchetype = EntityManager.GetComponentData<EventData>(this.suddenDeathPrefabEntity).m_Archetype;
+            }
+        }
+
+        protected override void OnStartRunning()
+        {
+            base.OnStartRunning();
+            this.initializeEvents();
+        }
+
+        protected override void OnUpdate()
 		{
 			if (GameManager.instance.gameMode != GameMode.Game || !Mod.settings.modEnabled)
 			{
