@@ -53,14 +53,14 @@ export default class Disease {
 		return (Math.round(this._diseaseJson.progressionSpeed * 1000) / 1000).toFixed(3);
 	}
 
-	/** @returns {number}*/
-	get type() {
-		return this._diseaseJson.type;
-	}
-
 	/** @returns {string} */
 	get createTimeString() {
 		return this._diseaseJson.createYear + "." + (this._diseaseJson.createWeek) + "." + (this._diseaseJson.createHour) + "." + (this._diseaseJson.createMinute);
+    }
+
+    /** @returns {string} */
+    get diseaseBase() {
+        return this._diseaseJson.diseaseBase;
     }
 
 	/** @returns {string} */
