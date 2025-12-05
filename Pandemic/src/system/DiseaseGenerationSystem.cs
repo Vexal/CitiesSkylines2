@@ -60,7 +60,7 @@ namespace Pandemic
                 rnd -= diseaseBases[i].baseSpontaneousChance;
             }
 
-            return this.commonColdDiseaseBase.entity;
+            return diseaseBases[0].entity;
 		}
 
 		private uint lastMutationFrame = 0;

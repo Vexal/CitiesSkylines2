@@ -1,4 +1,5 @@
 ﻿using Colossal.Entities;
+using Colossal.Logging;
 using Game;
 using Game.Citizens;
 using Game.City;
@@ -61,16 +62,22 @@ namespace Pandemic
         {
             base.OnStartRunning();
             this.retrieveSicknessEventArchetypes();
-        }
+		}
 
+        bool hasPrint = false;
 		protected override void OnUpdate()
 		{
 			if (GameManager.instance.gameMode != GameMode.Game || !Mod.settings.modEnabled)
 			{
 				return;
-			}
+            }
 
-			this.removeDiseaseFromHealthy();
+            if (!hasPrint)
+            {
+                
+            }
+
+            this.removeDiseaseFromHealthy();
 			this.addDiseaseToSick();
 			if (this.shouldProgressDisease())
 			{
@@ -404,6 +411,7 @@ namespace Pandemic
         private void initializePolicyPrefabs()
         {
             this.prefabSystem.TryGetPrefab(this.policyPrefabId, out this.policyPrefabEntity);
+            
             PrefabBase pr = this.policyPrefabEntity.Clone("Mask Mandate");
             pr.Remove(typeof(CityModifiers));
             pr.Remove(typeof(Unlockable));
@@ -492,12 +500,46 @@ namespace Pandemic
             }
         }
 
+
+		List<DiseaseBasePrefab> diseaseBasePrefabs = new List<DiseaseBasePrefab>();
+
+		private void loadDiseaseBasePrefabs()
+		{
+			this.diseaseBasePrefabs = new List<DiseaseBasePrefab>();
+			NativeArray<Entity> prefabEntities = GetEntityQuery(ComponentType.ReadOnly<PrefabData>()).ToEntityArray(Allocator.Temp);
+			foreach (Entity e in prefabEntities)
+			{
+				if (!EntityManager.TryGetComponent(e, out PrefabData prefabData))
+				{
+					continue;
+				}
+
+				if (!this.prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase))
+				{
+					continue;
+				}
+
+				if (prefabBase != null)
+				{
+					PrefabID prefabID = prefabBase.GetPrefabID();
+					if (prefabID.GetName() == "DiseaseBasePrefab" || prefabBase.GetType().Name == "DiseaseBasePrefab")
+					{
+						Mod.log.Info(prefabBase.GetPrefabID() + " disease: " + prefabBase.ToString());
+						this.diseaseBasePrefabs.Add((DiseaseBasePrefab)prefabBase);
+					}
+				}
+			}
+
+			Mod.log.Info("finished loading " + this.diseaseBasePrefabs.Count.ToString() + " disease base prefabs");
+		}
+
         protected override void OnGamePreload(Colossal.Serialization.Entities.Purpose purpose, GameMode mode)
 		{
 			base.OnGamePreload(purpose, mode);
             EntityManager.DestroyEntity(this.diseaseEntityQuery);
             EntityManager.DestroyEntity(this.diseaseBaseEntityQuery);
-            Mod.log.Info("Preloading game");
+			this.loadDiseaseBasePrefabs();
+			Mod.log.Info("Preloading game");
         }
 
         protected override void OnGameLoaded(Colossal.Serialization.Entities.Context serializationContext)
@@ -514,40 +556,35 @@ namespace Pandemic
             if (purpose == Colossal.Serialization.Entities.Purpose.NewGame || purpose == Colossal.Serialization.Entities.Purpose.LoadGame)
             {
                 this.createDiseaseBases();
-
-                Disease cc = this.createDisease(this.commonColdDiseaseBase);
-                this.instantiateDiseaseEntity(ref cc);
             }
         }
 
         public void createDiseaseBases()
         {
             Mod.log.Info("initializing new game health system");
-            {
+            foreach (DiseaseBasePrefab diseaseBasePrefab in this.diseaseBasePrefabs)
+			{
                 Entity entity = EntityManager.CreateEntity(this.diseaseBaseArchetype);
                 DiseaseBase diseaseBase = new()
                 {
-                    baseDeathChance = (Mod.settings.ccDeathChance),
-                    baseHealthPenalty = (byte)Mod.settings.ccHealthImpact,
-                    baseSpreadChance = Mod.settings.ccSpreadChance,
-                    baseSpreadRadius = Mod.settings.ccSpreadRadius,
-                    maxDeathHealth = 15,
-                    mutationChance = Mod.settings.ccMutationChance,
-                    mutationMagnitude = Mod.settings.ccMutationMagnitude,
-                    progressionSpeed = Mod.settings.ccProgressionSpeed,
-                    baseSpontaneousChance = Mod.settings.ccChance,
+                    baseDeathChance = diseaseBasePrefab.baseDeathChance,
+                    baseHealthPenalty = (byte)diseaseBasePrefab.baseHealthPenalty,
+                    baseSpreadChance = diseaseBasePrefab.baseSpreadChance,
+                    baseSpreadRadius = diseaseBasePrefab.baseSpreadRadius,
+                    maxDeathHealth = diseaseBasePrefab.maxDeathHealth,
+                    mutationChance = diseaseBasePrefab.mutationChance,
+                    mutationMagnitude = diseaseBasePrefab.mutationMagnitude,
+                    progressionSpeed = diseaseBasePrefab.progressionSpeed,
+                    baseSpontaneousChance = diseaseBasePrefab.baseSpontaneousChance,
                     entity = entity
                 };
 
                 EntityManager.SetComponentData(entity, diseaseBase);
-                this.nameSystem.SetCustomName(entity, "Common Cold");
-                   
-                this.commonColdEntity = entity;
-                this.commonColdDiseaseBase = diseaseBase;
-            }
-        }
+                this.nameSystem.SetCustomName(entity, diseaseBasePrefab.diseaseName);
 
-        public Entity commonColdEntity;
-        public DiseaseBase commonColdDiseaseBase;
+				Disease cc = this.createDisease(diseaseBase);
+				this.instantiateDiseaseEntity(ref cc);
+			}
+        }
 	}
 }

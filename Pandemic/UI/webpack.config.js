@@ -23,7 +23,7 @@ const banner = `
 `;
 
 module.exports = {
-  mode: "production",
+    mode: "development",
   stats: "none",
   entry: {
     [MOD.id]: "./src/index.tsx",

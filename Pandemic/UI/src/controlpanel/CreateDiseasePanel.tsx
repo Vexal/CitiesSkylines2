@@ -41,8 +41,8 @@ class InputDisease {
     mutationMagnitude;
     progressionSpeed;
 
-    constructor(disease: Disease|any) {
-        this.name = disease.customName;
+    constructor(disease: Disease|any, name? : string) {
+        this.name = name ? name : disease.customName;
         this.diseaseBase = disease.diseaseBase;
         this.baseDeathChance = disease.baseDeathChance;
         this.baseHealthPenalty = disease.baseHealthPenalty;
@@ -70,7 +70,7 @@ export default class CreateDiseasePanel extends Component {
 	}
 
     render() {
-        console.log(this.state.diseaseNames, CustomBindings.diseaseBaseNames.value);
+       // console.log(this.state.diseaseNames, CustomBindings.diseaseBaseNames.value, this.state.diseaseList, this.state.selectedDisease);
 		//console.log("disease names", this.state.diseaseNames);
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
 		return <> 
@@ -96,16 +96,7 @@ export default class CreateDiseasePanel extends Component {
 						<PanelSectionRow />
 						<div style={{display:"flex"} }>
                             <div className={styles.diseaseParamInputPane}>
-                                <DiseaseInputForm diseaseData={this.state.inputDisease} onChange={this.updateDiseaseInput}/>
-								<ParamInputRow name="Disease Name" ref={el => this.name = el}/>
-								<ParamInputRow name="Disease Type" ref={el => this.diseaseType = el} defaultValue={1} />
-								<ParamInputRow name="Spread Chance" defaultValue=".02" ref={el => this.baseSpreadChance = el} />
-								<ParamInputRow name="Death Chance" defaultValue="0" ref={el => this.baseDeathChance = el} />
-								<ParamInputRow name="Health Penalty" defaultValue="2" ref={el => this.baseHealthPenalty = el} />
-								<ParamInputRow name="Spread Radius" defaultValue="10.0" ref={el => this.baseSpreadRadius = el} />
-								<ParamInputRow name="Mutation Chance" defaultValue=".005" ref={el => this.mutationChance = el} />
-								<ParamInputRow name="Mutation Magnitude" defaultValue=".15" ref={el => this.mutationMagnitude = el} />
-								<ParamInputRow name="Progression Speed" defaultValue=".02" ref={el => this.progressionSpeed = el} />
+                                {this.state.inputDisease && <DiseaseInputForm diseaseData={this.state.inputDisease} onChange={this.updateDiseaseInput} />}
 								<div style={{ margin: "3rem" }} />
 								<div style={{display:"flex"} }>
 									<div style={{width:"48%"} }>
@@ -212,7 +203,7 @@ export default class CreateDiseasePanel extends Component {
             const disease: Disease = this.state.diseaseList.diseaseMap[diseaseKey];
             console.log("Selected disease", disease);
 
-			this.baseSpreadChance.value = disease.baseSpreadChance;
+			/*this.baseSpreadChance.value = disease.baseSpreadChance;
 			this.baseDeathChance.value = disease.baseDeathChance;
 			this.diseaseType.value = disease.diseaseBase;
 			this.baseHealthPenalty.value = disease.baseHealthPenalty;
@@ -220,8 +211,8 @@ export default class CreateDiseasePanel extends Component {
 			this.mutationChance.value = disease.mutationChance;
 			this.mutationMagnitude.value = disease.mutationMagnitude;
 			this.progressionSpeed.value = disease.progressionSpeed;
-			this.name.value = this.state.diseaseNames[disease.uniqueKey] ? this.state.diseaseNames[disease.uniqueKey] : disease.strainHeader;
-			this.setState({ selectedDisease: diseaseKey});
+			this.name.value = this.state.diseaseNames[disease.uniqueKey] ? this.state.diseaseNames[disease.uniqueKey] : disease.strainHeader;*/
+			this.setState({ selectedDisease: diseaseKey, inputDisease: new InputDisease(disease, this.state.diseaseNames[disease.uniqueKey])});
 
 		} else {
 			this.setState({ selectedDisease:  null});
@@ -286,8 +277,9 @@ interface InpFormProps {
 class DiseaseInputForm extends Component<InpFormProps> {
     render() {
         const data = this.props.diseaseData;
+        console.log("input data", data);
         return <div>
-            <ParamInputRow name="Disease Name" ref={el => this.name = el} />
+			<ParamInputRow name="Disease Name" defaultValue={data.name} ref={el => this.name = el} />
             <ParamInputRow name="Disease Type" ref={el => this.diseaseType = el} defaultValue={data.diseaseBase} />
             <ParamInputRow name="Spread Chance" defaultValue={data.baseSpreadChance} ref={el => this.baseSpreadChance = el} />
             <ParamInputRow name="Death Chance" defaultValue={data.baseDeathChance} ref={el => this.baseDeathChance = el} />
