@@ -96,7 +96,7 @@ export default class CreateDiseasePanel extends Component {
 						<PanelSectionRow />
 						<div style={{display:"flex"} }>
                             <div className={styles.diseaseParamInputPane}>
-                                {this.state.inputDisease && <DiseaseInputForm diseaseData={this.state.inputDisease} onChange={this.updateDiseaseInput} />}
+								{this.state.inputDisease && <DiseaseInputForm diseaseData={this.state.inputDisease} ref={el => this.diseaseInputForm = el} onChange={this.updateDiseaseInput} />}
 								<div style={{ margin: "3rem" }} />
 								<div style={{display:"flex"} }>
 									<div style={{width:"48%"} }>
@@ -194,7 +194,7 @@ export default class CreateDiseasePanel extends Component {
 		CustomBindings.currentInfectionCount.subscribe(val => this.setState({ currentInfectionCount: Disease.patientCountMap(val) }));
 	}
 
-    updateDiseaseInput(disease: InputDisease) {
+    updateDiseaseInput = (disease: InputDisease) => {
         this.setState({ inputDisease: disease });
     }
     selectDisease = (diseaseKey: string) => {
@@ -221,16 +221,18 @@ export default class CreateDiseasePanel extends Component {
 
 	createDiseeaseJson = (currentDisease: string | null): string => {
 		//console.log("disease", currentDisease);
+		const baseEntity = this.diseaseInputForm.diseaseType.value.split(":");
 		const inp = {
-			name: this.name.value === this.state.diseaseNames[currentDisease] ? "" : this.name.value,
-			type: parseInt(this.diseaseType.value),
-			baseSpreadChance: parseFloat(this.baseSpreadChance.value),
-			baseDeathChance: parseFloat(this.baseDeathChance.value),
-			baseHealthPenalty: parseInt(this.baseHealthPenalty.value),
-			baseSpreadRadius: parseFloat(this.baseSpreadRadius.value),
-			mutationChance: parseFloat(this.mutationChance.value),
-			mutationMagnitude: parseFloat(this.mutationMagnitude.value),
-			progressionSpeed: parseFloat(this.progressionSpeed.value),
+			name: this.diseaseInputForm.name.value,
+			baseEntityIndex: parseInt(baseEntity[0]),
+			baseEntityVersion: parseInt(baseEntity[1]),
+			baseSpreadChance: parseFloat(this.diseaseInputForm.baseSpreadChance.value),
+			baseDeathChance: parseFloat(this.diseaseInputForm.baseDeathChance.value),
+			baseHealthPenalty: parseInt(this.diseaseInputForm.baseHealthPenalty.value),
+			baseSpreadRadius: parseFloat(this.diseaseInputForm.baseSpreadRadius.value),
+			mutationChance: parseFloat(this.diseaseInputForm.mutationChance.value),
+			mutationMagnitude: parseFloat(this.diseaseInputForm.mutationMagnitude.value),
+			progressionSpeed: parseFloat(this.diseaseInputForm.progressionSpeed.value),
 		};
 
 		if (currentDisease) {
@@ -279,15 +281,15 @@ class DiseaseInputForm extends Component<InpFormProps> {
         const data = this.props.diseaseData;
         console.log("input data", data);
         return <div>
-			<ParamInputRow name="Disease Name" defaultValue={data.name} ref={el => this.name = el} />
-            <ParamInputRow name="Disease Type" ref={el => this.diseaseType = el} defaultValue={data.diseaseBase} />
-            <ParamInputRow name="Spread Chance" defaultValue={data.baseSpreadChance} ref={el => this.baseSpreadChance = el} />
-            <ParamInputRow name="Death Chance" defaultValue={data.baseDeathChance} ref={el => this.baseDeathChance = el} />
-            <ParamInputRow name="Health Penalty" defaultValue={data.baseHealthPenalty} ref={el => this.baseHealthPenalty = el} />
-            <ParamInputRow name="Spread Radius" defaultValue={data.baseSpreadRadius} ref={el => this.baseSpreadRadius = el} />
-            <ParamInputRow name="Mutation Chance" defaultValue={data.mutationChance} ref={el => this.mutationChance = el} />
-            <ParamInputRow name="Mutation Magnitude" defaultValue={data.mutationMagnitude} ref={el => this.mutationMagnitude = el} />
-            <ParamInputRow name="Progression Speed" defaultValue={data.progressionSpeed} ref={el => this.progressionSpeed = el} />
+			<ParamInputRow name="Disease Name" onChange={this.updateInput} defaultValue={data.name} ref={el => this.name = el} />
+			<ParamInputRow name="Disease Type" ref={el => this.diseaseType = el} defaultValue={data.diseaseBase} onChange={this.updateInput} />
+			<ParamInputRow name="Spread Chance" defaultValue={data.baseSpreadChance} ref={el => this.baseSpreadChance = el} onChange={this.updateInput} />
+			<ParamInputRow name="Death Chance" defaultValue={data.baseDeathChance} ref={el => this.baseDeathChance = el} onChange={this.updateInput} />
+			<ParamInputRow name="Health Penalty" defaultValue={data.baseHealthPenalty} ref={el => this.baseHealthPenalty = el} onChange={this.updateInput} />
+			<ParamInputRow name="Spread Radius" defaultValue={data.baseSpreadRadius} ref={el => this.baseSpreadRadius = el} onChange={this.updateInput} />
+			<ParamInputRow name="Mutation Chance" defaultValue={data.mutationChance} ref={el => this.mutationChance = el} onChange={this.updateInput} />
+			<ParamInputRow name="Mutation Magnitude" defaultValue={data.mutationMagnitude} ref={el => this.mutationMagnitude = el} onChange={this.updateInput} />
+			<ParamInputRow name="Progression Speed" defaultValue={data.progressionSpeed} ref={el => this.progressionSpeed = el} onChange={this.updateInput} />
         </div>
     }
 
@@ -305,7 +307,11 @@ class DiseaseInputForm extends Component<InpFormProps> {
         };
 
         return new InputDisease(inp);
-    }
+	}
+
+	updateInput = e => {
+		this.props.onChange(this.diseaseInput);
+	}
 }
 
 class ParamInputRow extends Component<InpProps> {
@@ -317,7 +323,7 @@ class ParamInputRow extends Component<InpProps> {
 				<LocalizedText text={this.props.name}/>
 			</div>
 		<div>
-                <input className={styles.paramTextInput} value={this.props.defaultValue} type="text" ref={el => this.inp = el} />
+				<input className={styles.paramTextInput} onChange={e => this.props.onChange(e) } value={this.props.defaultValue} type="text" ref={el => this.inp = el} />
                 {this.props.displayText && <div>Name: {this.props.displayText}</div> }
 			</div>
 		</div>

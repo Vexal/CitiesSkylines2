@@ -214,7 +214,7 @@ namespace Pandemic
 
 		private bool isImmuneToDisease(Entity citizen, Entity diseaseEntity)
 		{
-            /*
+            
 			if (!EntityManager.TryGetComponent<LastDisease>(citizen, out var lastDisease))
 			{
 				return false;
@@ -225,6 +225,11 @@ namespace Pandemic
 				return false;
 			}
 
+			if (lastDisease.IsInLastDiseases(diseaseEntity))
+			{
+				return true;
+			}
+/*
 			Entity lastRelevantDisease = lastDisease.getLastOfType(disease.type);
 			if (lastRelevantDisease == Entity.Null)
 			{

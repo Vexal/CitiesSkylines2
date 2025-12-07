@@ -4,30 +4,40 @@ namespace Pandemic
 {
 	public struct LastDisease : IComponentData, IQueryTypeParameter
 	{
-       /* public Entity lastDisease1;
+        public Entity lastDisease1;
         public Entity lastDisease2;
         public Entity lastDisease3;
         public Entity lastDisease4;
 
-        public byte lastDiseaseIndex; */
+        public byte lastDiseaseIndex;
 
-		public Entity lastCold;
-		public Entity lastFlu;
-		public Entity lastNovel;
-
-		public Entity getLastOfType(uint type)
+		public bool IsInLastDiseases(Entity diseaseEntity)
 		{
-			switch (type)
+			return diseaseEntity == this.lastDisease1 ||
+				   diseaseEntity == this.lastDisease2 ||
+				   diseaseEntity == this.lastDisease3 ||
+				   diseaseEntity == this.lastDisease4;
+		}
+
+		public void setLastDisease(Entity diseaseEntity)
+		{
+			switch (this.lastDiseaseIndex)
 			{
+				case 0:
+					this.lastDisease1 = diseaseEntity;
+					break;
 				case 1:
-					return lastCold;
+					this.lastDisease2 = diseaseEntity;
+					break;
 				case 2:
-					return lastFlu;
+					this.lastDisease3 = diseaseEntity;
+					break;
 				case 3:
-					return lastNovel;
-				default:
-					return Entity.Null;
+					this.lastDisease4 = diseaseEntity;
+					break;
 			}
+
+			this.lastDiseaseIndex = (byte)((this.lastDiseaseIndex + 1) % 4);
 		}
 	}
 }

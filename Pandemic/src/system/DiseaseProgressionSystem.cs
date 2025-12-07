@@ -129,22 +129,7 @@ namespace Pandemic
 					EntityManager.AddComponent<LastDisease>(citizens[i]);
 				}
 
-				/*switch (diseaseDefinition.type)
-				{
-					case 1:
-						lastDisease.lastCold = disease;
-						break;
-					case 2:
-						lastDisease.lastFlu = disease;
-						break;
-					case 3:
-						lastDisease.lastNovel = disease;
-						break;
-				}*/
-
-				//diseaseDefinition.infectionCount++;
-
-				//EntityManager.SetComponentData(disease, diseaseDefinition);
+				lastDisease.setLastDisease(disease);
 
 				EntityManager.SetComponentData(citizens[i], lastDisease);
 
@@ -183,6 +168,7 @@ namespace Pandemic
 					Citizen c = citizenData[i];
 					if (this.isInHospital(citizens[i]))
 					{
+						// Disease does not progress in hospital
 						continue;
 					}
 
@@ -229,7 +215,7 @@ namespace Pandemic
                 return;
             }
 
-            Mod.log.Info("Making entity " + targetCitizen.ToString() + " sick with disease " + disease.ToString() + " archetype: " + this.sickEventArchetype.ToString());
+            //Mod.log.Info("Making entity " + targetCitizen.ToString() + " sick with disease " + disease.ToString() + " archetype: " + this.sickEventArchetype.ToString());
             Entity eventEntity = EntityManager.CreateEntity(this.sickEventArchetype);
 
 			EntityManager.AddComponent<PrefabRef>(eventEntity);
@@ -417,10 +403,10 @@ namespace Pandemic
             pr.Remove(typeof(Unlockable));
             pr.AddComponent<CityModifiers>();
             pr.GetComponent<CityModifiers>().m_Modifiers = new CityModifierInfo[1];
-            pr.GetComponent<CityModifiers>().m_Modifiers[0] = new CityModifierInfo();
+            /*pr.GetComponent<CityModifiers>().m_Modifiers[0] = new CityModifierInfo();
             pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Type = CityModifierType.Entertainment;
             pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Mode = ModifierValueMode.Relative;
-            pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Range = new Colossal.Mathematics.Bounds1(new float2() { x = 15.5f, y = 15.5f });
+            pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Range = new Colossal.Mathematics.Bounds1(new float2() { x = 15.5f, y = 15.5f });*/
 
             /*pr.GetComponent<CityModifiers>().m_Modifiers[1] = new CityModifierInfo();
 			pr.GetComponent<CityModifiers>().m_Modifiers[1].m_Type = CityModifierType.DiseaseProbability;
@@ -554,12 +540,27 @@ namespace Pandemic
             Mod.log.Info("Loaded game complete " + purpose.ToString());
 
             if (purpose == Colossal.Serialization.Entities.Purpose.NewGame || purpose == Colossal.Serialization.Entities.Purpose.LoadGame)
-            {
-                this.createDiseaseBases();
-            }
-        }
+			{
+				NativeArray<DiseaseBase> diseaseBases = this.diseaseBaseEntityQuery.ToComponentDataArray<DiseaseBase>(Allocator.Temp);
+				// If no disease bases exist, create them from prefabs, otherwise assume they were loaded from save
+				if (diseaseBases.Length > 0)
+				{
+					Mod.log.Info(diseaseBases.Length.ToString() + " existing disease bases found, skipping creation from prefabs");
+					/*foreach (DiseaseBase diseaseBase in diseaseBases)
+					{
+						Disease cc = this.createDisease(diseaseBase);
+						this.instantiateDiseaseEntity(ref cc);
+					}*/
+				}
+				else
+				{
+					Mod.log.Info("no existing disease bases found, creating from prefabs");
+					this.createDiseaseBasesFromPrefas();
+				}
+			}
+		}
 
-        public void createDiseaseBases()
+        public void createDiseaseBasesFromPrefas()
         {
             Mod.log.Info("initializing new game health system");
             foreach (DiseaseBasePrefab diseaseBasePrefab in this.diseaseBasePrefabs)

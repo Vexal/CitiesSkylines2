@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Colossal.Serialization.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,9 +8,12 @@ using Unity.Entities;
 
 namespace Pandemic
 {
-    public struct DiseaseBase : IComponentData, IQueryTypeParameter
-    {
-        public float baseSpreadRadius;
+    public struct DiseaseBase : IComponentData, IQueryTypeParameter, ISerializable
+	{
+		public static readonly int CURRENT_VERSION = 1;
+
+		public Entity entity;
+		public float baseSpreadRadius;
         public float baseSpreadChance;
         public float baseDeathChance;
         public byte baseHealthPenalty;
@@ -18,6 +22,35 @@ namespace Pandemic
         public float mutationMagnitude;
         public float progressionSpeed;
         public float baseSpontaneousChance;
-        public Entity entity;
-    }
+
+		public void Deserialize<TReader>(TReader reader) where TReader : IReader
+		{
+			reader.Read(out int version);
+			reader.Read(out entity);
+			reader.Read(out baseSpreadRadius);
+			reader.Read(out baseSpreadChance);
+			reader.Read(out baseDeathChance);
+			reader.Read(out baseHealthPenalty);
+			reader.Read(out maxDeathHealth);
+			reader.Read(out mutationChance);
+			reader.Read(out mutationMagnitude);
+			reader.Read(out progressionSpeed);
+			reader.Read(out baseSpontaneousChance);
+		}
+
+		public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
+		{
+			writer.Write(CURRENT_VERSION);
+			writer.Write(entity);
+			writer.Write(baseSpreadRadius);
+			writer.Write(baseSpreadChance);
+			writer.Write(baseDeathChance);
+			writer.Write(baseHealthPenalty);
+			writer.Write(maxDeathHealth);
+			writer.Write(mutationChance);
+			writer.Write(mutationMagnitude);
+			writer.Write(progressionSpeed);
+			writer.Write(baseSpontaneousChance);
+		}
+	}
 }

@@ -1,11 +1,14 @@
-﻿using Colossal.UI.Binding;
+﻿using Colossal.Serialization.Entities;
+using Colossal.UI.Binding;
 using System;
 using Unity.Entities;
 
 namespace Pandemic
 {
-	public struct Disease : IComponentData, IQueryTypeParameter, IJsonWritable
+	public struct Disease : IComponentData, IQueryTypeParameter, IJsonWritable, ISerializable
 	{
+		public static readonly int CURRENT_VERSION = 1;
+
 		public float baseSpreadRadius;
 		public float baseSpreadChance;
 		public float baseDeathChance;
@@ -30,6 +33,64 @@ namespace Pandemic
 		public Entity entity;
 		public Entity parent;
         public Entity diseaseBase;
+
+		public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
+		{
+			writer.Write(CURRENT_VERSION);
+			writer.Write(baseSpreadRadius);
+			writer.Write(baseSpreadChance);
+			writer.Write(baseDeathChance);
+			writer.Write(baseHealthPenalty);
+			writer.Write(maxDeathHealth);
+			writer.Write(ts);
+			writer.Write(progressionSpeed);
+			writer.Write(createYear);
+			writer.Write(createMonth);
+			writer.Write(createDay);
+			writer.Write(createHour);
+			writer.Write(createMinute);
+			writer.Write(createSecond);
+			writer.Write(createWeek);
+			writer.Write(infectionCount);
+			writer.Write(victimCount);
+			writer.Write(mutationChance);
+			writer.Write(mutationMagnitude);
+			writer.Write(spontaneousProbability);
+			writer.Write(preventSpontaneously);
+			writer.Write(spreadCount);
+			writer.Write(entity);
+			writer.Write(parent);
+			writer.Write(diseaseBase);
+		}
+
+		public void Deserialize<TReader>(TReader reader) where TReader : IReader
+		{
+			reader.Read(out int version);
+			reader.Read(out baseSpreadRadius);
+			reader.Read(out baseSpreadChance);
+			reader.Read(out baseDeathChance);
+			reader.Read(out baseHealthPenalty);
+			reader.Read(out maxDeathHealth);
+			reader.Read(out ts);
+			reader.Read(out progressionSpeed);
+			reader.Read(out createYear);
+			reader.Read(out createMonth);
+			reader.Read(out createDay);
+			reader.Read(out createHour);
+			reader.Read(out createMinute);
+			reader.Read(out createSecond);
+			reader.Read(out createWeek);
+			reader.Read(out infectionCount);
+			reader.Read(out victimCount);
+			reader.Read(out mutationChance);
+			reader.Read(out mutationMagnitude);
+			reader.Read(out spontaneousProbability);
+			reader.Read(out preventSpontaneously);
+			reader.Read(out spreadCount);
+			reader.Read(out entity);
+			reader.Read(out parent);
+			reader.Read(out diseaseBase);
+		}
 
 		public string getUniqueKey()
 		{
