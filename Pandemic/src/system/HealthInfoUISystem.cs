@@ -20,6 +20,7 @@ namespace Pandemic
 {
 	public partial class HealthInfoUISystem : InfoSectionBase
 	{
+		public const string MOD_NAME = "Pandemic";
 		private EntityQuery diseaseQuery;
 		private EntityQuery diseaseBaseQuery;
 		private EntityQuery currentDiseaseQuery;
@@ -29,6 +30,8 @@ namespace Pandemic
 		private ValueBinding<bool> showCitizenHealth;
 		private ValueBinding<Dictionary<string, string>> diseaseNameBinding;
 		private ValueBinding<Dictionary<string, string>> diseaseBaseNameBinding;
+		private ValueBinding<bool> showDetails;
+		private TriggerBinding<bool> toggleShowDetails;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
 		private DiseaseProgressionSystem diseaseProgressionSystem;
@@ -61,6 +64,13 @@ namespace Pandemic
 			this.diseaseBaseNameBinding = new ValueBinding<Dictionary<string, string>>("Pandemic", "diseaseBaseNames", new Dictionary<string, string> (), 
 				new DictionaryWriter<string, string>());
 			AddBinding(this.diseaseBaseNameBinding);
+
+			this.showDetails = new ValueBinding<bool>(MOD_NAME, "showDetails_activeDiseases", Mod.settings.showActiveDiseaseDetails);
+			AddBinding(this.showDetails);
+			this.toggleShowDetails = new TriggerBinding<bool>(MOD_NAME, "toggleShowDetails_activeDiseases", s => { this.showDetails.Update(s); Mod.settings.showActiveDiseaseDetails = s; Mod.settings.ApplyAndSave(); });
+			AddBinding(this.toggleShowDetails);
+
+			Mod.settings.onSettingsApplied += s => { if (s is PandemicSettings setting) this.showDetails.Update(setting.showActiveDiseaseDetails); };
 
 
 			this.diseaseQuery = GetEntityQuery(new EntityQueryDesc

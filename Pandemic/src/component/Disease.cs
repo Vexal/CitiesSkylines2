@@ -33,6 +33,8 @@ namespace Pandemic
 		public Entity entity;
 		public Entity parent;
         public Entity diseaseBase;
+		public uint vaccineProgress; // 0 - 100
+		public float vaccineEffectiveness; // 0 - 1
 
 		public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
 		{

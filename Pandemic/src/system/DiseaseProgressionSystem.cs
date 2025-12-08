@@ -489,6 +489,35 @@ namespace Pandemic
 
 		List<DiseaseBasePrefab> diseaseBasePrefabs = new List<DiseaseBasePrefab>();
 
+		private void loadCustomPrefabs()
+		{
+			Mod.log.Info("Loading custom prefabs");
+			NativeArray<Entity> prefabEntities = GetEntityQuery(ComponentType.ReadOnly<PrefabData>()).ToEntityArray(Allocator.Temp);
+			foreach (Entity e in prefabEntities)
+			{
+				if (!EntityManager.TryGetComponent(e, out PrefabData prefabData))
+				{
+					continue;
+				}
+
+				if (!this.prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase))
+				{
+					continue;
+				}
+
+				if (prefabBase != null)
+				{
+					PrefabID prefabID = prefabBase.GetPrefabID();
+					if (prefabID.GetName().Contains("VaccineResearch") || prefabBase.GetType().Name.Contains("VaccineResearch"))
+					{
+						Mod.log.Info(prefabBase.GetPrefabID() + " research : " + prefabBase.ToString());
+						//prefabBase.AddComponent<VaccineFacilityPrefab>();
+						//this.prefabSystem.AddOrUpdatePrefab(prefabBase);
+					}
+				}
+			}
+		}
+
 		private void loadDiseaseBasePrefabs()
 		{
 			this.diseaseBasePrefabs = new List<DiseaseBasePrefab>();
@@ -525,6 +554,7 @@ namespace Pandemic
             EntityManager.DestroyEntity(this.diseaseEntityQuery);
             EntityManager.DestroyEntity(this.diseaseBaseEntityQuery);
 			this.loadDiseaseBasePrefabs();
+			this.loadCustomPrefabs();
 			Mod.log.Info("Preloading game");
         }
 

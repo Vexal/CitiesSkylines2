@@ -1,10 +1,10 @@
-import { bindValue } from "cs2/api";
+﻿import { bindValue, trigger } from "cs2/api";
 import Disease from "../model/Disease";
 import { Component } from "react";
 import { VanillaComponentResolver } from "../mods/VanillaComponentResolver";
 import styles from "../pandemic.module.scss"
 import { InfoviewPanelLabel, InfoviewPanelSection, InfoviewPanelSectionTheme } from "../mods/VanillaComponents";
-import CustomBindings from "../model/CustomBindings";
+import { CustomBindings, MOD_NAME } from "../model/CustomBindings";
 
 export const diseaseList = bindValue<any[]>("Pandemic", 'diseases');
 export const mutationCooldown = bindValue<number>("Pandemic", 'mutationCooldown');
@@ -71,15 +71,20 @@ export class DiseaseInfoPanel extends Component {
 		currentInfectionCount: null,// patientCountMap(currentInfectionCount.value),
 		mutationCooldown: mutationCooldown.value,
 		activeOnly: true,
-		expandedDisease: {}
+		expandedDisease: {},
+		showDiseaseList: CustomBindings.showActiveDiseaseDetails.value,
 	}
 
 	render() {
 		//console.log("the disease list", this.state.mutationCooldown, mutationCooldown.value, InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
+		const headerText = this.state.showDiseaseList ? `▼ Active Disease Strains` : `► Active Disease Strains`;
+		const activeDiseases = this.state.diseaseList?.filter((disease: Disease) => !this.state.activeOnly || this.state.currentInfectionCount[disease.uniqueKey] > 0);
 		return <div>
-			<InfoviewPanelSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
-				<InfoviewPanelLabel uppercase={true} text={"Active Disease Strains"} rightText={this.state.mutationCooldown.toString()}></InfoviewPanelLabel>
-				{this.state.diseaseList?.filter((disease: Disease) => !this.state.activeOnly || this.state.currentInfectionCount[disease.uniqueKey] > 0).map((disease: Disease) => <><InfoviewPanelLabel
+			<InfoviewPanelSection  focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoviewPanelSectionTheme.infoviewPanelSection}>
+				<InfoviewPanelLabel uppercase={true} text={<div className={styles.mainRowHeader} onClick={() => this.toggleShowDiseaseList()}>{headerText}</div>} rightText={activeDiseases?.length}></InfoviewPanelLabel>
+				{this.state.showDiseaseList && activeDiseases?.map((disease: Disease) => <>
+					{false && <InfoviewPanelLabel tiny={1} text={"Global Mutation Cooldown"} rightText={this.state.mutationCooldown.toString()}></InfoviewPanelLabel>}
+					<InfoviewPanelLabel
 					small={1}
 					text={disease.strainHeader}
 					rightText={<div onClick={e => this.toggleExpanded(disease)} className={styles.diseaseDetailsButton + " " + (this.isExpanded(disease) ? styles.expanded : "")}>{this.isExpanded(disease) ? "Hide Details" : "Show Details"}</div>}
@@ -120,6 +125,13 @@ export class DiseaseInfoPanel extends Component {
 	toggleExpanded(disease: Disease) {
 		const shouldExpand = !this.isExpanded(disease);
 		this.setState({ expandedDisease: { ...this.state.expandedDisease, [disease.uniqueKey]: shouldExpand } });
+	}
+
+	toggleShowDiseaseList = () => {
+		const shouldExpand = !this.state.showDiseaseList;
+		this.setState({ showDiseaseList: shouldExpand }, () => {
+			trigger(MOD_NAME, CustomBindings.toggleShowDetails("activeDiseases") , shouldExpand);
+		})
 	}
 
 	static patientCountMap = (countList) => {

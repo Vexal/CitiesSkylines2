@@ -166,6 +166,9 @@ namespace Pandemic
 		[SettingsUISection(mainSection, appearanceSettings)]
 		public bool showCitizenHealth { get; set; }
 
+		[SettingsUISection(mainSection, appearanceSettings)]
+		public bool showActiveDiseaseDetails { get; set; }
+
 		//Citizen behavior
 		[SettingsUISection(mainSection, citizenBehaviorGroup)]
 		public UnderEducatedPolicyAdherenceModifier underEducatedModifier { get; set; } = UnderEducatedPolicyAdherenceModifier.Minor;
@@ -183,6 +186,7 @@ namespace Pandemic
 			this.maxDiseaseSpreadPerFrame = 100;
 			this.maskEffectiveness = 65;
 			this.showContagiousCircle = true;
+			this.showActiveDiseaseDetails = true;
 			this.contagiousGraphicOpacity = .15f;
 			this.underEducatedModifier = UnderEducatedPolicyAdherenceModifier.Minor;
 
@@ -346,6 +350,9 @@ namespace Pandemic
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.showCitizenHealth)), "Show Selected Citizen Health Information" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.showCitizenHealth)), $"Display the disease information for selected citizens, if the citizen is currently sick." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(PandemicSettings.showActiveDiseaseDetails)), "Show Active Disease Details (Health Infoview)" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(PandemicSettings.showActiveDiseaseDetails)), $"Display the list of active diseases in the Health Infoview." },
 
 
 				{ m_Setting.GetEnumValueLocaleID(PandemicSettings.DiseaseProgression.Vanilla), "Vanilla" },
