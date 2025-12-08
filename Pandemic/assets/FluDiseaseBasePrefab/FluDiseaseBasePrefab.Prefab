@@ -1,0 +1,24 @@
+{
+    "$id": 0,
+    "$type": "0|Pandemic.DiseaseBasePrefab, Pandemic",
+    "name": "DiseaseBasePrefab",
+    "active": true,
+    "version": 1,
+    "components": {
+        "$id": 1,
+        "$type": "1|System.Collections.Generic.List`1[[Game.Prefabs.ComponentBase, Game]], mscorlib",
+        "$rlength": 0,
+        "$rcontent": [
+        ]
+    },
+    "baseSpreadRadius": 7,
+    "baseSpreadChance": 0.1,
+    "baseDeathChance": 2,
+    "baseHealthPenalty": 5,
+    "maxDeathHealth": 15,
+    "mutationChance": 0.05,
+    "mutationMagnitude": 0.35,
+    "progressionSpeed": 0.015,
+    "baseSpontaneousChance": 2,
+    "diseaseName": "Influenza"
+}

@@ -1,0 +1,24 @@
+{
+    "$id": 0,
+    "$type": "0|Pandemic.DiseaseBasePrefab, Pandemic",
+    "name": "DiseaseBasePrefab",
+    "active": true,
+    "version": 1,
+    "components": {
+        "$id": 1,
+        "$type": "1|System.Collections.Generic.List`1[[Game.Prefabs.ComponentBase, Game]], mscorlib",
+        "$rlength": 0,
+        "$rcontent": [
+        ]
+    },
+    "baseSpreadRadius": 10,
+    "baseSpreadChance": 0.02,
+    "baseDeathChance": 0,
+    "baseHealthPenalty": 0,
+    "maxDeathHealth": 15,
+    "mutationChance": 0.005,
+    "mutationMagnitude": 0.15,
+    "progressionSpeed": 0.015,
+    "baseSpontaneousChance": 100,
+    "diseaseName": "Common Cold"
+}
