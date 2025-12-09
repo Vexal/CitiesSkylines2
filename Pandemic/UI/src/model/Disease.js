@@ -87,7 +87,15 @@ export default class Disease {
 	/** @returns {string|undefined} */
 	get parentStrain() {
 		return this._parentStrain;
-	}
+    }
+
+    get vaccineProgress() {
+        return this._diseaseJson.vaccineProgress;
+    }
+
+    get vaccineEffectiveness() {
+        return this._diseaseJson.vaccineEffectiveness;
+    }
 
 	set parentStrain(p) {
 		this._parentStrain = p;

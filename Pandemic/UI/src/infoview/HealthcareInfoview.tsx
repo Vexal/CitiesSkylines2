@@ -75,7 +75,8 @@ export class DiseaseInfoPanel extends Component {
 		showDiseaseList: CustomBindings.showActiveDiseaseDetails.value,
 	}
 
-	render() {
+    render() {
+        console.log("the disease list", this.state.diseaseList);
 		//console.log("the disease list", this.state.mutationCooldown, mutationCooldown.value, InfoviewPanelLabel, InfoviewPanelSectionTheme, this.state.diseaseList, this.state.currentInfectionCount);
 		const headerText = this.state.showDiseaseList ? `▼ Active Disease Strains` : `► Active Disease Strains`;
 		const activeDiseases = this.state.diseaseList?.filter((disease: Disease) => !this.state.activeOnly || this.state.currentInfectionCount[disease.uniqueKey] > 0);

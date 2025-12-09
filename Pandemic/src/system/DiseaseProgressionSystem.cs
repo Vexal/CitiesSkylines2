@@ -401,10 +401,10 @@ namespace Pandemic
             PrefabBase pr = this.policyPrefabEntity.Clone("Mask Mandate");
             pr.Remove(typeof(CityModifiers));
             pr.Remove(typeof(Unlockable));
-            pr.AddComponent<CityModifiers>();
+            /*pr.AddComponent<CityModifiers>();
             pr.GetComponent<CityModifiers>().m_Modifiers = new CityModifierInfo[1];
-            /*pr.GetComponent<CityModifiers>().m_Modifiers[0] = new CityModifierInfo();
-            pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Type = CityModifierType.Entertainment;
+            pr.GetComponent<CityModifiers>().m_Modifiers[0] = new CityModifierInfo();
+            pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Type = 100;
             pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Mode = ModifierValueMode.Relative;
             pr.GetComponent<CityModifiers>().m_Modifiers[0].m_Range = new Colossal.Mathematics.Bounds1(new float2() { x = 15.5f, y = 15.5f });*/
 

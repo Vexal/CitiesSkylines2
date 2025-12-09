@@ -63,6 +63,8 @@ namespace Pandemic
 			writer.Write(entity);
 			writer.Write(parent);
 			writer.Write(diseaseBase);
+			writer.Write(vaccineProgress);
+			writer.Write(vaccineEffectiveness);
 		}
 
 		public void Deserialize<TReader>(TReader reader) where TReader : IReader
@@ -92,6 +94,8 @@ namespace Pandemic
 			reader.Read(out entity);
 			reader.Read(out parent);
 			reader.Read(out diseaseBase);
+            reader.Read(out vaccineProgress);
+            reader.Read(out vaccineEffectiveness);
 		}
 
 		public string getUniqueKey()
@@ -178,7 +182,11 @@ namespace Pandemic
 			writer.Write(this.parent.keyString());
 			writer.PropertyName(nameof(this.diseaseBase));
 			writer.Write(this.diseaseBase.keyString());
-			writer.TypeEnd();
+            writer.PropertyName(nameof(this.vaccineProgress));
+            writer.Write(this.vaccineProgress);
+            writer.PropertyName(nameof(this.vaccineEffectiveness));
+            writer.Write(this.vaccineEffectiveness);
+            writer.TypeEnd();
 		}
 
 		public string getStrainName()
