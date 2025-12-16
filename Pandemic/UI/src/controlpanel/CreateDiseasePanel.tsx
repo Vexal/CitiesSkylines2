@@ -87,7 +87,7 @@ export default class CreateDiseasePanel extends Component {
 			{this.state.hovering && <ToolTip text={"Disease Customizer"} />}
 
 			{this.state.menuOpen && <div className={styles.createDiseasePanel}>
-				<SectionHeader text="Disease Customizer" />
+				<SectionHeader text="Disease Customizeasdfasdfasdfr" />
 				<div className={styles.parkingMonitorPanelBody}>
 					<PanelSection>
 						<div style={{ display: "flex" }}>

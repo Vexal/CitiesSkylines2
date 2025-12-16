@@ -4,7 +4,6 @@ using Game.Common;
 using Game.UI;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 
 namespace Pandemic
 {
@@ -15,29 +14,23 @@ namespace Pandemic
 
 		public Entity createOrMutateDisease(Entity prev, out Disease disease)
 		{
-			if (prev == Entity.Null)
+			Entity resultDiseaseEntity = prev;
+			if (resultDiseaseEntity == Entity.Null)
 			{
-				return this.getOrCreateRandomDisease(out disease);
+				resultDiseaseEntity = this.getOrCreateRandomDisease(out disease);
 			}
 			else
 			{
 				disease = EntityManager.GetComponentData<Disease>(prev);
-				if (this.isMutationCooldownActive() == 0 && disease.shouldMutate())
-				{
-					disease = disease.mutate();
-					/*Entity newDisease = EntityManager.CreateEntity(this.diseaseArchetype);
-					mutation.initMetadata(this.timeSystem.GetCurrentDateTime(), newDisease);
-					disease = mutation;
-					this.lastMutationFrame[disease.type] = this.simulationSystem.frameIndex;
-					this.frameDiseases[disease.type] = mutation;
-					return newDisease;*/
-					return this.instantiateDiseaseEntity(ref disease);
-				}
-				else
-				{
-					return prev;
-				}
 			}
+
+			if (this.isMutationCooldownActive() == 0 && disease.shouldMutate())
+			{
+				disease = disease.mutate();
+				resultDiseaseEntity = this.instantiateDiseaseEntity(ref disease);
+			}
+
+			return resultDiseaseEntity;
 		}
 
 		private Entity chooseNewDiseaseType()
