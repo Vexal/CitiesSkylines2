@@ -33,7 +33,7 @@ namespace Pandemic
 		public Entity entity;
 		public Entity parent;
         public Entity diseaseBase;
-		public uint vaccineProgress; // 0 - 100
+		public float vaccineProgress; // 0 - 100
 		public float vaccineEffectiveness; // 0 - 1
 
 		public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
@@ -117,6 +117,7 @@ namespace Pandemic
 				mutationMagnitude = Utils.mutated(this.mutationMagnitude, m),
 				progressionSpeed = Utils.mutated(this.progressionSpeed, m),
 				spontaneousProbability = Utils.mutated(this.spontaneousProbability, m),
+                vaccineEffectiveness = this.vaccineEffectiveness,
                 diseaseBase = this.diseaseBase
 			};
 
