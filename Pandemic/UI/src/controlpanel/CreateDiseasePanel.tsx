@@ -294,7 +294,7 @@ class DiseaseInputForm extends Component<InpFormProps> {
     }
 
     get diseaseInput() : InputDisease {
-        const inp = {
+        /*const inp = {
 			name: this.name.value,
 			diseaseBase: this.diseaseType.value,
 			baseSpreadChance: parseFloat(this.baseSpreadChance.value),
@@ -304,6 +304,18 @@ class DiseaseInputForm extends Component<InpFormProps> {
 			mutationChance: parseFloat(this.mutationChance.value),
 			mutationMagnitude: parseFloat(this.mutationMagnitude.value),
 			progressionSpeed: parseFloat(this.progressionSpeed.value),
+        };*/
+
+        const inp = {
+            name: this.name.value,
+            diseaseBase: this.diseaseType.value,
+            baseSpreadChance: this.baseSpreadChance.value,
+            baseDeathChance: this.baseDeathChance.value,
+            baseHealthPenalty: this.baseHealthPenalty.value,
+            baseSpreadRadius: this.baseSpreadRadius.value,
+            mutationChance: this.mutationChance.value,
+            mutationMagnitude: this.mutationMagnitude.value,
+            progressionSpeed: this.progressionSpeed.value,
         };
 
         return new InputDisease(inp);

@@ -31,16 +31,19 @@ namespace Pandemic
 		private ValueBinding<Dictionary<string, string>> diseaseNameBinding;
 		private ValueBinding<Dictionary<string, string>> diseaseBaseNameBinding;
 		private ValueBinding<bool> showDetails;
+		private ValueBinding<bool> hasVaccineResearchCenter;
 		private TriggerBinding<bool> toggleShowDetails;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
 		private DiseaseProgressionSystem diseaseProgressionSystem;
+        private VaccineSystem vaccineSystem;
 
 		protected override void OnCreate()
 		{
 			base.OnCreate();
 			m_InfoUISystem.AddTopSection(this);
-			this.showCitizenHealth = new ValueBinding<bool>("Pandemic", "showCitizenHealth", Mod.INSTANCE.m_Setting.showCitizenHealth);
+            this.vaccineSystem = World.GetOrCreateSystemManaged<VaccineSystem>();
+            this.showCitizenHealth = new ValueBinding<bool>("Pandemic", "showCitizenHealth", Mod.INSTANCE.m_Setting.showCitizenHealth);
 			Mod.INSTANCE.m_Setting.onSettingsApplied += setting =>
 			{
 				showCitizenHealth.Update(((PandemicSettings)setting).showCitizenHealth);
@@ -57,7 +60,10 @@ namespace Pandemic
 			AddBinding(this.mutationCooldown);
 
 
-			this.diseaseNameBinding = new ValueBinding<Dictionary<string, string>>("Pandemic", "diseaseNames", new Dictionary<string, string> (), 
+            this.hasVaccineResearchCenter = new ValueBinding<bool>(MOD_NAME, "hasVaccineResearchCenter", false);
+            AddBinding(this.hasVaccineResearchCenter);
+
+            this.diseaseNameBinding = new ValueBinding<Dictionary<string, string>>("Pandemic", "diseaseNames", new Dictionary<string, string> (), 
 				new DictionaryWriter<string, string>());
 			AddBinding(this.diseaseNameBinding);
 
@@ -134,6 +140,8 @@ namespace Pandemic
 			{
 				return;
 			}
+
+            this.hasVaccineResearchCenter.Update(this.vaccineSystem.hasVaccineResearchCenter);
 
 			this.mutationCooldown.Update(this.diseaseProgressionSystem.isMutationCooldownActive());
 

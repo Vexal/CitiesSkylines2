@@ -175,7 +175,28 @@ namespace Pandemic
 					Disease disease = EntityManager.GetComponentData<Disease>(currentDiseases[i].disease);
 
 					CurrentDisease currentDisease = currentDiseases[i];
-					currentDisease.progression += disease.progressionSpeed;
+
+                    if (this.isMutationCooldownActive() <= 0 && disease.shouldMutate())
+                    {
+                        Disease mutatedDisease = disease.mutate();
+                        this.instantiateDiseaseEntity(ref mutatedDisease);
+                        currentDisease.progression = 0f;
+                        currentDisease.disease = mutatedDisease.entity;
+                        currentDiseases[i] = currentDisease;
+
+                        if (!EntityManager.TryGetComponent<LastDisease>(citizens[i], out var lastDisease))
+                        {
+                            lastDisease = new LastDisease();
+                            EntityManager.AddComponent<LastDisease>(citizens[i]);
+                        }
+
+                        lastDisease.setLastDisease(mutatedDisease.entity);
+
+                        EntityManager.SetComponentData(citizens[i], lastDisease);
+                        continue;
+                    }
+
+                    currentDisease.progression += disease.progressionSpeed;
 					currentDisease.progression = math.min(1f, currentDisease.progression);
 					currentDiseases[i] = currentDisease;
 

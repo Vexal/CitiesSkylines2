@@ -76,7 +76,7 @@ namespace Pandemic
 					continue;
 				}
 
-				if (disease.vaccineProgress >= 100)
+				if (disease.vaccineProgress >= 1f)
 				{
 					//vaccinated diseases cannot spread, even if a citizen is currently afflicted by it
 					continue;

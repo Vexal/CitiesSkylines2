@@ -16,6 +16,7 @@ namespace Pandemic
 	{
         private EntityQuery diseaseEntityQuery;
         private EntityQuery vaccineResearchCenterEntityQuery;
+        public bool hasVaccineResearchCenter { get; private set; } = false;
 
         protected override void OnCreate()
         {
@@ -60,8 +61,11 @@ namespace Pandemic
             if (this.vaccineResearchCenterEntityQuery.CalculateEntityCount() == 0)
             {
                 //vaccine research does not progress without a research center
+                this.hasVaccineResearchCenter = false;
                 return;
             }
+
+            this.hasVaccineResearchCenter = true;
 
             NativeArray<Disease> diseases = this.diseaseEntityQuery.ToComponentDataArray<Disease>(Allocator.Temp);
             NativeArray<Entity> diseaseEntities = this.diseaseEntityQuery.ToEntityArray(Allocator.Temp);
@@ -75,6 +79,7 @@ namespace Pandemic
                     if (disease.vaccineProgress > 1.0f)
                     {
                         disease.vaccineProgress = 1.0f;
+                        EntityManager.AddComponent<VaccinatedDisease>(diseaseEntities[i]);
                     }
 
                     EntityManager.SetComponentData(diseaseEntities[i], disease);

@@ -18,7 +18,12 @@ function DiseaseDetailsPanel(props: { disease: Disease, expanded: boolean, curre
 			tiny={1}
 			rightText={props.currentInfectionCount + " / " + props.disease.totalInfectionCount}
 		/>
-		{props.expanded && <>
+        {props.expanded && <>
+            <InfoviewPanelLabel
+                text={"Vaccine Progress"}
+                tiny={1}
+                rightText={props.disease.vaccineProgress}
+            />
 			<InfoviewPanelLabel
 				text={"Parent Strain"}
 				tiny={1}
