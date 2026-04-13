@@ -13,7 +13,18 @@ namespace Pandemic
 			return entity.Index.ToString() + ":" + entity.Version.ToString();
 		}
 
-		[BurstCompile]
+        public static Entity entityFromString(string entityIdString)
+        {
+            string[] parts = entityIdString.Split(':');
+            if (parts.Length != 2)
+            {
+                return Entity.Null;
+            }
+
+            return new Entity() { Index = int.Parse(parts[0]), Version = int.Parse(parts[1]) };
+        }
+
+        [BurstCompile]
 		public static float mutated(float original, float maxMagnitude)
 		{
 			float h = maxMagnitude * .5f;

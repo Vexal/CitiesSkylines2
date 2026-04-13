@@ -1,5 +1,8 @@
-﻿using Game;
+﻿using Colossal.Entities;
+using Game;
+using Game.City;
 using Game.Common;
+using Game.Simulation;
 using Game.Tools;
 using System;
 using System.Collections.Generic;
@@ -14,6 +17,7 @@ namespace Pandemic
 {
 	public partial class VaccineSystem : GameSystemBase
 	{
+        private CitySystem citySystem;
         private EntityQuery diseaseEntityQuery;
         private EntityQuery vaccineResearchCenterEntityQuery;
         public bool hasVaccineResearchCenter { get; private set; } = false;
@@ -21,6 +25,7 @@ namespace Pandemic
         protected override void OnCreate()
         {
             base.OnCreate();
+            this.citySystem = World.GetOrCreateSystemManaged<CitySystem>();
 
             this.diseaseEntityQuery = GetEntityQuery(new EntityQueryDesc
             {
@@ -58,7 +63,7 @@ namespace Pandemic
             {
                 return;
             }
-            if (this.vaccineResearchCenterEntityQuery.CalculateEntityCount() == 0)
+            if (this.vaccineResearchCenterEntityQuery.IsEmpty)
             {
                 //vaccine research does not progress without a research center
                 this.hasVaccineResearchCenter = false;
@@ -75,7 +80,7 @@ namespace Pandemic
                 Disease disease = diseases[i];
                 if (disease.vaccineProgress < 1.0f)
                 {
-                    disease.vaccineProgress += 0.01f * disease.vaccineEffectiveness; //increase vaccine progress by 1% every second
+                    disease.vaccineProgress += 0.0001f * disease.vaccineEffectiveness; //increase vaccine progress by 1% every second
                     if (disease.vaccineProgress > 1.0f)
                     {
                         disease.vaccineProgress = 1.0f;
@@ -86,5 +91,52 @@ namespace Pandemic
                 }
             }
 		}
-	}
+
+
+
+        private static readonly int TOTAL_VACCINE_COST = 1000000;
+
+        public void fundVaccine(Entity diseaseEntity, float maxFundAmount)
+        {
+
+            if (!EntityManager.TryGetComponent<Disease>(diseaseEntity, out var disease))
+            {
+                return;
+            }
+
+            if (disease.vaccineProgress >= 1f)
+            {
+                return;
+            }
+
+            // int currentMoney = this.cityStatisticsSystem.GetStatisticValue(Game.City.StatisticType.Money);
+            if (!EntityManager.TryGetComponent<PlayerMoney>(this.citySystem.City, out var playerMoney))
+            {
+                return;
+            }
+
+            float progressDelta;
+            if (1 - disease.vaccineProgress < maxFundAmount)
+            {
+                progressDelta = 1 - disease.vaccineProgress;
+            }
+            else
+            {
+                progressDelta = maxFundAmount;
+            }
+
+            int progressCost = (int)(TOTAL_VACCINE_COST * progressDelta);
+            Mod.log.Info("Current money: " + playerMoney.money.ToString() + "; research cost: " + progressCost);
+            disease.vaccineProgress += progressDelta;
+            EntityManager.SetComponentData(diseaseEntity, disease);
+
+            playerMoney.Subtract(progressCost);
+            EntityManager.SetComponentData(this.citySystem.City, playerMoney);
+        }
+
+        private bool hasVaccineResearchCenter()
+        {
+
+        }
+    }
 }
