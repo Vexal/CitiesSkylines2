@@ -32,6 +32,7 @@ namespace NoTrafficDespawn
 			this.despawnPedestrians = true;
 			this.despawnPersonalVehicles = true;
 			this.despawnPublicTransit = true;
+			this.despawnTrains = true;
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
 			//this.attemptReroute = false;
@@ -111,6 +112,10 @@ namespace NoTrafficDespawn
 
 		[SettingsUISection(kSection, despawnTypeGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnTrains { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
 		public bool despawnServiceVehicles { get; set; }
 
 		[SettingsUISection(kSection, despawnTypeGroup)]
@@ -134,6 +139,7 @@ namespace NoTrafficDespawn
 			this.despawnPedestrians = true;
 			this.despawnPersonalVehicles = true;
 			this.despawnPublicTransit = true;
+			this.despawnTrains = true;
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
 			//this.attemptReroute = false;
@@ -227,8 +233,11 @@ namespace NoTrafficDespawn
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTaxis)), "Taxis" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTaxis)), $"Despawn stuck taxis." },
 
-				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), "Public Transit" },	
-				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), $"Despawn stuck public transit vehicles (buses, trams, trains, etc)." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), "Public Transit (Except trains / trams)" },	
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), $"Despawn stuck public transit vehicles (buses or other)." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTrains)), "Trains / Trams" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTrains)), $"Despawn stuck train-like vehicles (trains, trams, etc)." },
 
 			};
 		}
