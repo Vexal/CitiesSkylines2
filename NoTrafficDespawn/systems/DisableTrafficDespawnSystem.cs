@@ -32,6 +32,7 @@ namespace NoTrafficDespawn
 		private bool despawnPublicTransit;
 		private bool despawnServiceVehicles;
 		private bool despawnTaxis;
+		private bool despawnTrains;
 
 		protected override void OnCreate()
 		{
@@ -157,7 +158,8 @@ namespace NoTrafficDespawn
 								(this.despawnCommercialVehicles && EntityManager.HasComponent<DeliveryTruck>(stuckEntity)) ||
 								(this.despawnPedestrians && EntityManager.HasComponent<Creature>(stuckEntity)) ||
 								(this.despawnPersonalVehicles && EntityManager.HasComponent<PersonalCar>(stuckEntity)) ||
-								(this.despawnPublicTransit && EntityManager.HasComponent<PassengerTransport>(stuckEntity)) ||
+								(this.despawnTrains && EntityManager.HasComponent<Train>(stuckEntity)) ||
+								(this.despawnPublicTransit && EntityManager.HasComponent<PassengerTransport>(stuckEntity) && !EntityManager.HasComponent<Train>(stuckEntity)) ||
 								(this.despawnTaxis && EntityManager.HasComponent<Taxi>(stuckEntity)) ||
 								(this.despawnServiceVehicles && (
 										!EntityManager.HasComponent<Creature>(stuckEntity) &&
@@ -247,6 +249,7 @@ namespace NoTrafficDespawn
 			this.despawnPedestrians = settings.despawnPedestrians;
 			this.despawnPersonalVehicles = settings.despawnPersonalVehicles;
 			this.despawnPublicTransit = settings.despawnPublicTransit;
+			this.despawnTrains = settings.despawnTrains;
 			this.despawnServiceVehicles = settings.despawnServiceVehicles;
 			this.despawnTaxis = settings.despawnTaxis;
 		}
