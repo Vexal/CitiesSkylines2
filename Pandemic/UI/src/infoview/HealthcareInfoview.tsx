@@ -11,6 +11,14 @@ export const mutationCooldown = bindValue<number>("Pandemic", 'mutationCooldown'
 
 
 
+class BoostVaccineButton extends Component<{entityId: string}, {}> {
+    render() {
+        return <div><span>Vaccine Progress</span><span onClick={() => {
+            trigger(MOD_NAME, "fundVaccineTrigger", this.props.entityId)
+        } }>Fund+ 10%</span></div>
+    }
+}
+
 function DiseaseDetailsPanel(props: { disease: Disease, expanded: boolean, currentInfectionCount: number }) {
 	return <>
 		<InfoviewPanelLabel
@@ -18,7 +26,12 @@ function DiseaseDetailsPanel(props: { disease: Disease, expanded: boolean, curre
 			tiny={1}
 			rightText={props.currentInfectionCount + " / " + props.disease.totalInfectionCount}
 		/>
-		{props.expanded && <>
+        {props.expanded && <>
+            <InfoviewPanelLabel
+                text={<BoostVaccineButton entityId={ props.disease.uniqueKey} />}
+                tiny={1}
+                rightText={props.disease.vaccineProgress}
+            />
 			<InfoviewPanelLabel
 				text={"Parent Strain"}
 				tiny={1}
@@ -62,7 +75,6 @@ function DiseaseDetailsPanel(props: { disease: Disease, expanded: boolean, curre
 		</>}
 	</>
 }
-
 export class DiseaseInfoPanel extends Component {
 	state = {
 		/** @type {Disease[]} */

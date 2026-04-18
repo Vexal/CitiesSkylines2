@@ -24,11 +24,11 @@ namespace Pandemic
 				disease = EntityManager.GetComponentData<Disease>(prev);
 			}
 
-			if (this.isMutationCooldownActive() == 0 && disease.shouldMutate())
+			/*if (this.isMutationCooldownActive() == 0 && disease.shouldMutate())
 			{
 				disease = disease.mutate();
 				resultDiseaseEntity = this.instantiateDiseaseEntity(ref disease);
-			}
+			}*/
 
 			return resultDiseaseEntity;
 		}
