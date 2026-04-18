@@ -25,13 +25,13 @@
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/difficulty-config-mod-series.1686868/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.1" />
+	<ModVersion Value="1.2" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.3.6*" />
+	<GameVersion Value="1.5.2*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="1.3.6f compatibility" />
+	<ChangeLog Value="Fix issue with milestone rewards not disabled while paused." />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
