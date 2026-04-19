@@ -7,6 +7,7 @@ using Game.Pathfind;
 using Game.Simulation;
 using Game.Tools;
 using Game.Vehicles;
+using System;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine.InputSystem;
@@ -33,6 +34,8 @@ namespace NoTrafficDespawn
 		private bool despawnServiceVehicles;
 		private bool despawnTaxis;
 		private bool despawnTrains;
+		private bool despawnTrams;
+		private bool despawnBicycles;
 
 		protected override void OnCreate()
 		{
@@ -154,22 +157,7 @@ namespace NoTrafficDespawn
 					{
 						if ((stuck.frameCount += 4) >= this.deadlockLingerFrames && availableRemovalCount > 0)
 						{
-							if (this.despawnAll ||
-								(this.despawnCommercialVehicles && EntityManager.HasComponent<DeliveryTruck>(stuckEntity)) ||
-								(this.despawnPedestrians && EntityManager.HasComponent<Creature>(stuckEntity)) ||
-								(this.despawnPersonalVehicles && EntityManager.HasComponent<PersonalCar>(stuckEntity)) ||
-								(this.despawnTrains && EntityManager.HasComponent<Train>(stuckEntity)) ||
-								(this.despawnPublicTransit && EntityManager.HasComponent<PassengerTransport>(stuckEntity) && !EntityManager.HasComponent<Train>(stuckEntity)) ||
-								(this.despawnTaxis && EntityManager.HasComponent<Taxi>(stuckEntity)) ||
-								(this.despawnServiceVehicles && (
-										!EntityManager.HasComponent<Creature>(stuckEntity) &&
-										!EntityManager.HasComponent<PersonalCar>(stuckEntity) &&
-										!EntityManager.HasComponent<Taxi>(stuckEntity) &&
-										!EntityManager.HasComponent<DeliveryTruck>(stuckEntity) &&
-										!EntityManager.HasComponent<PassengerTransport>(stuckEntity)
-									)
-								)
-							)
+							if (this.shouldDespawn(ref stuckEntity))
 							{
 								if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
 								{
@@ -220,6 +208,62 @@ namespace NoTrafficDespawn
 			}
 		}
 
+		private bool shouldDespawn(ref Entity stuckEntity)
+		{
+			if (this.despawnAll || 
+				(this.despawnCommercialVehicles && EntityManager.HasComponent<DeliveryTruck>(stuckEntity)) ||
+				(this.despawnPedestrians && EntityManager.HasComponent<Creature>(stuckEntity)) ||
+				(this.despawnPersonalVehicles && EntityManager.HasComponent<PersonalCar>(stuckEntity))) {
+				return true;
+			}
+
+			if ((this.despawnPersonalVehicles || this.despawnBicycles) && EntityManager.HasComponent<PersonalCar>(stuckEntity))
+			{
+				if (EntityManager.HasComponent<Bicycle>(stuckEntity))
+				{
+					if (this.despawnBicycles)
+					{
+						return true;
+					}
+				}
+				else if (this.despawnPersonalVehicles)
+				{
+					return true;
+				}
+			}
+
+			bool isPassengerTransport = EntityManager.HasComponent<PassengerTransport>(stuckEntity);
+			if (isPassengerTransport && (this.despawnTrains || this.despawnTrams || this.despawnPublicTransit))
+			{
+				if (EntityManager.TryGetComponent<Train>(stuckEntity, out var train))
+				{
+					bool isTram = train.m_Flags.HasFlag(TrainFlags.Pantograph);
+					if (isTram && this.despawnTrams)
+					{
+						return true;
+					}
+					else if (!isTram && this.despawnTrains)
+					{
+						return true;
+					}
+				}
+				else if (this.despawnPublicTransit)
+				{
+					return true;
+				}
+			}
+
+			return (this.despawnTaxis && EntityManager.HasComponent<Taxi>(stuckEntity)) ||
+				(this.despawnServiceVehicles && (
+							!EntityManager.HasComponent<Creature>(stuckEntity) &&
+							!EntityManager.HasComponent<PersonalCar>(stuckEntity) &&
+							!EntityManager.HasComponent<Taxi>(stuckEntity) &&
+							!EntityManager.HasComponent<DeliveryTruck>(stuckEntity) &&
+							!EntityManager.HasComponent<PassengerTransport>(stuckEntity)
+						)
+					);
+		}
+
 		private bool shouldDisable;
 
 		private void updateSettings(TrafficDespawnSettings settings)
@@ -252,6 +296,7 @@ namespace NoTrafficDespawn
 			this.despawnTrains = settings.despawnTrains;
 			this.despawnServiceVehicles = settings.despawnServiceVehicles;
 			this.despawnTaxis = settings.despawnTaxis;
+			this.despawnTrams = settings.despawnTrams;
 		}
 
 		private void cleanupAfterDisable()
