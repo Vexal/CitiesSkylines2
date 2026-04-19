@@ -36,6 +36,7 @@ namespace NoTrafficDespawn
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
 			this.despawnTrams = true;
+			this.despawnBicycles = true;
 			//this.attemptReroute = false;
 			//this.attemptRerouteFrames = 100;
 		}
@@ -105,6 +106,10 @@ namespace NoTrafficDespawn
 
 		[SettingsUISection(kSection, despawnTypeGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnBicycles { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
 		public bool despawnPersonalVehicles { get; set; }
 
 		[SettingsUISection(kSection, despawnTypeGroup)]
@@ -148,6 +153,7 @@ namespace NoTrafficDespawn
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
 			this.despawnTrams = true;
+			this.despawnBicycles = true;
 			//this.attemptReroute = false;
 			//this.attemptRerouteFrames = 100;
 		}
@@ -247,6 +253,9 @@ namespace NoTrafficDespawn
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTrams)), "Trams" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTrams)), $"Despawn stuck trams." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnBicycles)), "Bicycles" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnBicycles)), $"Despawn stuck bicycles." },
 
 			};
 		}
