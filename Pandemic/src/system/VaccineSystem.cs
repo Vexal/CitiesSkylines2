@@ -134,9 +134,9 @@ namespace Pandemic
             EntityManager.SetComponentData(this.citySystem.City, playerMoney);
         }
 
-        private bool hasVaccineResearchCenter()
+        /*private bool hasVaccineResearchCenter()
         {
 
-        }
+        }*/
     }
 }

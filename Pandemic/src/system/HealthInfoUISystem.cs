@@ -37,6 +37,7 @@ namespace Pandemic
 		private TriggerBinding<bool> toggleShowDetails;
 		private UIUpdateState uf;
 		private ToolSystem toolSystem;
+		private CitySystem citySystem;
 		private DiseaseProgressionSystem diseaseProgressionSystem;
         private VaccineSystem vaccineSystem;
 
@@ -125,6 +126,7 @@ namespace Pandemic
 
 			this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
 			this.diseaseProgressionSystem = World.GetOrCreateSystemManaged<DiseaseProgressionSystem>();
+			this.citySystem = World.GetOrCreateSystemManaged<CitySystem>();
 		}
 
 		protected override void OnUpdate()
