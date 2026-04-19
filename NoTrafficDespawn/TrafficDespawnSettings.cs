@@ -35,6 +35,7 @@ namespace NoTrafficDespawn
 			this.despawnTrains = true;
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
+			this.despawnTrams = true;
 			//this.attemptReroute = false;
 			//this.attemptRerouteFrames = 100;
 		}
@@ -116,6 +117,10 @@ namespace NoTrafficDespawn
 
 		[SettingsUISection(kSection, despawnTypeGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
+		public bool despawnTrams { get; set; }
+
+		[SettingsUISection(kSection, despawnTypeGroup)]
+		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnTypeOptions))]
 		public bool despawnServiceVehicles { get; set; }
 
 		[SettingsUISection(kSection, despawnTypeGroup)]
@@ -142,6 +147,7 @@ namespace NoTrafficDespawn
 			this.despawnTrains = true;
 			this.despawnServiceVehicles = true;
 			this.despawnTaxis = true;
+			this.despawnTrams = true;
 			//this.attemptReroute = false;
 			//this.attemptRerouteFrames = 100;
 		}
@@ -236,8 +242,11 @@ namespace NoTrafficDespawn
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), "Public Transit (Except trains / trams)" },	
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnPublicTransit)), $"Despawn stuck public transit vehicles (buses or other)." },
 
-				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTrains)), "Trains / Trams" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTrains)), $"Despawn stuck train-like vehicles (trains, trams, etc)." },
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTrains)), "Trains" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTrains)), $"Despawn stuck passenger train vehicles." },
+
+				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.despawnTrams)), "Trams" },
+				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.despawnTrams)), $"Despawn stuck trams." },
 
 			};
 		}
