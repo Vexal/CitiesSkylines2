@@ -101,6 +101,7 @@ namespace BuildingUsageTracker
 			public NativeCounter serviceCount;
 			public NativeCounter deliveryCount;
 			public NativeCounter personalCarCount;
+			public NativeCounter personalBicycleCount;
 			public NativeCounter taxiCount;
 			public NativeCounter otherCount;
 			public NativeList<Entity> entities;
@@ -112,6 +113,7 @@ namespace BuildingUsageTracker
 				this.serviceCount = new NativeCounter(Allocator.TempJob);
 				this.deliveryCount = new NativeCounter(Allocator.TempJob);
 				this.personalCarCount = new NativeCounter(Allocator.TempJob);
+				this.personalBicycleCount = new NativeCounter(Allocator.TempJob);
 				this.taxiCount = new NativeCounter(Allocator.TempJob);
 				this.otherCount = new NativeCounter(Allocator.TempJob);
 
@@ -131,6 +133,7 @@ namespace BuildingUsageTracker
 				job.serviceCount = this.serviceCount.ToConcurrent();
 				job.deliveryCount = this.deliveryCount.ToConcurrent();
 				job.personalCarCount = this.personalCarCount.ToConcurrent();
+				job.personalBicycleCount = this.personalBicycleCount.ToConcurrent();
 				job.taxiCount = this.taxiCount.ToConcurrent();
 				job.otherCount = this.otherCount.ToConcurrent();
 
@@ -146,6 +149,7 @@ namespace BuildingUsageTracker
 				Utils.jsonFieldC("serviceCount", this.serviceCount) +
 				Utils.jsonFieldC("deliveryCount", this.deliveryCount) +
 				Utils.jsonFieldC("personalCarCount", this.personalCarCount) +
+				Utils.jsonFieldC("personalBicycleCount", this.personalBicycleCount) +
 				Utils.jsonFieldC("taxiCount", this.taxiCount) +
 				Utils.jsonFieldC("other", this.otherCount);
 
@@ -162,6 +166,7 @@ namespace BuildingUsageTracker
 				this.deliveryCount.Dispose();
 				this.taxiCount.Dispose();
 				this.personalCarCount.Dispose();
+				this.personalBicycleCount.Dispose();
 				this.otherCount.Dispose();
 			}
 		}

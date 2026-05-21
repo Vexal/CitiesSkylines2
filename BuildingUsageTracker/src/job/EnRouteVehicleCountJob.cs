@@ -26,6 +26,7 @@ namespace BuildingUsageTracker
 		public NativeCounter.Concurrent serviceCount;
 		public NativeCounter.Concurrent deliveryCount;
 		public NativeCounter.Concurrent personalCarCount;
+		public NativeCounter.Concurrent personalBicycleCount;
 		public NativeCounter.Concurrent taxiCount;
 		public NativeCounter.Concurrent otherCount;
 
@@ -51,6 +52,7 @@ namespace BuildingUsageTracker
 			bool checkPaths = this.checkPathElements && chunk.Has<PathOwner>() && chunk.Has<PathElement>();
 			bool isDelivery = chunk.Has<DeliveryTruck>();
 			bool isPersonalCar = chunk.Has<PersonalCar>();
+			bool isPersonalBicycle = chunk.Has<Bicycle>();
 			bool isTaxi = chunk.Has<Taxi>();
 			bool isServiceVehicle = chunk.Has<PostVan>() || chunk.Has<PoliceCar>() || chunk.Has<Hearse>() ||
 				chunk.Has<GarbageTruck>() || chunk.Has<Ambulance>() || chunk.Has<FireEngine>();
@@ -62,6 +64,7 @@ namespace BuildingUsageTracker
 			int serviceCount = 0;
 			int deliveryCount = 0;
 			int personalCarCount = 0;
+			int personalBicycleCount = 0;
 			int taxiCount = 0;
 			int otherCount = 0;
 			var chunkIterator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
@@ -96,6 +99,10 @@ namespace BuildingUsageTracker
 					{
 						++deliveryCount;
 					}
+					else if (isPersonalBicycle)
+					{
+						++personalBicycleCount;
+					}
 					else if (isPersonalCar)
 					{
 						++personalCarCount;
@@ -120,6 +127,7 @@ namespace BuildingUsageTracker
 			this.serviceCount.Increment(serviceCount);
 			this.deliveryCount.Increment(deliveryCount);
 			this.personalCarCount.Increment(personalCarCount);
+			this.personalBicycleCount.Increment(personalBicycleCount);
 			this.taxiCount.Increment(taxiCount);
 			this.otherCount.Increment(otherCount);
 		}

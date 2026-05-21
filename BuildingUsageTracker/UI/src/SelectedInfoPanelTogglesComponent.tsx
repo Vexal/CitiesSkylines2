@@ -98,6 +98,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
                 infoRows={[
                 getInfoRow(data, "passingThroughCount", "(Passing Through Station / Parking)", true)
                 ,getInfoRow(data, "inVehicleCount", "(In Vehicles)", true)
+                ,getInfoRow(data, "onBicycleCount", "(On Bicycles)", true)
                 ,getInfoRow(data, "inPublicTransportCount", "(In Public Transport)", true)
                 ,getInfoRow(data, "waitingTransportCount", "(Awaiting Public Transport)", true)
                 ,getInfoRow(data, "workerCount", "Going to Work")
@@ -127,6 +128,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
                 showEntityList={true}
                 infoRows={[
                     getInfoRow(data, "personalCarCount", "Personal Vehicles"),
+                    getInfoRow(data, "personalBicycleCount", "Personal Bicycles"),
                     getInfoRow(data, "serviceCount", "Service Vehicles"),
                     getInfoRow(data, "deliveryCount", "Delilvery Vehicles"),
                     getInfoRow(data, "taxiCount", "Taxis"),
