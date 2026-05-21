@@ -525,17 +525,6 @@ namespace Pandemic
 				{
 					continue;
 				}
-
-				if (prefabBase != null)
-				{
-					PrefabID prefabID = prefabBase.GetPrefabID();
-					if (prefabID.GetName().Contains("VaccineResearch") || prefabBase.GetType().Name.Contains("VaccineResearch"))
-					{
-						Mod.log.Info(prefabBase.GetPrefabID() + " research : " + prefabBase.ToString());
-						//prefabBase.AddComponent<VaccineFacilityPrefab>();
-						//this.prefabSystem.AddOrUpdatePrefab(prefabBase);
-					}
-				}
 			}
 		}
 

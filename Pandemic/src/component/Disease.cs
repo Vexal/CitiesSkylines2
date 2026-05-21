@@ -33,8 +33,6 @@ namespace Pandemic
 		public Entity entity;
 		public Entity parent;
         public Entity diseaseBase;
-		public float vaccineProgress; // 0 - 100
-		public float vaccineEffectiveness; // 0 - 1
 
 		public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
 		{
@@ -63,8 +61,6 @@ namespace Pandemic
 			writer.Write(entity);
 			writer.Write(parent);
 			writer.Write(diseaseBase);
-			writer.Write(vaccineProgress);
-			writer.Write(vaccineEffectiveness);
 		}
 
 		public void Deserialize<TReader>(TReader reader) where TReader : IReader
@@ -94,8 +90,6 @@ namespace Pandemic
 			reader.Read(out entity);
 			reader.Read(out parent);
 			reader.Read(out diseaseBase);
-            reader.Read(out vaccineProgress);
-            reader.Read(out vaccineEffectiveness);
 		}
 
 		public string getUniqueKey()
@@ -117,7 +111,6 @@ namespace Pandemic
 				mutationMagnitude = Utils.mutated(this.mutationMagnitude, m),
 				progressionSpeed = Utils.mutated(this.progressionSpeed, m),
 				spontaneousProbability = Utils.mutated(this.spontaneousProbability, m),
-                vaccineEffectiveness = this.vaccineEffectiveness,
                 diseaseBase = this.diseaseBase
 			};
 
@@ -183,10 +176,6 @@ namespace Pandemic
 			writer.Write(this.parent.keyString());
 			writer.PropertyName(nameof(this.diseaseBase));
 			writer.Write(this.diseaseBase.keyString());
-            writer.PropertyName(nameof(this.vaccineProgress));
-            writer.Write(this.vaccineProgress);
-            writer.PropertyName(nameof(this.vaccineEffectiveness));
-            writer.Write(this.vaccineEffectiveness);
             writer.TypeEnd();
 		}
 

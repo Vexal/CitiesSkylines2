@@ -76,12 +76,6 @@ namespace Pandemic
 					continue;
 				}
 
-				if (disease.vaccineProgress >= 1f)
-				{
-					//vaccinated diseases cannot spread, even if a citizen is currently afflicted by it
-					continue;
-				}
-
 				if (isInBuilding && this.hospitalLookup.HasComponent(currentBuildings[i].m_CurrentBuilding))
 				{
 					continue;

@@ -30,7 +30,6 @@ namespace Pandemic
 			AssetDatabase.global.LoadSettings(nameof(Pandemic), m_Setting, new PandemicSettings(this));
 
 			//updateSystem.UpdateBefore<ForceSicknessSystem>(SystemUpdatePhase.GameSimulation);
-			updateSystem.UpdateBefore<VaccineSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<PandemicSpreadSystem>(SystemUpdatePhase.GameSimulation);
 			updateSystem.UpdateBefore<RenderDiseaseSystem>(SystemUpdatePhase.Rendering);
 			updateSystem.UpdateAt<HealthInfoUISystem>(SystemUpdatePhase.UIUpdate);

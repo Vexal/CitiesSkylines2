@@ -142,7 +142,6 @@ namespace Pandemic
 				mutationMagnitude = diseaseBase.mutationMagnitude,
 				progressionSpeed = diseaseBase.progressionSpeed,
                 spontaneousProbability = diseaseBase.baseSpontaneousChance,
-                vaccineEffectiveness = 1f,
                 diseaseBase = diseaseBase.entity
             };
 
@@ -162,7 +161,6 @@ namespace Pandemic
 				mutationMagnitude = inp.mutationMagnitude,
 				progressionSpeed = inp.progressionSpeed,
 				spontaneousProbability = inp.spontaneousProbability,
-                vaccineEffectiveness = 1f,
                 diseaseBase = inp.getBaseEntity()
             };
 

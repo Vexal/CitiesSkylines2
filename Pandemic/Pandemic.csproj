@@ -88,12 +88,6 @@
 	  <None Update="assets\packaged\CommonColdDiseaseBasePrefab.cok.cid">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
-	  <None Update="assets\packaged\VaccineResearchCenter01.cok">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="assets\packaged\VaccineResearchCenter01.cok.cid">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 	
 	<Target Name="InstallUI" AfterTargets="AfterBuild">
