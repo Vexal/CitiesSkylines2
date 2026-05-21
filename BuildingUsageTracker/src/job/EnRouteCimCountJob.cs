@@ -32,6 +32,8 @@ namespace BuildingUsageTracker
 		[ReadOnly]
 		public ComponentLookup<PublicTransport> publicTransportLookup;
 		[ReadOnly]
+		public ComponentLookup<Bicycle> bicycleLookup;
+		[ReadOnly]
 		public ComponentLookup<HouseholdMember> householdMemberLookup;
 		[ReadOnly]
 		public ComponentLookup<Household> householdLookup;
@@ -57,6 +59,7 @@ namespace BuildingUsageTracker
 		public NativeCounter.Concurrent movingInCount;
 		public NativeCounter.Concurrent passingThroughCount;
 		public NativeCounter.Concurrent inVehicleCount;
+		public NativeCounter.Concurrent onBicycleCount;
 		public NativeCounter.Concurrent movingAwayCount;
 		public NativeCounter.Concurrent waitingTransportCount;
 		public NativeCounter.Concurrent inPublicTransportCount;
@@ -104,6 +107,7 @@ namespace BuildingUsageTracker
 			int otherCount = 0;
 			int passingThroughCount = 0;
 			int inVehicleCount = 0;
+			int onBicycleCount = 0;
 			int movingAwayCount = 0;
 			int waitingTransportCount = 0;
 			int inPublicTransportCount = 0;
@@ -149,10 +153,24 @@ namespace BuildingUsageTracker
 						{
 							if ((residents[i].m_Flags & ResidentFlags.InVehicle) > 0)
 							{
-								++inVehicleCount;
-								if (checkVehicle && this.publicTransportLookup.HasComponent(currentVehicles[i].m_Vehicle))
+								if (checkVehicle)
 								{
-									++inPublicTransportCount;
+									if (this.bicycleLookup.HasComponent(currentVehicles[i].m_Vehicle))
+									{
+										++onBicycleCount;
+									}
+									else
+									{
+										++inVehicleCount;
+										if (this.publicTransportLookup.HasComponent(currentVehicles[i].m_Vehicle))
+										{
+											++inPublicTransportCount;
+										}
+									}
+								}
+								else
+								{
+									++inVehicleCount;
 								}
 							}
 							else if ((residents[i].m_Flags & ResidentFlags.WaitingTransport) > 0)
@@ -249,6 +267,7 @@ namespace BuildingUsageTracker
 			this.otherCount.Increment(otherCount);
 			this.passingThroughCount.Increment(passingThroughCount);
 			this.inVehicleCount.Increment(inVehicleCount);
+			this.onBicycleCount.Increment(onBicycleCount);
 			this.movingAwayCount.Increment(movingAwayCount);
 			this.waitingTransportCount.Increment(waitingTransportCount);
 			this.inPublicTransportCount.Increment(inPublicTransportCount);

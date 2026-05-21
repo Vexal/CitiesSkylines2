@@ -58,6 +58,7 @@ namespace BuildingUsageTracker
 			EnRouteCimCountJob job = new EnRouteCimCountJob();
 			job.currentVehicleHandle = SystemAPI.GetComponentTypeHandle<CurrentVehicle>(true);
 			job.publicTransportLookup = SystemAPI.GetComponentLookup<PublicTransport>(true);
+			job.bicycleLookup = SystemAPI.GetComponentLookup<Bicycle>(true);
 			bool isTransitStation = EntityManager.isTransitStation(selectedEntity);
 			bool isParkingStructure = EntityManager.isParkingStructure(selectedEntity);
 			if (isTransitStation || isParkingStructure)
@@ -134,6 +135,7 @@ namespace BuildingUsageTracker
 			public NativeCounter movingInCount;
 			public NativeCounter passingThroughCount;
 			public NativeCounter inVehicleCount;
+			public NativeCounter onBicycleCount;
 			public NativeCounter movingAwayCount;
 			public NativeCounter waitingTransportCount;
 			public NativeCounter inPublicTransportCount;
@@ -155,6 +157,7 @@ namespace BuildingUsageTracker
 				this.liesureCount = new NativeCounter(Allocator.TempJob);
 				this.movingInCount = new NativeCounter(Allocator.TempJob);
 				this.inVehicleCount = new NativeCounter(Allocator.TempJob);
+				this.onBicycleCount = new NativeCounter(Allocator.TempJob);
 				this.passingThroughCount = new NativeCounter(Allocator.TempJob);
 				this.movingAwayCount = new NativeCounter(Allocator.TempJob);
 				this.waitingTransportCount = new NativeCounter(Allocator.TempJob);
@@ -181,6 +184,7 @@ namespace BuildingUsageTracker
 				job.liesureCount = this.liesureCount.ToConcurrent();
 				job.movingInCount = this.movingInCount.ToConcurrent();
 				job.inVehicleCount = this.inVehicleCount.ToConcurrent();
+				job.onBicycleCount = this.onBicycleCount.ToConcurrent();
 				job.passingThroughCount = this.passingThroughCount.ToConcurrent();
 				job.movingAwayCount = this.movingAwayCount.ToConcurrent();
 				job.waitingTransportCount = this.waitingTransportCount.ToConcurrent();
@@ -207,6 +211,7 @@ namespace BuildingUsageTracker
 				Utils.jsonFieldC("liesureCount", this.liesureCount) +
 				Utils.jsonFieldC("passingThroughCount", this.passingThroughCount) +
 				Utils.jsonFieldC("inVehicleCount", this.inVehicleCount) +
+				Utils.jsonFieldC("onBicycleCount", this.onBicycleCount) +
 				Utils.jsonFieldC("movingInCount", this.movingInCount) +
 				Utils.jsonFieldC("waitingTransportCount", this.waitingTransportCount) +
 				Utils.jsonFieldC("inPublicTransportCount", this.inPublicTransportCount) +
@@ -234,6 +239,7 @@ namespace BuildingUsageTracker
 				this.movingInCount.Dispose();
 				this.passingThroughCount.Dispose();
 				this.inVehicleCount.Dispose();
+				this.onBicycleCount.Dispose();
 				this.movingAwayCount.Dispose();
 				this.waitingTransportCount.Dispose();
 				this.inPublicTransportCount.Dispose();
