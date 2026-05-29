@@ -27,6 +27,7 @@ namespace Pandemic
 		private EntityQuery diseaseBaseQuery;
 		private EntityQuery currentDiseaseQuery;
 		private ValueBinding<Disease[]> diseaseBinding;
+		private ValueBinding<DiseaseBase[]> diseaseBaseBinding;
 		private ValueBinding<string[]> currentInfectionCountBinding;
 		private ValueBinding<uint> mutationCooldown;
 		private ValueBinding<bool> showCitizenHealth;
@@ -52,6 +53,9 @@ namespace Pandemic
 
 			this.diseaseBinding = new ValueBinding<Disease[]>("Pandemic", "diseases", new Disease[] { }, new ArrayWriter<Disease>(new ValueWriter<Disease>()));
 			AddBinding(this.diseaseBinding);
+
+			this.diseaseBaseBinding = new ValueBinding<DiseaseBase[]>("Pandemic", "diseaseBases", new DiseaseBase[] { }, new ArrayWriter<DiseaseBase>(new ValueWriter<DiseaseBase>()));
+			AddBinding(this.diseaseBaseBinding);
 
 			this.currentInfectionCountBinding = new ValueBinding<string[]>("Pandemic", "currentInfectionCount", new string[] { }, new ArrayWriter<string>());
 			AddBinding(this.currentInfectionCountBinding);
@@ -153,7 +157,7 @@ namespace Pandemic
             }
 
 			NativeArray<Entity> diseaseBases = this.diseaseBaseQuery.ToEntityArray(Allocator.Temp);
-
+			this.diseaseBaseBinding.Update(this.diseaseBaseQuery.ToComponentDataArray<DiseaseBase>(Allocator.Temp).ToArray());
 			Dictionary<string, string> diseaseBaseNames = new Dictionary<string, string>();
 			foreach (Entity d in diseaseBases)
 			{

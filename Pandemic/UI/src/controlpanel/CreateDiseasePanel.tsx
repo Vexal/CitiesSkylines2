@@ -64,6 +64,8 @@ export default class CreateDiseasePanel extends Component {
 		diseaseList: Disease.buildDiseaseList(CustomBindings.diseaseList.value),
 		currentInfectionCount: Disease.patientCountMap(CustomBindings.currentInfectionCount.value),
 		diseaseNames: CustomBindings.diseaseNames.value,
+		diseaseBases: CustomBindings.diseaseBases.value,
+		diseaseBaseNames: CustomBindings.diseaseBaseNames.value,
         activeOnlyFilter: false,
         inputDisease: null
 
@@ -73,6 +75,7 @@ export default class CreateDiseasePanel extends Component {
        // console.log(this.state.diseaseNames, CustomBindings.diseaseBaseNames.value, this.state.diseaseList, this.state.selectedDisease);
 		//console.log("disease names", this.state.diseaseNames);
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
+		console.log("disease bases", CustomBindings.diseaseBases.value, this.state.diseaseList);
 		return <> 
 			<div className={styles.createDiseaseButton + " " + (this.state.menuOpen ? styles.createDiseasePanelExpanded : "")} onClick={() => {
 				const shouldOpen = !this.state.menuOpen;
@@ -169,16 +172,19 @@ export default class CreateDiseasePanel extends Component {
 								<div style={{fontSize:"13rem", marginBottom:"6rem"} }>
 								Select a disease to view or edit its properties; click again to deselect.
 								</div>
-								<div className={styles.diseaseListPaneContent }>
-								{this.state.diseaseList.diseaseList.filter((disease: Disease) => !this.state.activeOnlyFilter || this.diseaseIsActive(disease)).map((disease: Disease) => <div
-									className={styles.controlDiseaseRow + (this.isSelected(disease) ? " " + styles.selected : "")}
-									onClick={() => this.selectDisease(disease.uniqueKey)}>
-									<div style={{ display: "flex" }}>
-										<div style={{fontSize:"14rem"} }>{disease.strainHeader}</div>
-										<div style={{ flex: "1" }} />
-										<div style={{fontSize:"13rem", color:"palevioletred"} }>{this.state.currentInfectionCount[disease.uniqueKey]}</div>
-									</div>
-								</div>)}
+								<div className={styles.diseaseListPaneContent}>
+									{this.state.diseaseBases.map(diseaseBase => <div>
+										<div>{this.state.diseaseBaseNames?.[diseaseBase.entity]}</div>
+										<div>
+											{this.activeDiseases.filter(disease => disease.diseaseBase === diseaseBase.entity ).map((disease: Disease) => <DiseaseRow isSelected={this.isSelected(disease)}
+												currentInfectionCount={this.state.currentInfectionCount[disease.uniqueKey]}
+												selectDisease={this.selectDisease}
+												disease={disease}
+											/>)}
+										</div>
+									</div>)}
+									
+							
 								</div>
 							</div>
 						</div>
@@ -190,6 +196,8 @@ export default class CreateDiseasePanel extends Component {
 
 	componentDidMount() {
 		CustomBindings.diseaseNames.subscribe(val => this.setState({ diseaseNames: val }));
+		CustomBindings.diseaseBaseNames.subscribe(val => this.setState({ diseaseBaseNames: val }));
+		CustomBindings.diseaseBases.subscribe(val => this.setState({ diseaseBases: val }));
 		CustomBindings.diseaseList.subscribe(val => this.setState({ diseaseList: Disease.buildDiseaseList(val) }));
 		CustomBindings.currentInfectionCount.subscribe(val => this.setState({ currentInfectionCount: Disease.patientCountMap(val) }));
 	}
@@ -262,6 +270,27 @@ export default class CreateDiseasePanel extends Component {
 
 	diseaseIsActive = (disease: Disease): boolean => {
 		return this.state.currentInfectionCount[disease.uniqueKey] > 0
+	}
+
+	get activeDiseases(): Disease[] {
+		return this.state.diseaseList.diseaseList.filter((disease: Disease) => !this.state.activeOnlyFilter ||
+			this.diseaseIsActive(disease));
+	}
+}
+
+class DiseaseRow extends Component<{disease: Disease, currentInfectionCount: number, isSelected: boolean, selectDisease: function}> {
+	render() {
+		return (
+			<div
+				className={styles.controlDiseaseRow + (this.props.isSelected ? " " + styles.selected : "")}
+				onClick={() => this.props.selectDisease(this.props.disease.uniqueKey)}>
+				<div style={{ display: "flex" }}>
+					<div style={{ fontSize: "14rem" }}>{this.props.disease.strainHeader}</div>
+					<div style={{ flex: "1" }} />
+					<div style={{ fontSize: "13rem", color: "palevioletred" }}>{this.props.currentInfectionCount}</div>
+				</div>
+			</div>
+		)
 	}
 }
 
