@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.5.11709.299 stable
+VisualStudioVersion = 18.5.11709.299
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmploymentTracker", "EmploymentTracker\EmploymentTracker.csproj", "{9A7C6DD6-60CC-439A-9B90-7B9A31CBEE88}"
 EndProject
@@ -35,6 +35,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuildingUsageTracker", "BuildingUsageTracker\BuildingUsageTracker.csproj", "{849753EF-202B-4F41-A3ED-C9550447EC6B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gamenew", "gamenew\gamenew.csproj", "{E99FB1F5-59A0-4194-ABCA-A681386680B7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackButton", "BackButton\BackButton.csproj", "{E02C2F66-B54F-471F-A9DA-DF1C8A3CB50C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +100,10 @@ Global
 		{E99FB1F5-59A0-4194-ABCA-A681386680B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E99FB1F5-59A0-4194-ABCA-A681386680B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E99FB1F5-59A0-4194-ABCA-A681386680B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E02C2F66-B54F-471F-A9DA-DF1C8A3CB50C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E02C2F66-B54F-471F-A9DA-DF1C8A3CB50C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E02C2F66-B54F-471F-A9DA-DF1C8A3CB50C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E02C2F66-B54F-471F-A9DA-DF1C8A3CB50C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

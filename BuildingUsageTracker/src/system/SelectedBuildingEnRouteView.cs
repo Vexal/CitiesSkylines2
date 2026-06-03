@@ -110,6 +110,11 @@ namespace BuildingUsageTracker
 				JobChunkExtensions.ScheduleParallel(job, this.enrouteCitizenQuery, default);
 
 			jobHandle.Complete();
+			if (this.showEntities)
+			{
+				this.populateEntityNames(ref job.resultEntities);
+			}
+
 			this.counters.disposeAndBuild();
 			if (isTransitStation)
 			{

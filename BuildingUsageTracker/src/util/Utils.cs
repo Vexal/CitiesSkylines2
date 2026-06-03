@@ -18,6 +18,16 @@ namespace BuildingUsageTracker
 			return (comma ? ",\"" : "\"") + name + "\":" + value.Count;
 		}
 
+		public static string jsonFieldC(string name, string value, bool comma = true)
+		{
+			return (comma ? ",\"" : "\"") + name + "\":\"" + value + "\"";
+		}
+
+		public static string jsonFieldC(Entity name, string value, bool comma = true)
+		{
+			return jsonFieldC(jsonEntity(name), value, comma);
+		}
+
 		public static string jsonEntity(Entity entity)
 		{
 			return "\"" + entity.Index + ":" + entity.Version + "\"";

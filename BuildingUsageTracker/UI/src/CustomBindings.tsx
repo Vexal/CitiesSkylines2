@@ -8,7 +8,9 @@ const CustomBindings = {
     expandEnrouteView: bindValue<boolean>(MOD_NAME, 'showDetails_enrouteView'),
     expandVehicleEnrouteView: bindValue<boolean>(MOD_NAME, 'showDetails_enrouteVehicleView'),
     expandOccupantView: bindValue<boolean>(MOD_NAME, 'showDetails_occupancyView'),
-    toggleShowDetails: (name:string) => "toggleShowDetails_" + name
+	toggleShowDetails: (name: string) => "toggleShowDetails_" + name,
+	entityNames: bindValue<string>(MOD_NAME, 'entityNames_enrouteView'),
+	entityNamesVehicles: bindValue<string>(MOD_NAME, 'entityNames_enrouteVehicleView')
 }
 
 export const getArray = (binding: ValueBinding<string>, name: string): string[] => {

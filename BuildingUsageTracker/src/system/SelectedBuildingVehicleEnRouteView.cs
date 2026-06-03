@@ -91,6 +91,11 @@ namespace BuildingUsageTracker
 				JobChunkExtensions.ScheduleParallel(job, this.enrouteVehicleQuery, default);
 
 			jobHandle.Complete();
+			if (this.showEntities)
+			{
+				this.populateEntityNames(ref job.resultEntities);
+			}
+
 			this.counters.disposeAndBuild();
 			this.enrouteCountBinding.Update(this.counters.json);
 		}

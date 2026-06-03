@@ -27,6 +27,8 @@ export default class EntityListPane extends Component {
 			return null;
 		}
 
+		console.log("entity names", CustomBindings.entityNames.value);
+
 		return <div className={styles.entityPanel}>
 			<div className={styles.entityPanelHeader}>
 				Enroute Entities
