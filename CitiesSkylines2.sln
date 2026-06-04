@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gamenew", "gamenew\gamenew.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackButton", "BackButton\BackButton.csproj", "{E02C2F66-B54F-471F-A9DA-DF1C8A3CB50C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "game", "game", "{F91A6DB4-75C0-4914-9CA6-1C9FF2C3D9A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F91A6DB4-75C0-4914-9CA6-1C9FF2C3D9A7} = {CF984F04-FC5E-4394-8382-151B59B9DFB5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A1CD456-8B36-41FC-9001-8AE5710AEB4C}

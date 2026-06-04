@@ -48,7 +48,8 @@ namespace BuildingUsageTracker
 			});
 
 			AddBinding(new TriggerBinding<bool>("BuildingUsageTracker", "toggleShowEnrouteEntityList", s => { this.toggleEntities(s); }));
-			AddBinding(new TriggerBinding<string>("BuildingUsageTracker", "selectEnrouteEntity", s => { this.toolSystem.selected = Utils.entity(s) ; }));
+			//AddBinding(new TriggerBinding<string>("BuildingUsageTracker", "selectEnrouteEntity", s => { this.toolSystem.selected = Utils.entity(s) ; }));
+			//AddBinding(new TriggerBinding<string>("BuildingUsageTracker", "selectEnrouteEntity", s => { this.FocusEntity(Utils.entity(s)) ; }));
 
             Mod.SETTINGS.onSettingsApplied += s => { if (s is Setting setting) this.showDetails.Update(setting.showDetailedEnrouteCimCounts); };
 		}

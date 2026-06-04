@@ -1,4 +1,5 @@
 ﻿using Colossal;
+using Colossal.Entities;
 using Game.Buildings;
 using Game.Routes;
 using Unity.Collections;
@@ -72,6 +73,18 @@ namespace BuildingUsageTracker
 				return Entity.Null;
 			}
 			return new Entity { Index = int.Parse(e[0]), Version = int.Parse(e[1]) };
+		}
+
+		public static bool getCitizenFromSelected(this EntityManager entityManager, Entity target, out Entity result)
+		{
+			if (entityManager.TryGetComponent<Game.Creatures.Resident>(target, out var resident) && entityManager.Exists(resident.m_Citizen))
+			{
+				result = resident.m_Citizen;
+				return true;
+			}
+
+			result = Entity.Null;
+			return false;
 		}
 	}
 }

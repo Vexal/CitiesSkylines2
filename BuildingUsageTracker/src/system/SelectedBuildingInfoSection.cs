@@ -1,15 +1,14 @@
 ﻿using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game;
-using Game.Creatures;
+using Game.Citizens;
 using Game.Net;
 using Game.Objects;
+using Game.Rendering;
 using Game.Routes;
 using Game.Tools;
 using Game.UI;
-using Colossal.Localization;
 using Game.UI.InGame;
-using System;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -150,80 +149,22 @@ namespace BuildingUsageTracker
 
 			string json = "{";
 			bool needsComma = false;
-			LocalizationDictionary dict = null;
-			try
-			{
-				dict = Game.SceneFlow.GameManager.instance.localizationManager.activeDictionary;
-			}
-			catch
-			{
-				dict = null;
-			}
-
-			if (dict == null)
-			{
-				// no localization dictionary available, nothing to render
-				return;
-			}
 			foreach (var entity in entities)
 			{
-				var name = this.nameSystem.GetName(entity);
-				string nameJson = "null";
 				string display = "";
-				try
+
+				if (EntityManager.getCitizenFromSelected(entity, out Entity citizen))
 				{
-					var writer = new BasicJsonWriter();
-					if (name is IJsonWritable jw)
+					display = this.nameSystem.GetRenderedLabelName(citizen);
+					if (EntityManager.TryGetComponent<HouseholdMember>(citizen, out var houseHold))
 					{
-						jw.Write(writer);
-						nameJson = writer.Result ?? "null";
-
-						// derive human-readable string from writer fields
-						if (!string.IsNullOrEmpty(writer.TypeName) && writer.TypeName.Contains("CustomName"))
+						string familyName = this.nameSystem.GetRenderedLabelName(houseHold.m_Household);
+						if (familyName.StartsWith("The "))
 						{
-							display = writer.CustomName ?? string.Empty;
-						}
-						else if (!string.IsNullOrEmpty(writer.TypeName) && writer.TypeName.Contains("LocalizedName"))
-						{
-							var id = writer.NameId;
-							if (id != null && dict.TryGetValue(id, out var val)) display = val;
-							else display = id ?? string.Empty;
-						}
-						else if (!string.IsNullOrEmpty(writer.TypeName) && writer.TypeName.Contains("FormattedName"))
-						{
-							var id = writer.NameId;
-							string template = null;
-							if (id != null && dict.TryGetValue(id, out var val)) template = val;
-
-							if (template == null) template = id ?? string.Empty;
-							foreach (var kv in writer.NameArgs)
-							{
-								string valText = kv.Value;
-								if (kv.Value != null && dict.TryGetValue(kv.Value, out var v2)) valText = v2;
-
-								template = template.Replace("{" + kv.Key + "}", valText).Replace(kv.Key, valText);
-							}
-
-							display = template;
-						}
-						else
-						{
-							display = writer.Result ?? string.Empty;
+							display += " " + familyName.Substring(4, familyName.Length - 11); //strip 'The ' and ' Family'
 						}
 					}
-					else
-					{
-						nameJson = '"' + name.ToString().Replace("\"", "\\\"") + '"';
-						display = name.ToString() ?? string.Empty;
-					}
 				}
-				catch (Exception e)
-				{
-					nameJson = "null";
-					display = "";
-					Mod.log.Info("exception: " + e.ToString());
-				}
-
 				string displayEsc = display.Replace("\"", "\\\"");
 				string combined = "{" + "\"display\":\"" + displayEsc + "\"}";
 				json += (needsComma ? "," : "") + Utils.jsonEntity(entity) + ":" + combined;

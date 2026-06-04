@@ -45,6 +45,7 @@ namespace BuildingUsageTracker
 			updateSystem.UpdateAt<SelectedBuildingEnRouteView>(SystemUpdatePhase.UIUpdate);
 			updateSystem.UpdateAt<SelectedBuildingVehicleEnRouteView>(SystemUpdatePhase.UIUpdate);
 			updateSystem.UpdateAt<SelectedBuildingOccupancyView>(SystemUpdatePhase.UIUpdate);
+			updateSystem.UpdateAt<SelectedListEntitySystem>(SystemUpdatePhase.UIUpdate);
 		}
 
 		public void OnDispose()

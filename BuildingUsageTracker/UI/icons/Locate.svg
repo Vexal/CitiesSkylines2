@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <clipPath id="clip-Locate">
+      <rect width="32" height="32"/>
+    </clipPath>
+  </defs>
+  <g id="Locate" clip-path="url(#clip-Locate)">
+    <g id="MapMarker" transform="translate(0.39 0.794)">
+      <path id="Path_1308" data-name="Path 1308" d="M15.431,4C11.274,4,7.85,6.134,7.85,11.537s7.582,14.789,7.582,14.789,7.582-9.386,7.582-14.789S19.589,4,15.431,4Z" transform="translate(0)" fill="#ebebeb"/>
+      <circle id="Ellipse_496" data-name="Ellipse 496" cx="4.32" cy="4.32" r="4.32" transform="translate(11.111 6.191)" fill="#6d6a6a"/>
+    </g>
+  </g>
+</svg>
