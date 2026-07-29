@@ -20,7 +20,8 @@ export class EntityListPaneVehicle extends Component {
 export default class EntityListPane extends Component {
 	state = {
 		entities: getArray(this.props.binding, "entities"),
-		entityNames: {}
+		entityNames: {},
+		entityNamesVehicles: {}
 	}
 
 	render() {
@@ -28,15 +29,22 @@ export default class EntityListPane extends Component {
 			return null;
 		}
 
+
+		console.log("entity names", this.state.entityNames);
 		return <div className={styles.entityPanel}>
 			<div className={styles.entityPanelHeader}>
 				Enroute Entities
 			</div>
 
 			<div className={styles.entityPaneList }>
-				{this.state.entities.map(entity => <EntityRow entity={entity} key={entity} entityName={this.state.entityNames[entity]?.display || entity} />)}
+				{this.state.entities.map(entity => <EntityRow entity={entity} key={entity} entityName={this.getName(entity)} />)}
 			</div>
 		</div>
+	}
+
+	getName = entity => {
+		return this.state.entityNames[entity]?.display ||
+			this.state.entityNamesVehicles[entity]?.display || entity;
 	}
 
 	componentDidMount() {
@@ -45,6 +53,9 @@ export default class EntityListPane extends Component {
 		});
 		CustomBindings.entityNames.subscribe(val => {
 			this.setState({entityNames: JSON.parse(val)});
+		})
+		CustomBindings.entityNamesVehicles.subscribe(val => {
+			this.setState({ entityNamesVehicles: JSON.parse(val)});
 		})
 
 	}
