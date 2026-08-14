@@ -26,6 +26,7 @@ namespace NoTrafficDespawn
 		private StuckType removeType;
 		private bool highlightDirty = false;
 		private bool wasHighlighting = false;
+		private bool etherealBlockers = false;
 		private bool despawnAll;
 		private bool despawnCommercialVehicles;
 		private bool despawnPedestrians;
@@ -51,6 +52,7 @@ namespace NoTrafficDespawn
 				}
 			};
 
+			this.etherealBlockers = Mod.INSTANCE.settings.removeBlockerOnly;
 			this.updateSettings(Mod.INSTANCE.settings);
 
 			this.unstuckObjectQuery = GetEntityQuery(new EntityQueryDesc
@@ -127,7 +129,7 @@ namespace NoTrafficDespawn
 				Entity stuckEntity = stuckEntities[i];
 				bool updated = false;
 
-				if (highlightDirty)
+				if (this.highlightDirty)
 				{
 					if (EntityManager.HasComponent<Highlighted>(stuckEntity))
 					{
@@ -159,12 +161,22 @@ namespace NoTrafficDespawn
 						{
 							if (this.shouldDespawn(ref stuckEntity))
 							{
-								if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+								if (this.etherealBlockers)
+								{
+									EntityManager.RemoveComponent<Blocker>(stuckEntity);
+									updated = true;
+								}
+								else if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
 								{
 									pathOwner.m_State |= PathFlags.Stuck;
-									//pathOwner.m_State |=  PathFlags.Obsolete;
+									pathOwner.m_State |=  PathFlags.Obsolete;
 									EntityManager.SetComponentData(stuckEntity, pathOwner);
+										
 									updated = true;
+								}
+
+								if (updated)
+								{
 									--availableRemovalCount;
 								}
 							}
