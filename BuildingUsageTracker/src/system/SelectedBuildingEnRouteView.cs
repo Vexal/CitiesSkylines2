@@ -117,7 +117,7 @@ namespace BuildingUsageTracker
 			}
 
 			this.counters.disposeAndBuild();
-			if (isTransitStation)
+			if (isTransitStation || isParkingStructure)
 			{
 				job.pathTargets.Dispose();
 			}

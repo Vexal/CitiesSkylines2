@@ -98,6 +98,10 @@ namespace BuildingUsageTracker
 
 			this.counters.disposeAndBuild();
 			this.enrouteCountBinding.Update(this.counters.json);
+			if (isParkingStructure)
+			{
+				job.pathTargets.Dispose();
+			}
 		}
 
 		private struct Counters
