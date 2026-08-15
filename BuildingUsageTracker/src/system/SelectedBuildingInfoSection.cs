@@ -1,12 +1,13 @@
 ﻿using Colossal.Entities;
 using Colossal.UI.Binding;
 using Game;
-using Game.Net;
-using Game.Objects;
+using Game.Citizens;
+using Game.Prefabs;
 using Game.Routes;
 using Game.Tools;
 using Game.UI;
 using Game.UI.InGame;
+using Game.Vehicles;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -17,11 +18,14 @@ namespace BuildingUsageTracker
 		protected UIUpdateState uf;
 		private Entity previousSelectedEntity = Entity.Null;
 		protected ToolSystem toolSystem;
+		protected NameSystem nameSystem;
 		protected static string MOD_NAME = "BuildingUsageTracker";
 		protected SelectedBuildingInfoSection otherView;
 		protected bool showEntities = false;
         protected ValueBinding<bool> showDetails;
+		protected ValueBinding<string> entityNames;
         protected TriggerBinding<bool> toggleShowDetails;
+		protected PrefabSystem prefabSystem;
         protected string sectionName;
 
 		protected void OnCreate(string sectionName, bool expandDetails)
@@ -30,11 +34,15 @@ namespace BuildingUsageTracker
             this.sectionName = sectionName;
             this.uf = UIUpdateState.Create(World, 60);
 			this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+			this.nameSystem = World.GetOrCreateSystemManaged<NameSystem>();
+			this.prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
 			m_InfoUISystem.AddMiddleSection(this);
             this.showDetails = new ValueBinding<bool>(MOD_NAME, "showDetails_" + sectionName, expandDetails);
             AddBinding(this.showDetails);
             this.toggleShowDetails = new TriggerBinding<bool>(MOD_NAME, "toggleShowDetails_" + sectionName, s => { this.showDetails.Update(s); this.updateExpandDetailsSetting(s); });
             AddBinding(this.toggleShowDetails);
+			this.entityNames = new ValueBinding<string>(MOD_NAME, "entityNames_" + sectionName, "{}");
+			AddBinding(this.entityNames);
         }
 
 		protected override void OnUpdate()
@@ -73,7 +81,7 @@ namespace BuildingUsageTracker
 
 		protected void addSubObjectsConnectedRoutes(ref NativeHashSet<Entity> results, Entity entity)
 		{
-			if (EntityManager.TryGetBuffer<SubObject>(entity, true, out var subObjects))
+			if (EntityManager.TryGetBuffer<Game.Objects.SubObject>(entity, true, out var subObjects))
 			{
 				for (int i = 0; i < subObjects.Length; i++)
 				{
@@ -81,7 +89,7 @@ namespace BuildingUsageTracker
 					this.addSubObjectsConnectedRoutes(ref results, subObjects[i].m_SubObject);
 				}
 			}
-			if (EntityManager.TryGetBuffer<SubLane>(entity, true, out var subLanes))
+			if (EntityManager.TryGetBuffer<Game.Net.SubLane>(entity, true, out var subLanes))
 			{
 				for (int i = 0; i < subLanes.Length; i++)
 				{
@@ -106,7 +114,7 @@ namespace BuildingUsageTracker
 
 		protected void addParkingSpots(ref NativeHashSet<Entity> results, Entity entity)
 		{
-			if (EntityManager.TryGetComponent<ParkingLane>(entity, out var parkingLane))
+			if (EntityManager.TryGetComponent<Game.Net.ParkingLane>(entity, out var parkingLane))
 			{
 				results.Add(entity);
 			}
@@ -131,6 +139,63 @@ namespace BuildingUsageTracker
 			}
 
 			return true;
+		}
+
+		protected void populateEntityNames(ref NativeList<Entity> entities)
+		{
+			if (entities.IsEmpty)
+			{
+				return;
+			}
+
+			string json = "{";
+			bool needsComma = false;
+			foreach (var entity in entities)
+			{
+				string display = "";
+
+				if (EntityManager.getCitizenFromSelected(entity, out Entity citizen))
+				{
+					display = this.getCitizenName(citizen);
+				}
+				else
+				{
+					display = this.nameSystem.GetRenderedLabelName(entity);
+					if (display != "")
+					{
+						if (EntityManager.TryGetBuffer<Passenger>(entity, true, out var passengers) && passengers.Length > 0 && EntityManager.getCitizenFromSelected(passengers[0].m_Passenger, out var passenger))
+						{
+							string name = this.getCitizenName(passenger);
+							if (name != "")
+							{
+								display += " (" + name + ")";
+							}
+						}
+					}
+				}
+				string displayEsc = display.Replace("\"", "\\\"");
+				string combined = "{" + "\"display\":\"" + displayEsc + "\"}";
+				json += (needsComma ? "," : "") + Utils.jsonEntity(entity) + ":" + combined;
+				needsComma = true;
+			}
+
+			json += "}";
+			this.entityNames.Update(json);
+		}
+
+		protected string getCitizenName(Entity citizen)
+		{
+			string display = this.nameSystem.GetRenderedLabelName(citizen);
+			if (EntityManager.TryGetComponent<HouseholdMember>(citizen, out var houseHold))
+			{
+				string familyName = this.nameSystem.GetRenderedLabelName(houseHold.m_Household);
+				if (familyName.StartsWith("The "))
+				{
+					display += " " + familyName.Substring(4, familyName.Length - 11); //strip 'The ' and ' Family'
+				}
+			}
+
+			return display;
 		}
 
 		protected abstract void selectionChanged();

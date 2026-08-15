@@ -26,6 +26,7 @@ namespace NoTrafficDespawn
 		private StuckType removeType;
 		private bool highlightDirty = false;
 		private bool wasHighlighting = false;
+		private bool etherealBlockers = false;
 		private bool despawnAll;
 		private bool despawnCommercialVehicles;
 		private bool despawnPedestrians;
@@ -127,7 +128,7 @@ namespace NoTrafficDespawn
 				Entity stuckEntity = stuckEntities[i];
 				bool updated = false;
 
-				if (highlightDirty)
+				if (this.highlightDirty)
 				{
 					if (EntityManager.HasComponent<Highlighted>(stuckEntity))
 					{
@@ -159,12 +160,31 @@ namespace NoTrafficDespawn
 						{
 							if (this.shouldDespawn(ref stuckEntity))
 							{
-								if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+								bool tryToPhase = this.etherealBlockers && !EntityManager.HasComponent<Train>(stuckEntity);
+								if (tryToPhase)
 								{
-									pathOwner.m_State |= PathFlags.Stuck;
-									//pathOwner.m_State |=  PathFlags.Obsolete;
-									EntityManager.SetComponentData(stuckEntity, pathOwner);
-									updated = true;
+									if (EntityManager.TryGetComponent<Blocker>(stuckEntity, out var blocker))
+									{
+										blocker.m_Blocker = Entity.Null;
+										blocker.m_Type = BlockerType.None;
+										EntityManager.SetComponentData(stuckEntity, blocker);
+										updated = true;
+									}
+								}
+								else
+								{
+									if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+									{
+										pathOwner.m_State |= PathFlags.Stuck;
+										//pathOwner.m_State |=  PathFlags.Obsolete;
+										EntityManager.SetComponentData(stuckEntity, pathOwner);
+
+										updated = true;
+									}
+								}
+
+								if (updated)
+								{
 									--availableRemovalCount;
 								}
 							}
@@ -172,7 +192,6 @@ namespace NoTrafficDespawn
 						else
 						{
 							EntityManager.SetComponentData(stuckEntity, stuck);
-							updated = true;
 						}
 					}
 					
@@ -275,6 +294,8 @@ namespace NoTrafficDespawn
 				this.Enabled = true;
 			}
 
+
+			this.etherealBlockers = false;// settings.removeBlockerOnly;
 			this.despawnBehavior = settings.despawnBehavior;
 			this.highlightStuckObjects = settings.highlightStuckObjects;
 			this.deadlockLingerFrames = settings.deadlockLingerFrames;

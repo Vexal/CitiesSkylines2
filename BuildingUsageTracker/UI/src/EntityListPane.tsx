@@ -19,7 +19,9 @@ export class EntityListPaneVehicle extends Component {
 
 export default class EntityListPane extends Component {
 	state = {
-		entities: getArray(this.props.binding, "entities")
+		entities: getArray(this.props.binding, "entities"),
+		entityNames: {},
+		entityNamesVehicles: {}
 	}
 
 	render() {
@@ -27,26 +29,101 @@ export default class EntityListPane extends Component {
 			return null;
 		}
 
+
+		console.log("entity names", this.state.entityNames);
 		return <div className={styles.entityPanel}>
 			<div className={styles.entityPanelHeader}>
 				Enroute Entities
 			</div>
 
 			<div className={styles.entityPaneList }>
-				{this.state.entities.map(entity => <div onClick={() => trigger(MOD_NAME, "selectEnrouteEntity", entity) }>
-					{entity }
-				</div>)}
+				{this.state.entities.map(entity => <EntityRow entity={entity} key={entity} entityName={this.getName(entity)} />)}
 			</div>
 		</div>
+	}
+
+	getName = entity => {
+		return this.state.entityNames[entity]?.display ||
+			this.state.entityNamesVehicles[entity]?.display || entity;
 	}
 
 	componentDidMount() {
 		this.props.binding.subscribe(val => {
 			this.setState({ entities: getArray(this.props.binding, "entities") });
+		});
+		CustomBindings.entityNames.subscribe(val => {
+			this.setState({entityNames: JSON.parse(val)});
 		})
+		CustomBindings.entityNamesVehicles.subscribe(val => {
+			this.setState({ entityNamesVehicles: JSON.parse(val)});
+		})
+
 	}
 }
 
-/*EntityListPane.propTypes = {
-	binding: PropTypes.any
-}*/
+class EntityRow extends Component<{entity: any, entityName: any}, {}> {
+	render() {
+		return <div style={{ display: "flex" }}>
+			<div onClick={() => trigger(MOD_NAME, "focusEnrouteEntity", this.props.entity)}>
+				{cameraIcon2}
+			</div>
+			<div onClick={() => { trigger(MOD_NAME, "selectEnrouteEntity", this.props.entity) }}>
+				{locateIcon}
+			</div>
+			<div onClick={() => { trigger(MOD_NAME, "selectEnrouteEntity", this.props.entity); trigger(MOD_NAME, "focusEnrouteEntity", this.props.entity) }}>
+				{this.getEntityName()}
+			</div>
+		</div>
+	}
+
+	getEntityName = () => {
+		return this.props.entityName;
+	}
+}
+
+const cameraIcon = <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="26" height="26" viewBox="0 0 26 26">
+	<defs>
+		<clipPath id="clip-Camera">
+			<rect width="26" height="26" />
+		</clipPath>
+	</defs>
+	<g id="Camera" clip-path="url(#clip-Camera)">
+		<path id="Path_3689" data-name="Path 3689" d="M476.923-945.576l11.4,7.393v-12.891l-11.4-6.757Z" transform="translate(-471.814 962.56)" fill="#768b8f" />
+		<path id="Path_3688" data-name="Path 3688" d="M476.923-947.129l11.332,7.264v-8.745l-11.332-7.075Z" transform="translate(-471.814 962.297)" fill="#3e4244" />
+		<path id="Path_3690" data-name="Path 3690" d="M489.847-950.581l4.432-3.073V-940.6l-4.432,2.993Z" transform="translate(-473.407 962.049)" fill="#58676a" />
+		<path id="Path_3691" data-name="Path 3691" d="M489.82-948.056l4.475-3.163v8.925L489.82-939.2Z" transform="translate(-473.404 961.75)" fill="#171919" />
+		<path id="Path_3692" data-name="Path 3692" d="M478.923-956.831l4.666-2.556,11.1,6.217-4.444,3.185Z" transform="translate(-473.814 961.56)" fill="#a8bdc1" />
+		<path id="Path_3693" data-name="Path 3693" d="M2.5,0C3.524,0,4.464-.2,5,.6c-.016-.093,0,.684,0,.9C5,2.328,3.881,3,2.5,3S0,2.328,0,1.5A7.8,7.8,0,0,1,0,.6C-.031.017,1.121,0,2.5,0Z" transform="translate(7.186 2.56)" fill="#171919" />
+		<ellipse id="Ellipse_920" data-name="Ellipse 920" cx="2.5" cy="1.5" rx="2.5" ry="1.5" transform="translate(7.186 1.56)" fill="#585a59" />
+		<path id="Path_3694" data-name="Path 3694" d="M2.5,0C3.881,0,5,1.567,5,3.5S3.881,7,2.5,7a3.688,3.688,0,0,1-1.22.172C.343,7.048,0,5.3,0,3.5,0,2.077-.2.862.947.168A9.363,9.363,0,0,1,2.5,0Z" transform="translate(7.586 11.369) rotate(-17)" fill="#a8bdc1" />
+		<ellipse id="Ellipse_922" data-name="Ellipse 922" cx="2.5" cy="3.5" rx="2.5" ry="3.5" transform="translate(6.643 11.807) rotate(-17)" fill="#bcdede" />
+		<ellipse id="Ellipse_923" data-name="Ellipse 923" cx="2" cy="3" rx="2" ry="3" transform="translate(7.267 12.139) rotate(-17)" />
+		<ellipse id="Ellipse_924" data-name="Ellipse 924" cx="1.107" cy="1.382" rx="1.107" ry="1.382" transform="translate(7.758 12.539) rotate(-17)" fill="#334565" />
+		<ellipse id="Ellipse_925" data-name="Ellipse 925" cx="0.765" cy="0.984" rx="0.765" ry="0.984" transform="translate(8.202 12.819) rotate(-17)" fill="#83b7eb" />
+	</g>
+</svg>
+
+const cameraIcon2 = <svg version="1.1" viewBox="0 0 32 32" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+	<g>
+		<rect x="6" y="5" width="6" height="4" rx="1" ry="1" fill="#575757" />
+		<rect x="3" y="7.0191" width="26" height="18" rx="3" ry="3" fill="#c2bdbd" />
+		<rect x="3" y="10" width="26" height="12" fill="#575757" />
+	</g>
+	<circle cx="16" cy="16" r="4.5" stroke="#c2bdbd" />
+	<circle cx="15.5" cy="14.5" r="1" fill="#c2bdbd" stroke="#858585" />
+</svg>
+
+const locateIcon = <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32" height="32" viewBox="0 0 32 32">
+	<defs>
+		<clipPath id="clip-Locate">
+			<rect width="32" height="32" />
+		</clipPath>
+	</defs>
+	<g id="Locate" clip-path="url(#clip-Locate)">
+		<g id="MapMarker" transform="translate(0.39 0.794)">
+			<path id="Path_1308" data-name="Path 1308" d="M15.431,4C11.274,4,7.85,6.134,7.85,11.537s7.582,14.789,7.582,14.789,7.582-9.386,7.582-14.789S19.589,4,15.431,4Z" transform="translate(0)" fill="#ebebeb" />
+			<circle id="Ellipse_496" data-name="Ellipse 496" cx="4.32" cy="4.32" r="4.32" transform="translate(11.111 6.191)" fill="#6d6a6a" />
+		</g>
+	</g>
+</svg>
+

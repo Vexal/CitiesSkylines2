@@ -27,7 +27,7 @@ namespace NoTrafficDespawn
 
 			AssetDatabase.global.LoadSettings(nameof(NoTrafficDespawn), settings, new TrafficDespawnSettings(this));
 			updateSystem.UpdateBefore<NewStuckMovingObjectSystem>(SystemUpdatePhase.Modification1);
-			updateSystem.UpdateAfter<DisableTrafficDespawnSystem>(SystemUpdatePhase.Modification1);
+			updateSystem.UpdateAfter<DisableTrafficDespawnSystem>(SystemUpdatePhase.Modification1); 
 		}
 
 		public void OnDispose()

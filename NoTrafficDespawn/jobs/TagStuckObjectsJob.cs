@@ -33,6 +33,9 @@ namespace NoTrafficDespawn
 		public ComponentTypeHandle<Target> m_TargetType;
 
 		[ReadOnly]
+		public ComponentTypeHandle<Car> m_CarType;
+
+		[ReadOnly]
 		public ComponentLookup<Blocker> m_BlockerData;
 
 		[ReadOnly]
@@ -47,12 +50,24 @@ namespace NoTrafficDespawn
 		public ComponentLookup<StuckObject> stuckObjectLookup;
 		[ReadOnly]
 		public ComponentLookup<UnstuckObject> unstuckObjectLookup;
+
+		[NativeDisableParallelForRestriction]
+		public ComponentLookup<CarCurrentLane> m_CarCurrentLaneData;
+
+		[ReadOnly]
+		public ComponentLookup<ParkedCar> m_ParkedCarData;
+
+		[ReadOnly]
+		public ComponentLookup<ParkedTrain> m_ParkedTrainData;
+
 		[ReadOnly]
 		public long maxTraversalCount;
 		[ReadOnly]
 		public byte minStuckSpeed;
 		[ReadOnly]
 		public bool deadlocksOnly;
+		[ReadOnly]
+		public bool highlightStuckObjects;
 
 		public ComponentTypeHandle<PathOwner> m_PathOwnerType;
 		public ComponentTypeHandle<AnimalCurrentLane> m_AnimalCurrentLaneType;
@@ -62,7 +77,7 @@ namespace NoTrafficDespawn
 			NativeArray<Entity> nativeArray = chunk.GetNativeArray(m_EntityType);
 			NativeArray<Blocker> nativeArray2 = chunk.GetNativeArray(ref m_BlockerType);
 			NativeArray<GroupMember> nativeArray3 = chunk.GetNativeArray(ref m_GroupMemberType);
-			NativeArray<CurrentVehicle> nativeArray4 = chunk.GetNativeArray(ref m_CurrentVehicleType);
+			NativeArray<CurrentVehicle> vehicles = chunk.GetNativeArray(ref m_CurrentVehicleType);
 			NativeArray<RideNeeder> nativeArray5 = chunk.GetNativeArray(ref m_RideNeederType);
 			NativeArray<Target> nativeArray6 = chunk.GetNativeArray(ref m_TargetType);
 			NativeArray<PathOwner> nativeArray7 = chunk.GetNativeArray(ref m_PathOwnerType);
@@ -71,16 +86,46 @@ namespace NoTrafficDespawn
 			//All entities in the same chunk have the same component set, so only need to check before the loop
 			bool wasStuck = chunk.Has<StuckObject>();
 			bool wasUnstuck = chunk.Has<UnstuckObject>();
+			bool hasCar = chunk.Has(ref m_CarType);
 
 			for (int i = 0; i < nativeArray2.Length; i++)
 			{
 				Blocker blocker = nativeArray2[i];
-				if (!(blocker.m_Blocker != Entity.Null) || blocker.m_MaxSpeed >= this.minStuckSpeed)
+				bool notBlocked = false;
+				if (blocker.m_Blocker == Entity.Null || blocker.m_Type == BlockerType.Temporary)
+				{
+					notBlocked = true;
+				}
+
+				if (hasCar && blocker.m_Type == BlockerType.Crossing)
+				{
+					Entity blockingEntity = blocker.m_Blocker;
+					if (this.m_ControllerData.TryGetComponent(blocker.m_Blocker, out var componentData))
+					{
+						blockingEntity = componentData.m_Controller;
+					}
+
+					if (this.m_CarCurrentLaneData.TryGetComponent(blockingEntity, out var componentData2))
+					{
+						componentData2.m_LaneFlags |= CarLaneFlags.RequestSpace;
+						this.m_CarCurrentLaneData[blockingEntity] = componentData2;
+					}
+				}
+
+				if (blocker.m_MaxSpeed >= this.minStuckSpeed)
+				{
+					notBlocked = true;
+				}
+
+				if (notBlocked)
 				{
 					if (wasStuck)
 					{
 						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, nativeArray[i]);
-						this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, nativeArray[i]);
+						if (this.highlightStuckObjects)
+						{
+							this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, nativeArray[i]);
+						}
 					}
 
 					continue;
@@ -88,52 +133,64 @@ namespace NoTrafficDespawn
 
 				Entity entity = nativeArray[i];
 				Entity entity2 = Entity.Null;
-				if (nativeArray4.Length != 0)
-				{
-					entity2 = nativeArray4[i].m_Vehicle;
-				}
-				else if (nativeArray5.Length != 0)
-				{
-					RideNeeder rideNeeder = nativeArray5[i];
-					if (m_DispatchedData.TryGetComponent(rideNeeder.m_RideRequest, out var componentData))
-					{
-						entity2 = componentData.m_Handler;
-					}
-				}
-				else if (nativeArray3.Length != 0)
-				{
-					GroupMember groupMember = nativeArray3[i];
-					if (m_CurrentVehicleData.TryGetComponent(groupMember.m_Leader, out var componentData2))
-					{
-						entity2 = componentData2.m_Vehicle;
-					}
-				}
 
-				if (nativeArray6.Length != 0 && entity2 == Entity.Null)
+				bool flag = false;
+				if (m_ParkedTrainData.HasComponent(blocker.m_Blocker) || (!hasCar && m_ParkedCarData.HasComponent(blocker.m_Blocker)))
 				{
-					entity2 = nativeArray6[i].m_Target;
-				}
-
-				bool flag;
-				if (entity2 != Entity.Null)
-				{
-					if (m_ControllerData.TryGetComponent(entity2, out var componentData3))
-					{
-						entity2 = componentData3.m_Controller;
-					}
-
-					flag = IsBlocked(entity, entity2, blocker);
+					flag = true;
 				}
 				else
 				{
-					flag = IsBlocked(entity, blocker);
+					if (vehicles.Length != 0)
+					{
+						entity2 = vehicles[i].m_Vehicle;
+					}
+					else if (nativeArray5.Length != 0)
+					{
+						RideNeeder rideNeeder = nativeArray5[i];
+						if (this.m_DispatchedData.TryGetComponent(rideNeeder.m_RideRequest, out var componentData))
+						{
+							entity2 = componentData.m_Handler;
+						}
+					}
+					else if (nativeArray3.Length != 0)
+					{
+						GroupMember groupMember = nativeArray3[i];
+						if (this.m_CurrentVehicleData.TryGetComponent(groupMember.m_Leader, out var componentData2))
+						{
+							entity2 = componentData2.m_Vehicle;
+						}
+					}
+
+					if (nativeArray6.Length != 0 && entity2 == Entity.Null)
+					{
+						entity2 = nativeArray6[i].m_Target;
+					}
+
+					if (entity2 != Entity.Null)
+					{
+						if (this.m_ControllerData.TryGetComponent(entity2, out var componentData3))
+						{
+							entity2 = componentData3.m_Controller;
+						}
+
+						flag = IsBlocked(entity, entity2, blocker);
+					}
+					else
+					{
+						flag = IsBlocked(entity, blocker);
+					}
 				}
 
 				if (!flag)
 				{
 					if (wasStuck)
 					{
-						this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, entity);
+						if (this.highlightStuckObjects)
+						{
+							this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, entity);
+						}
+
 						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, entity);
 					}
 
@@ -192,6 +249,11 @@ namespace NoTrafficDespawn
 					return false;
 				}
 
+				if (blocker.m_Type == BlockerType.Temporary)
+				{
+					return false;
+				}
+
 				if (blocker.m_MaxSpeed >= this.minStuckSpeed)
 				{
 					return false;
@@ -227,6 +289,11 @@ namespace NoTrafficDespawn
 
 				blocker = m_BlockerData[blocker.m_Blocker];
 				if (blocker.m_Blocker == Entity.Null)
+				{
+					return false;
+				}
+
+				if (blocker.m_Type == BlockerType.Temporary)
 				{
 					return false;
 				}
