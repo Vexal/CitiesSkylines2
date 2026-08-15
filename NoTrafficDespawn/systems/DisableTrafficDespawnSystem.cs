@@ -52,7 +52,6 @@ namespace NoTrafficDespawn
 				}
 			};
 
-			this.etherealBlockers = Mod.INSTANCE.settings.removeBlockerOnly;
 			this.updateSettings(Mod.INSTANCE.settings);
 
 			this.unstuckObjectQuery = GetEntityQuery(new EntityQueryDesc
@@ -161,18 +160,27 @@ namespace NoTrafficDespawn
 						{
 							if (this.shouldDespawn(ref stuckEntity))
 							{
-								if (this.etherealBlockers)
+								bool tryToPhase = this.etherealBlockers && !EntityManager.HasComponent<Train>(stuckEntity);
+								if (tryToPhase)
 								{
-									EntityManager.RemoveComponent<Blocker>(stuckEntity);
-									updated = true;
+									if (EntityManager.TryGetComponent<Blocker>(stuckEntity, out var blocker))
+									{
+										blocker.m_Blocker = Entity.Null;
+										blocker.m_Type = BlockerType.None;
+										EntityManager.SetComponentData(stuckEntity, blocker);
+										updated = true;
+									}
 								}
-								else if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+								else
 								{
-									pathOwner.m_State |= PathFlags.Stuck;
-									pathOwner.m_State |=  PathFlags.Obsolete;
-									EntityManager.SetComponentData(stuckEntity, pathOwner);
-										
-									updated = true;
+									if (EntityManager.TryGetComponent(stuckEntity, out PathOwner pathOwner))
+									{
+										pathOwner.m_State |= PathFlags.Stuck;
+										//pathOwner.m_State |=  PathFlags.Obsolete;
+										EntityManager.SetComponentData(stuckEntity, pathOwner);
+
+										updated = true;
+									}
 								}
 
 								if (updated)
@@ -184,7 +192,6 @@ namespace NoTrafficDespawn
 						else
 						{
 							EntityManager.SetComponentData(stuckEntity, stuck);
-							updated = true;
 						}
 					}
 					
@@ -287,6 +294,8 @@ namespace NoTrafficDespawn
 				this.Enabled = true;
 			}
 
+
+			this.etherealBlockers = false;// settings.removeBlockerOnly;
 			this.despawnBehavior = settings.despawnBehavior;
 			this.highlightStuckObjects = settings.highlightStuckObjects;
 			this.deadlockLingerFrames = settings.deadlockLingerFrames;

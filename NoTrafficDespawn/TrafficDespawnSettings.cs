@@ -37,7 +37,7 @@ namespace NoTrafficDespawn
 			this.despawnTaxis = true;
 			this.despawnTrams = true;
 			this.despawnBicycles = true;
-			this.removeBlockerOnly = true;
+			//this.removeBlockerOnly = true;
 			//this.attemptReroute = false;
 			//this.attemptRerouteFrames = 100;
 		}
@@ -65,9 +65,9 @@ namespace NoTrafficDespawn
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
 		public int deadlockLingerFrames { get; set; }
 
-		[SettingsUISection(kSection, kToggleGroup)]
+		/*[SettingsUISection(kSection, kToggleGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
-		public bool removeBlockerOnly { get; set; }
+		public bool removeBlockerOnly { get; set; }*/
 
 		/*[SettingsUISection(kSection, kToggleGroup)]
 		[SettingsUIDisableByCondition(typeof(TrafficDespawnSettings), nameof(disableDespawnOptions))]
@@ -151,7 +151,7 @@ namespace NoTrafficDespawn
 			this.maxStuckObjectSpeed = 3;
 			this.despawnAll = true;
 			this.despawnCommercialVehicles = true;
-			this.removeBlockerOnly = true;
+			//this.removeBlockerOnly = true;
 			this.despawnPedestrians = true;
 			this.despawnPersonalVehicles = true;
 			this.despawnPublicTransit = true;
@@ -210,8 +210,8 @@ namespace NoTrafficDespawn
 
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.highlightStuckObjects)), "Highlight Stuck Objects" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.highlightStuckObjects)), $"Highlight objects that are detected as stuck." },
-				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.removeBlockerOnly)), "Make Stuck Objects Ethereal" },
-				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.removeBlockerOnly)), $"Whether to allow stuck options to pass through their blocker rather than despawn completely." },
+				//{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.removeBlockerOnly)), "Make Stuck Objects Ethereal" },
+				//{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.removeBlockerOnly)), $"Whether to allow stuck options to pass through their blocker rather than despawn completely." },
 				
 				{ m_Setting.GetOptionLabelLocaleID(nameof(TrafficDespawnSettings.deadlockLingerFrames)), "Deadlocked Vehicle Removal Wait Frames" },
 				{ m_Setting.GetOptionDescLocaleID(nameof(TrafficDespawnSettings.deadlockLingerFrames)), $"The number of frames the simulation will wait before removing vehicles it detects to be stuck. Increasing this number may allow the simulation to recover on its own, but the vanilla default is 0." },

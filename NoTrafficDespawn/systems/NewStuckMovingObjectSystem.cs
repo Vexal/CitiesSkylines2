@@ -26,7 +26,7 @@ namespace NoTrafficDespawn
 			base.OnCreate();
 			this.entityCommandBufferSystem = World.GetOrCreateSystemManaged<ModificationBarrier1>();
 			this.disableTrafficDespawnSystem = World.GetOrCreateSystemManaged<DisableTrafficDespawnSystem>();
-			blockedEntityQuery = GetEntityQuery(ComponentType.ReadOnly<Blocker>(), ComponentType.ReadOnly<UpdateFrame>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Temp>());
+			blockedEntityQuery = GetEntityQuery(ComponentType.ReadOnly<Blocker>(), ComponentType.ReadOnly<UpdateFrame>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<StuckPhaseTimer>());
 			RequireForUpdate(blockedEntityQuery);
 
 			Mod.INSTANCE.settings.onSettingsApplied += settings =>

@@ -77,7 +77,7 @@ namespace NoTrafficDespawn
 			NativeArray<Entity> nativeArray = chunk.GetNativeArray(m_EntityType);
 			NativeArray<Blocker> nativeArray2 = chunk.GetNativeArray(ref m_BlockerType);
 			NativeArray<GroupMember> nativeArray3 = chunk.GetNativeArray(ref m_GroupMemberType);
-			NativeArray<CurrentVehicle> nativeArray4 = chunk.GetNativeArray(ref m_CurrentVehicleType);
+			NativeArray<CurrentVehicle> vehicles = chunk.GetNativeArray(ref m_CurrentVehicleType);
 			NativeArray<RideNeeder> nativeArray5 = chunk.GetNativeArray(ref m_RideNeederType);
 			NativeArray<Target> nativeArray6 = chunk.GetNativeArray(ref m_TargetType);
 			NativeArray<PathOwner> nativeArray7 = chunk.GetNativeArray(ref m_PathOwnerType);
@@ -99,15 +99,16 @@ namespace NoTrafficDespawn
 
 				if (hasCar && blocker.m_Type == BlockerType.Crossing)
 				{
+					Entity blockingEntity = blocker.m_Blocker;
 					if (this.m_ControllerData.TryGetComponent(blocker.m_Blocker, out var componentData))
 					{
-						blocker.m_Blocker = componentData.m_Controller;
+						blockingEntity = componentData.m_Controller;
 					}
 
-					if (this.m_CarCurrentLaneData.TryGetComponent(blocker.m_Blocker, out var componentData2))
+					if (this.m_CarCurrentLaneData.TryGetComponent(blockingEntity, out var componentData2))
 					{
 						componentData2.m_LaneFlags |= CarLaneFlags.RequestSpace;
-						this.m_CarCurrentLaneData[blocker.m_Blocker] = componentData2;
+						this.m_CarCurrentLaneData[blockingEntity] = componentData2;
 					}
 				}
 
@@ -134,15 +135,15 @@ namespace NoTrafficDespawn
 				Entity entity2 = Entity.Null;
 
 				bool flag = false;
-				if (m_ParkedTrainData.HasComponent(blocker.m_Blocker) || (!flag && m_ParkedCarData.HasComponent(blocker.m_Blocker)))
+				if (m_ParkedTrainData.HasComponent(blocker.m_Blocker) || (!hasCar && m_ParkedCarData.HasComponent(blocker.m_Blocker)))
 				{
 					flag = true;
 				}
 				else
 				{
-					if (nativeArray4.Length != 0)
+					if (vehicles.Length != 0)
 					{
-						entity2 = nativeArray4[i].m_Vehicle;
+						entity2 = vehicles[i].m_Vehicle;
 					}
 					else if (nativeArray5.Length != 0)
 					{
