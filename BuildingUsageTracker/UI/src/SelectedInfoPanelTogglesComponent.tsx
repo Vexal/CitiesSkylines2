@@ -65,7 +65,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 
 	componentList["BuildingUsageTracker.SelectedBuildingOccupancyView"] = (e: InfoSectionComponent) => {
         const data = JSON.parse(e.group);
-        console.log("occupancy data", data);
+        //console.log("occupancy data", data);
 
         const infs = <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
             <SectionContainer data={data}
@@ -87,7 +87,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 	}
 	componentList["BuildingUsageTracker.SelectedBuildingEnRouteView"] = (e: InfoSectionComponent) => {
         const data = JSON.parse(e.group);
-		console.log("enroute cims", data);
+		//console.log("enroute cims", data);
         return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
             <SectionContainer data={data}
                 expandDetails={CustomBindings.expandEnrouteView.value}
@@ -118,7 +118,7 @@ export const SelectedInfoPanelTogglesComponent = (componentList: any): any => {
 	}
 	componentList["BuildingUsageTracker.SelectedBuildingVehicleEnRouteView"] = (e: InfoSectionComponent) => {
 		const data = JSON.parse(e.group);
-		console.log("the data", data);
+		//console.log("the data", data);
         return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
             <SectionContainer data={data}
                 expandDetails={CustomBindings.expandVehicleEnrouteView.value}

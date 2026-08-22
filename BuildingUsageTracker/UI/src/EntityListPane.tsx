@@ -30,7 +30,7 @@ export default class EntityListPane extends Component {
 		}
 
 
-		console.log("entity names", this.state.entityNames);
+		//console.log("entity names", this.state.entityNames);
 		return <div className={styles.entityPanel}>
 			<div className={styles.entityPanelHeader}>
 				Enroute Entities

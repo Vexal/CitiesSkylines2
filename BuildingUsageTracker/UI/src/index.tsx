@@ -5,7 +5,7 @@ import { VanillaComponentResolver } from "./mods/VanillaComponentResolver";
 import { EntityListPaneCim, EntityListPaneVehicle } from "./EntityListPane";
 
 const register: ModRegistrar = (moduleRegistry) => {
-	console.log("the test");
+	//console.log("the test");
 	VanillaComponentResolver.setRegistry(moduleRegistry);
 	moduleRegistry.append('GameTopLeft', EntityListPaneCim);
 	moduleRegistry.append('GameTopLeft', EntityListPaneVehicle);
