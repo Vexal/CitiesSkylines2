@@ -15,7 +15,7 @@ namespace NoTrafficDespawn
 	{
 		public EntityCommandBuffer.ParallelWriter commandBuffer;
 		[ReadOnly]
-		public EntityTypeHandle m_EntityType;
+		public EntityTypeHandle entityTypeHandle;
 
 		[ReadOnly]
 		public ComponentTypeHandle<Blocker> m_BlockerType;
@@ -74,13 +74,13 @@ namespace NoTrafficDespawn
 
 		public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
 		{
-			NativeArray<Entity> nativeArray = chunk.GetNativeArray(m_EntityType);
-			NativeArray<Blocker> nativeArray2 = chunk.GetNativeArray(ref m_BlockerType);
+			NativeArray<Entity> entities = chunk.GetNativeArray(entityTypeHandle);
+			NativeArray<Blocker> blockers = chunk.GetNativeArray(ref m_BlockerType);
 			NativeArray<GroupMember> nativeArray3 = chunk.GetNativeArray(ref m_GroupMemberType);
 			NativeArray<CurrentVehicle> vehicles = chunk.GetNativeArray(ref m_CurrentVehicleType);
 			NativeArray<RideNeeder> nativeArray5 = chunk.GetNativeArray(ref m_RideNeederType);
-			NativeArray<Target> nativeArray6 = chunk.GetNativeArray(ref m_TargetType);
-			NativeArray<PathOwner> nativeArray7 = chunk.GetNativeArray(ref m_PathOwnerType);
+			NativeArray<Target> targets = chunk.GetNativeArray(ref m_TargetType);
+			NativeArray<PathOwner> pathOwners = chunk.GetNativeArray(ref m_PathOwnerType);
 			NativeArray<AnimalCurrentLane> nativeArray8 = chunk.GetNativeArray(ref m_AnimalCurrentLaneType);
 
 			//All entities in the same chunk have the same component set, so only need to check before the loop
@@ -88,9 +88,11 @@ namespace NoTrafficDespawn
 			bool wasUnstuck = chunk.Has<UnstuckObject>();
 			bool hasCar = chunk.Has(ref m_CarType);
 
-			for (int i = 0; i < nativeArray2.Length; i++)
+			for (int i = 0; i < blockers.Length; i++)
 			{
-				Blocker blocker = nativeArray2[i];
+				Blocker blocker = blockers[i];
+				Entity entity = entities[i];
+
 				bool notBlocked = false;
 				if (blocker.m_Blocker == Entity.Null || blocker.m_Type == BlockerType.Temporary)
 				{
@@ -121,26 +123,25 @@ namespace NoTrafficDespawn
 				{
 					if (wasStuck)
 					{
-						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, nativeArray[i]);
+						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, entity);
 						if (this.highlightStuckObjects)
 						{
-							this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, nativeArray[i]);
+							this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, entity);
 						}
 					}
 
 					continue;
 				}
 
-				Entity entity = nativeArray[i];
-				Entity entity2 = Entity.Null;
 
-				bool flag = false;
+				bool blocked = false;
 				if (m_ParkedTrainData.HasComponent(blocker.m_Blocker) || (!hasCar && m_ParkedCarData.HasComponent(blocker.m_Blocker)))
 				{
-					flag = true;
+					blocked = true;
 				}
 				else
 				{
+					Entity entity2 = Entity.Null;
 					if (vehicles.Length != 0)
 					{
 						entity2 = vehicles[i].m_Vehicle;
@@ -162,9 +163,9 @@ namespace NoTrafficDespawn
 						}
 					}
 
-					if (nativeArray6.Length != 0 && entity2 == Entity.Null)
+					if (targets.Length != 0 && entity2 == Entity.Null)
 					{
-						entity2 = nativeArray6[i].m_Target;
+						entity2 = targets[i].m_Target;
 					}
 
 					if (entity2 != Entity.Null)
@@ -174,35 +175,19 @@ namespace NoTrafficDespawn
 							entity2 = componentData3.m_Controller;
 						}
 
-						flag = IsBlocked(entity, entity2, blocker);
+						blocked = IsBlocked(entity, entity2, blocker);
 					}
 					else
 					{
-						flag = IsBlocked(entity, blocker);
+						blocked = IsBlocked(entity, blocker);
 					}
 				}
 
-				if (!flag)
+				if (blocked)
 				{
-					if (wasStuck)
+					if (pathOwners.Length != 0)
 					{
-						if (this.highlightStuckObjects)
-						{
-							this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, entity);
-						}
-
-						this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, entity);
-					}
-
-					continue;
-				}
-
-				if (nativeArray7.Length != 0)
-				{
-					PathOwner value = nativeArray7[i];
-					if ((value.m_State & PathFlags.Pending) == 0)
-					{
-						if (entity != Entity.Null)
+						if ((pathOwners[i].m_State & PathFlags.Pending) == 0)
 						{
 							if (!wasStuck)
 							{
@@ -212,14 +197,27 @@ namespace NoTrafficDespawn
 							{
 								this.commandBuffer.RemoveComponent<UnstuckObject>(unfilteredChunkIndex, entity);
 							}
+
+							continue;
 						}
 					}
+					else if (nativeArray8.Length != 0)
+					{
+						AnimalCurrentLane value2 = nativeArray8[i];
+						value2.m_Flags |= CreatureLaneFlags.Stuck;
+						nativeArray8[i] = value2;
+						continue;
+					}
 				}
-				else if (nativeArray8.Length != 0)
+
+				if (wasStuck)
 				{
-					AnimalCurrentLane value2 = nativeArray8[i];
-					value2.m_Flags |= CreatureLaneFlags.Stuck;
-					nativeArray8[i] = value2;
+					if (this.highlightStuckObjects)
+					{
+						this.commandBuffer.AddComponent<UnstuckObject>(unfilteredChunkIndex, entity);
+					}
+
+					this.commandBuffer.RemoveComponent<StuckObject>(unfilteredChunkIndex, entity);
 				}
 			}
 		}

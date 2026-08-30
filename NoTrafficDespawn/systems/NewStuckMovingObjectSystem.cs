@@ -14,7 +14,7 @@ namespace NoTrafficDespawn
 		private EntityQuery blockedEntityQuery;
 		private EntityCommandBufferSystem entityCommandBufferSystem;
 		private DisableTrafficDespawnSystem disableTrafficDespawnSystem;
-		private bool highlightStuckObjects = false;
+		//private bool highlightStuckObjects = false;
 
 		public override int GetUpdateInterval(SystemUpdatePhase phase)
 		{
@@ -29,13 +29,13 @@ namespace NoTrafficDespawn
 			blockedEntityQuery = GetEntityQuery(ComponentType.ReadOnly<Blocker>(), ComponentType.ReadOnly<UpdateFrame>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<StuckPhaseTimer>());
 			RequireForUpdate(blockedEntityQuery);
 
-			Mod.INSTANCE.settings.onSettingsApplied += settings =>
+			/*Mod.INSTANCE.settings.onSettingsApplied += settings =>
 			{
 				if (settings.GetType() == typeof(TrafficDespawnSettings))
 				{
 					this.highlightStuckObjects = ((TrafficDespawnSettings)settings).highlightStuckObjects;
 				}
-			};
+			};*/
 		}
 
 		protected override void OnUpdate()
@@ -45,8 +45,8 @@ namespace NoTrafficDespawn
 			//blockedEntityQuery.SetSharedComponentFilter(new UpdateFrame(index));
 			//if (this.disableTrafficDespawnSystem.highlightStuckObjects)
 			TagStuckObjectsJob stuckCheckJob = default;
-			stuckCheckJob.highlightStuckObjects = this.highlightStuckObjects;
-			stuckCheckJob.m_EntityType = SystemAPI.GetEntityTypeHandle();
+			stuckCheckJob.highlightStuckObjects = this.disableTrafficDespawnSystem.highlightStuckObjects;
+			stuckCheckJob.entityTypeHandle = SystemAPI.GetEntityTypeHandle();
 			stuckCheckJob.m_BlockerType = SystemAPI.GetComponentTypeHandle<Blocker>(isReadOnly: true);
 			stuckCheckJob.m_GroupMemberType = SystemAPI.GetComponentTypeHandle<GroupMember>(isReadOnly: true);
 			stuckCheckJob.m_CurrentVehicleType = SystemAPI.GetComponentTypeHandle<CurrentVehicle>(isReadOnly: true);

@@ -16,6 +16,7 @@ TEST VERSION: Adds enhanced disease gameplay, including:
 * New 'Mask Mandate' city policy -- citizen adherence to mask mandates is based on eduction level
 * Custom disease creator
 * Immunity to strains recently contracted
+* Base disease prefabs are configured in the editor as custom assets
 
 All disease strains are mutations Base Disease Types:
 * 1 - Common Cold
@@ -43,7 +44,7 @@ The final version of the mod will also include:
 
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Thumbnail Value="Properties/HealthcareThumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="Properties/pandemic1.jpg" />
 	<Screenshot Value="Properties/pandemic2.png" />
@@ -54,13 +55,13 @@ The final version of the mod will also include:
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/pandemic-test-version.1729680/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.3" />
+	<ModVersion Value="1.6" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.3.6*" />
+	<GameVersion Value="1.6.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="1.3.6 Patch compatibility." />
+	<ChangeLog Value="Support save games; use editor assets for disease types; better disease tracking." />
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->

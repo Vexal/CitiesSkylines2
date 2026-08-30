@@ -1,8 +1,6 @@
 ﻿using Colossal.Entities;
-using Colossal.Logging;
 using Game;
 using Game.Citizens;
-using Game.City;
 using Game.Common;
 using Game.Creatures;
 using Game.Events;
@@ -12,7 +10,6 @@ using Game.Simulation;
 using Game.Tools;
 using Game.UI;
 using System.Collections.Generic;
-using System.Runtime.Remoting.Lifetime;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -280,7 +277,7 @@ namespace Pandemic
 			{
 				if (EntityManager.TryGetComponent<HealthProblem>(targetCitizen, out var healthProblem) && isSick(healthProblem.m_Flags))
 				{
-					Mod.log.Info("Attempt curing " + targetCitizen);
+					//Mod.log.Info("Attempt curing " + targetCitizen);
 					EntityManager.RemoveComponent<HealthProblem>(targetCitizen);
 					this.resetCitizenTrip(targetCitizen, Purpose.Hospital);
 				}

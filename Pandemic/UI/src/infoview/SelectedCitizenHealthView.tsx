@@ -20,7 +20,7 @@ export const SelectedCitizenHealthView = (componentList: any): any => {
 		if (!disease.strainName) {
 			return null;
 		}
-		console.log("this text?", e);
+		//console.log("this text?", e);
 		// These get the value of the bindings.
 		return <InfoSection focusKey={VanillaComponentResolver.instance.FOCUS_DISABLED} disableFocus={true} className={InfoSectionTheme.infoSection}>
 			<InfoRow

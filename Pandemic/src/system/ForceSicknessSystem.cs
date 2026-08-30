@@ -1,5 +1,4 @@
 ﻿using Colossal.Entities;
-using Colossal.UI.Binding;
 using Game.Buildings;
 using Game.Citizens;
 using Game.Common;
@@ -9,8 +8,6 @@ using Game.Prefabs;
 using Game.Simulation;
 using Game.Tools;
 using Game.UI;
-using Game.Vehicles;
-using System;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine.InputSystem;
@@ -303,6 +300,7 @@ namespace Pandemic
 			}
 		}
 
+		/*
 		public void applyDiseasePenalty(bool force, byte amount)
 		{
 			if (amount == 0)
@@ -374,7 +372,7 @@ namespace Pandemic
 					}
 				}
 			}
-		}
+		}*/
 
 		private Entity getSelected()
 		{

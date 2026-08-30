@@ -66,7 +66,7 @@ export default class CreateDiseasePanel extends Component {
 		diseaseNames: CustomBindings.diseaseNames.value,
 		diseaseBases: CustomBindings.diseaseBases.value,
 		diseaseBaseNames: CustomBindings.diseaseBaseNames.value,
-        activeOnlyFilter: false,
+        activeOnlyFilter: true,
         inputDisease: null
 
 	}
@@ -75,7 +75,7 @@ export default class CreateDiseasePanel extends Component {
        // console.log(this.state.diseaseNames, CustomBindings.diseaseBaseNames.value, this.state.diseaseList, this.state.selectedDisease);
 		//console.log("disease names", this.state.diseaseNames);
 		//TODO figure out why Panel component is too laggy; temporarily use div with manual styling
-		console.log("disease bases", CustomBindings.diseaseBases.value, this.state.diseaseList);
+		//console.log("disease bases", CustomBindings.diseaseBases.value, this.state.diseaseList);
 		return <> 
 			<div className={styles.createDiseaseButton + " " + (this.state.menuOpen ? styles.createDiseasePanelExpanded : "")} onClick={() => {
 				const shouldOpen = !this.state.menuOpen;
@@ -90,7 +90,7 @@ export default class CreateDiseasePanel extends Component {
 			{this.state.hovering && <ToolTip text={"Disease Customizer"} />}
 
 			{this.state.menuOpen && <div className={styles.createDiseasePanel}>
-				<SectionHeader text="Disease Customizeasdfasdfasdfr" />
+				<SectionHeader text="Disease Customizer" />
 				<div className={styles.parkingMonitorPanelBody}>
 					<PanelSection>
 						<div style={{ display: "flex" }}>
@@ -172,6 +172,9 @@ export default class CreateDiseasePanel extends Component {
 								<div style={{fontSize:"13rem", marginBottom:"6rem"} }>
 								Select a disease to view or edit its properties; click again to deselect.
 								</div>
+								<div>{!this.state.activeOnlyFilter ? <div onClick={() => this.setState({ activeOnlyFilter: true })} >Active Only
+								</div> : <div onClick={() => this.setState({ activeOnlyFilter: false })} style={{color:"#229922"} } >Active Only
+								</div>}</div>
 								<div className={styles.diseaseListPaneContent}>
 									{this.state.diseaseBases.map(diseaseBase => <div>
 										<div>{this.state.diseaseBaseNames?.[diseaseBase.entity]}</div>
@@ -209,7 +212,7 @@ export default class CreateDiseasePanel extends Component {
 		if (this.state.selectedDisease !== diseaseKey) {
 			/** @type {Disease} */
             const disease: Disease = this.state.diseaseList.diseaseMap[diseaseKey];
-            console.log("Selected disease", disease);
+            //console.log("Selected disease", disease);
 
 			/*this.baseSpreadChance.value = disease.baseSpreadChance;
 			this.baseDeathChance.value = disease.baseDeathChance;
@@ -308,7 +311,7 @@ interface InpFormProps {
 class DiseaseInputForm extends Component<InpFormProps> {
     render() {
         const data = this.props.diseaseData;
-        console.log("input data", data);
+        //console.log("input data", data);
         return <div>
 			<ParamInputRow name="Disease Name" onChange={this.updateInput} defaultValue={data.name} ref={el => this.name = el} />
 			<ParamInputRow name="Disease Type" ref={el => this.diseaseType = el} defaultValue={data.diseaseBase} onChange={this.updateInput} />
